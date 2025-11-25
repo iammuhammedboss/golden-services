@@ -1,0 +1,332 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model clients {
+  id          String        @id
+  name        String
+  phone       String
+  whatsapp    String?
+  email       String?
+  type        ClientType    @default(INDIVIDUAL)
+  notes       String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime
+  job_orders  job_orders[]
+  quotations  quotations[]
+  site_visits site_visits[]
+  sites       sites[]
+}
+
+model job_assignments {
+  id         String     @id
+  jobOrderId String
+  userId     String
+  roleInJob  JobRole    @default(CLEANER)
+  createdAt  DateTime   @default(now())
+  job_orders job_orders @relation(fields: [jobOrderId], references: [id], onDelete: Cascade)
+  users      users      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([jobOrderId, userId])
+}
+
+model job_orders {
+  id                 String               @id
+  quotationId        String?
+  clientId           String
+  siteId             String
+  jobNumber          String               @unique
+  status             JobOrderStatus       @default(SCHEDULED)
+  scheduledDate      DateTime             @db.Date
+  scheduledStartTime DateTime?
+  scheduledEndTime   DateTime?
+  notes              String?
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime
+  job_assignments    job_assignments[]
+  clients            clients              @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  quotations         quotations?          @relation(fields: [quotationId], references: [id])
+  sites              sites                @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  job_status_updates job_status_updates[]
+  photos             photos[]
+}
+
+model job_status_updates {
+  id              String            @id
+  jobOrderId      String
+  createdById     String
+  status          JobProgressStatus
+  progressPercent Int               @default(0)
+  note            String?
+  createdAt       DateTime          @default(now())
+  users           users             @relation(fields: [createdById], references: [id])
+  job_orders      job_orders        @relation(fields: [jobOrderId], references: [id], onDelete: Cascade)
+}
+
+model leads {
+  id              String        @id
+  name            String
+  phone           String
+  whatsapp        String?
+  email           String?
+  source          LeadSource
+  serviceInterest String?
+  notes           String?
+  status          LeadStatus    @default(NEW)
+  createdById     String
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime
+  users           users         @relation(fields: [createdById], references: [id])
+  quotations      quotations[]
+  site_visits     site_visits[]
+}
+
+model measurement_items {
+  id          String      @id
+  siteVisitId String
+  type        String
+  sizeLabel   String?
+  description String?
+  quantity    Int         @default(1)
+  dirtLevel   DirtLevel   @default(MEDIUM)
+  notes       String?
+  createdAt   DateTime    @default(now())
+  site_visits site_visits @relation(fields: [siteVisitId], references: [id], onDelete: Cascade)
+}
+
+model photos {
+  id           String       @id
+  siteVisitId  String?
+  jobOrderId   String?
+  phase        PhotoPhase
+  url          String
+  description  String?
+  uploadedById String
+  createdAt    DateTime     @default(now())
+  job_orders   job_orders?  @relation(fields: [jobOrderId], references: [id])
+  site_visits  site_visits? @relation(fields: [siteVisitId], references: [id])
+  users        users        @relation(fields: [uploadedById], references: [id])
+}
+
+model quotation_items {
+  id          String     @id
+  quotationId String
+  serviceId   String?
+  description String
+  quantity    Decimal    @db.Decimal(10, 2)
+  unit        String
+  unitPrice   Decimal    @db.Decimal(10, 3)
+  total       Decimal    @db.Decimal(10, 3)
+  optionGroup String?
+  createdAt   DateTime   @default(now())
+  quotations  quotations @relation(fields: [quotationId], references: [id], onDelete: Cascade)
+  services    services?  @relation(fields: [serviceId], references: [id])
+}
+
+model quotations {
+  id              String            @id
+  clientId        String
+  siteId          String?
+  leadId          String?
+  createdById     String
+  status          QuotationStatus   @default(DRAFT)
+  validUntil      DateTime?
+  notes           String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime
+  job_orders      job_orders[]
+  quotation_items quotation_items[]
+  clients         clients           @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  users           users             @relation(fields: [createdById], references: [id])
+  leads           leads?            @relation(fields: [leadId], references: [id])
+  sites           sites?            @relation(fields: [siteId], references: [id])
+}
+
+model roles {
+  id          String       @id
+  name        String       @unique
+  description String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime
+  user_roles  user_roles[]
+}
+
+model service_categories {
+  id          String     @id
+  name        String
+  description String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime
+  services    services[]
+}
+
+model service_pricing_rules {
+  id          String      @id
+  serviceId   String
+  pricingType PricingType
+  unitLabel   String
+  basePrice   Decimal     @db.Decimal(10, 3)
+  currency    String      @default("OMR")
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime
+  services    services    @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+}
+
+model services {
+  id                    String                  @id
+  categoryId            String
+  name                  String
+  slug                  String                  @unique
+  description           String?
+  isActive              Boolean                 @default(true)
+  createdAt             DateTime                @default(now())
+  updatedAt             DateTime
+  quotation_items       quotation_items[]
+  service_pricing_rules service_pricing_rules[]
+  service_categories    service_categories      @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+}
+
+model site_visits {
+  id                String              @id
+  leadId            String?
+  clientId          String?
+  siteId            String?
+  scheduledAt       DateTime
+  status            SiteVisitStatus     @default(SCHEDULED)
+  assignedToId      String
+  notes             String?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime
+  measurement_items measurement_items[]
+  photos            photos[]
+  users             users               @relation(fields: [assignedToId], references: [id])
+  clients           clients?            @relation(fields: [clientId], references: [id])
+  leads             leads?              @relation(fields: [leadId], references: [id])
+  sites             sites?              @relation(fields: [siteId], references: [id])
+}
+
+model sites {
+  id          String        @id
+  clientId    String
+  name        String
+  address     String?
+  city        String?
+  locationUrl String?
+  notes       String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime
+  job_orders  job_orders[]
+  quotations  quotations[]
+  site_visits site_visits[]
+  clients     clients       @relation(fields: [clientId], references: [id], onDelete: Cascade)
+}
+
+model user_roles {
+  userId String
+  roleId String
+  roles  roles  @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  users  users  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, roleId])
+}
+
+model users {
+  id                 String               @id
+  name               String
+  email              String               @unique
+  phone              String?
+  whatsapp           String?
+  hashedPassword     String
+  isActive           Boolean              @default(true)
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime
+  job_assignments    job_assignments[]
+  job_status_updates job_status_updates[]
+  leads              leads[]
+  photos             photos[]
+  quotations         quotations[]
+  site_visits        site_visits[]
+  user_roles         user_roles[]
+}
+
+enum ClientType {
+  INDIVIDUAL
+  COMPANY
+}
+
+enum DirtLevel {
+  LIGHT
+  MEDIUM
+  HEAVY
+}
+
+enum JobOrderStatus {
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum JobProgressStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  ON_HOLD
+  COMPLETED
+}
+
+enum JobRole {
+  SUPERVISOR
+  CLEANER
+  TECHNICIAN
+  OTHER
+}
+
+enum LeadSource {
+  WEBSITE
+  WHATSAPP
+  INSTAGRAM
+  PHONE_CALL
+  REFERRAL
+  OTHER
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  SITE_VISIT_SCHEDULED
+  QUOTED
+  WON
+  LOST
+}
+
+enum PhotoPhase {
+  BEFORE
+  DURING
+  AFTER
+}
+
+enum PricingType {
+  PER_UNIT
+  PER_SQM
+  PER_HOUR
+  PER_VISIT
+  LUMP_SUM
+}
+
+enum QuotationStatus {
+  DRAFT
+  SENT
+  ACCEPTED
+  REJECTED
+}
+
+enum SiteVisitStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+}

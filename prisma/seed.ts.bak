@@ -1,0 +1,409 @@
+// This is your Prisma schema file
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// USER & ROLES MANAGEMENT
+// ============================================
+
+model User {
+  id              String   @id @default(cuid())
+  name            String
+  email           String   @unique
+  phone           String?
+  whatsapp        String?
+  hashedPassword  String
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  roles              UserRole[]
+  createdLeads       Lead[]              @relation("LeadCreatedBy")
+  assignedSiteVisits SiteVisit[]         @relation("SiteVisitAssignedTo")
+  jobAssignments     JobAssignment[]
+  jobStatusUpdates   JobStatusUpdate[]
+  uploadedPhotos     Photo[]
+  createdQuotations  Quotation[]         @relation("QuotationCreatedBy")
+
+  @@map("users")
+}
+
+model Role {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  users UserRole[]
+
+  @@map("roles")
+}
+
+model UserRole {
+  userId String
+  roleId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role   Role   @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, roleId])
+  @@map("user_roles")
+}
+
+// ============================================
+// CRM / CLIENTS
+// ============================================
+
+enum LeadSource {
+  WEBSITE
+  WHATSAPP
+  INSTAGRAM
+  PHONE_CALL
+  REFERRAL
+  OTHER
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  SITE_VISIT_SCHEDULED
+  QUOTED
+  WON
+  LOST
+}
+
+model Lead {
+  id              String     @id @default(cuid())
+  name            String
+  phone           String
+  whatsapp        String?
+  email           String?
+  source          LeadSource
+  serviceInterest String?
+  notes           String?    @db.Text
+  status          LeadStatus @default(NEW)
+  createdById     String
+  createdBy       User       @relation("LeadCreatedBy", fields: [createdById], references: [id])
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  // Relations
+  siteVisits  SiteVisit[]
+  quotations  Quotation[]
+
+  @@map("leads")
+}
+
+enum ClientType {
+  INDIVIDUAL
+  COMPANY
+}
+
+model Client {
+  id        String     @id @default(cuid())
+  name      String
+  phone     String
+  whatsapp  String?
+  email     String?
+  type      ClientType @default(INDIVIDUAL)
+  notes     String?    @db.Text
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  // Relations
+  sites       Site[]
+  siteVisits  SiteVisit[]
+  quotations  Quotation[]
+  jobOrders   JobOrder[]
+
+  @@map("clients")
+}
+
+model Site {
+  id          String   @id @default(cuid())
+  clientId    String
+  client      Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  name        String
+  address     String?  @db.Text
+  city        String?
+  locationUrl String?  @db.Text
+  notes       String?  @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  siteVisits  SiteVisit[]
+  quotations  Quotation[]
+  jobOrders   JobOrder[]
+
+  @@map("sites")
+}
+
+// ============================================
+// SITE VISITS & MEASUREMENTS
+// ============================================
+
+enum SiteVisitStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+}
+
+model SiteVisit {
+  id           String          @id @default(cuid())
+  leadId       String?
+  lead         Lead?           @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  clientId     String?
+  client       Client?         @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  siteId       String?
+  site         Site?           @relation(fields: [siteId], references: [id], onDelete: SetNull)
+  scheduledAt  DateTime
+  status       SiteVisitStatus @default(SCHEDULED)
+  assignedToId String
+  assignedTo   User            @relation("SiteVisitAssignedTo", fields: [assignedToId], references: [id])
+  notes        String?         @db.Text
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  // Relations
+  measurements MeasurementItem[]
+  photos       Photo[]
+
+  @@map("site_visits")
+}
+
+enum DirtLevel {
+  LIGHT
+  MEDIUM
+  HEAVY
+}
+
+model MeasurementItem {
+  id          String    @id @default(cuid())
+  siteVisitId String
+  siteVisit   SiteVisit @relation(fields: [siteVisitId], references: [id], onDelete: Cascade)
+  type        String
+  sizeLabel   String?
+  description String?   @db.Text
+  quantity    Int       @default(1)
+  dirtLevel   DirtLevel @default(MEDIUM)
+  notes       String?   @db.Text
+  createdAt   DateTime  @default(now())
+
+  @@map("measurement_items")
+}
+
+enum PhotoPhase {
+  BEFORE
+  DURING
+  AFTER
+}
+
+model Photo {
+  id           String      @id @default(cuid())
+  siteVisitId  String?
+  siteVisit    SiteVisit?  @relation(fields: [siteVisitId], references: [id], onDelete: SetNull)
+  jobOrderId   String?
+  jobOrder     JobOrder?   @relation(fields: [jobOrderId], references: [id], onDelete: SetNull)
+  phase        PhotoPhase
+  url          String      @db.Text
+  description  String?     @db.Text
+  uploadedById String
+  uploadedBy   User        @relation(fields: [uploadedById], references: [id])
+  createdAt    DateTime    @default(now())
+
+  @@map("photos")
+}
+
+// ============================================
+// SERVICES & PRICING
+// ============================================
+
+model ServiceCategory {
+  id          String    @id @default(cuid())
+  name        String
+  description String?   @db.Text
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relations
+  services Service[]
+
+  @@map("service_categories")
+}
+
+model Service {
+  id          String          @id @default(cuid())
+  categoryId  String
+  category    ServiceCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  name        String
+  slug        String          @unique
+  description String?         @db.Text
+  isActive    Boolean         @default(true)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  // Relations
+  pricingRules   ServicePricingRule[]
+  quotationItems QuotationItem[]
+
+  @@map("services")
+}
+
+enum PricingType {
+  PER_UNIT
+  PER_SQM
+  PER_HOUR
+  PER_VISIT
+  LUMP_SUM
+}
+
+model ServicePricingRule {
+  id          String      @id @default(cuid())
+  serviceId   String
+  service     Service     @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  pricingType PricingType
+  unitLabel   String
+  basePrice   Decimal     @db.Decimal(10, 3)
+  currency    String      @default("OMR")
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@map("service_pricing_rules")
+}
+
+// ============================================
+// QUOTATIONS
+// ============================================
+
+enum QuotationStatus {
+  DRAFT
+  SENT
+  ACCEPTED
+  REJECTED
+}
+
+model Quotation {
+  id          String          @id @default(cuid())
+  clientId    String
+  client      Client          @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  siteId      String?
+  site        Site?           @relation(fields: [siteId], references: [id], onDelete: SetNull)
+  leadId      String?
+  lead        Lead?           @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  createdById String
+  createdBy   User            @relation("QuotationCreatedBy", fields: [createdById], references: [id])
+  status      QuotationStatus @default(DRAFT)
+  validUntil  DateTime?
+  notes       String?         @db.Text
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  // Relations
+  items     QuotationItem[]
+  jobOrders JobOrder[]
+
+  @@map("quotations")
+}
+
+model QuotationItem {
+  id           String     @id @default(cuid())
+  quotationId  String
+  quotation    Quotation  @relation(fields: [quotationId], references: [id], onDelete: Cascade)
+  serviceId    String?
+  service      Service?   @relation(fields: [serviceId], references: [id], onDelete: SetNull)
+  description  String     @db.Text
+  quantity     Decimal    @db.Decimal(10, 2)
+  unit         String
+  unitPrice    Decimal    @db.Decimal(10, 3)
+  total        Decimal    @db.Decimal(10, 3)
+  optionGroup  String?
+  createdAt    DateTime   @default(now())
+
+  @@map("quotation_items")
+}
+
+// ============================================
+// JOB ORDERS & ASSIGNMENTS
+// ============================================
+
+enum JobOrderStatus {
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+model JobOrder {
+  id                 String         @id @default(cuid())
+  quotationId        String?
+  quotation          Quotation?     @relation(fields: [quotationId], references: [id], onDelete: SetNull)
+  clientId           String
+  client             Client         @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  siteId             String
+  site               Site           @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  jobNumber          String         @unique
+  status             JobOrderStatus @default(SCHEDULED)
+  scheduledDate      DateTime       @db.Date
+  scheduledStartTime DateTime?
+  scheduledEndTime   DateTime?
+  notes              String?        @db.Text
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+
+  // Relations
+  assignments    JobAssignment[]
+  statusUpdates  JobStatusUpdate[]
+  photos         Photo[]
+
+  @@map("job_orders")
+}
+
+enum JobRole {
+  SUPERVISOR
+  CLEANER
+  TECHNICIAN
+  OTHER
+}
+
+model JobAssignment {
+  id         String   @id @default(cuid())
+  jobOrderId String
+  jobOrder   JobOrder @relation(fields: [jobOrderId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  roleInJob  JobRole  @default(CLEANER)
+  createdAt  DateTime @default(now())
+
+  @@unique([jobOrderId, userId])
+  @@map("job_assignments")
+}
+
+enum JobProgressStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  ON_HOLD
+  COMPLETED
+}
+
+model JobStatusUpdate {
+  id              String            @id @default(cuid())
+  jobOrderId      String
+  jobOrder        JobOrder          @relation(fields: [jobOrderId], references: [id], onDelete: Cascade)
+  createdById     String
+  createdBy       User              @relation(fields: [createdById], references: [id])
+  status          JobProgressStatus
+  progressPercent Int               @default(0)
+  note            String?           @db.Text
+  createdAt       DateTime          @default(now())
+
+  @@map("job_status_updates")
+}
