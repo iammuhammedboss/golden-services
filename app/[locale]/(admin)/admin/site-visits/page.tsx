@@ -11,6 +11,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { prisma } from '@/lib/prisma'
 import { formatDate, formatDateTime, enumToReadable, getStatusColor } from '@/lib/utils'
+import { AddSiteVisitDialog } from '@/components/add-site-visit-dialog'
 
 export default async function SiteVisitsPage() {
   const siteVisits = await prisma.siteVisit.findMany({
@@ -58,22 +59,7 @@ export default async function SiteVisitsPage() {
           <h1 className="text-3xl font-bold">Site Visits</h1>
           <p className="text-muted-foreground">Manage site visit schedules and measurements</p>
         </div>
-        <Button>
-          <svg
-            className="mr-2 h-4 w-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M12 4v16m8-8H4"
-            />
-          </svg>
-          New Site Visit
-        </Button>
+        <AddSiteVisitDialog />
       </div>
 
       {/* Stats */}
