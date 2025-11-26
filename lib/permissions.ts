@@ -118,3 +118,38 @@ export function canManageInvoices(user: UserWithRoles | null | undefined): boole
 export function canViewInvoices(user: UserWithRoles | null | undefined): boolean {
   return hasAnyRole(user, ['OWNER', 'ACCOUNTANT', 'SALES', 'OPERATIONS_MANAGER'])
 }
+
+/**
+ * Check if user can manage master data (OWNER only)
+ */
+export function canManageMasters(user: UserWithRoles | null | undefined): boolean {
+  return hasRole(user, 'OWNER')
+}
+
+/**
+ * Check if user can view audit logs (OWNER, AUDITOR, OPERATIONS_MANAGER)
+ */
+export function canViewAuditLogs(user: UserWithRoles | null | undefined): boolean {
+  return hasAnyRole(user, ['OWNER', 'AUDITOR', 'OPERATIONS_MANAGER'])
+}
+
+/**
+ * Check if user can restore deleted records (OWNER only)
+ */
+export function canRestoreRecords(user: UserWithRoles | null | undefined): boolean {
+  return hasRole(user, 'OWNER')
+}
+
+/**
+ * Check if user can manage payments (OWNER, ACCOUNTANT)
+ */
+export function canManagePayments(user: UserWithRoles | null | undefined): boolean {
+  return hasAnyRole(user, ['OWNER', 'ACCOUNTANT'])
+}
+
+/**
+ * Check if user can view deleted records (OWNER, AUDITOR)
+ */
+export function canViewDeletedRecords(user: UserWithRoles | null | undefined): boolean {
+  return hasAnyRole(user, ['OWNER', 'AUDITOR'])
+}

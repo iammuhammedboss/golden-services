@@ -12,17 +12,17 @@ datasource db {
 // ============================================
 
 model AuditLog {
-  id         String      @id @default(cuid())
-  userId     String
-  action     AuditAction
-  entityType String // Table name
-  entityId   String // Record ID
-  oldValues  Json? // Before state
-  newValues  Json? // After state
-  ipAddress  String?
-  userAgent  String?
-  createdAt  DateTime    @default(now())
-  user       User        @relation(fields: [userId], references: [id])
+  id          String       @id @default(cuid())
+  userId      String
+  action      AuditAction
+  entityType  String       // Table name
+  entityId    String       // Record ID
+  oldValues   Json?        // Before state
+  newValues   Json?        // After state
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime     @default(now())
+  user        User         @relation(fields: [userId], references: [id])
 
   @@index([entityType, entityId])
   @@index([userId, createdAt])
@@ -31,16 +31,16 @@ model AuditLog {
 }
 
 model DeletedRecord {
-  id           String    @id @default(cuid())
-  entityType   String // Table name
-  entityId     String // Original record ID
-  data         Json // Complete snapshot of deleted record
-  deletedById  String
-  deletedAt    DateTime  @default(now())
-  restoredAt   DateTime?
+  id          String          @id @default(cuid())
+  entityType  String          // Table name
+  entityId    String          // Original record ID
+  data        Json            // Complete snapshot of deleted record
+  deletedById String
+  deletedAt   DateTime        @default(now())
+  restoredAt  DateTime?
   restoredById String?
-  deletedBy    User      @relation("DeletedBy", fields: [deletedById], references: [id])
-  restoredBy   User?     @relation("RestoredBy", fields: [restoredById], references: [id])
+  deletedBy   User            @relation("DeletedBy", fields: [deletedById], references: [id])
+  restoredBy  User?           @relation("RestoredBy", fields: [restoredById], references: [id])
 
   @@index([entityType, entityId])
   @@index([deletedAt])
@@ -54,7 +54,7 @@ model DeletedRecord {
 model ItemTypeMaster {
   id          String    @id @default(cuid())
   name        String    @unique // WINDOW, SOFA, CURTAIN, etc.
-  category    String // FURNITURE, TEXTILE, APPLIANCE, etc.
+  category    String    // FURNITURE, TEXTILE, APPLIANCE, etc.
   description String?
   isActive    Boolean   @default(true)
   sortOrder   Int       @default(0)
@@ -83,7 +83,7 @@ model SofaTypeMaster {
 model WindowSizeMaster {
   id          String    @id @default(cuid())
   name        String    @unique // SMALL, MEDIUM, LARGE, CUSTOM
-  dimensions  String? // e.g., "3ft x 4ft"
+  dimensions  String?   // e.g., "3ft x 4ft"
   description String?
   isActive    Boolean   @default(true)
   sortOrder   Int       @default(0)
@@ -128,26 +128,26 @@ model PaymentMethodMaster {
 // ============================================
 
 model Client {
-  id             String         @id @default(cuid())
-  name           String
-  phone          String
-  alternatePhone String?
-  whatsapp       String?
-  email          String?
-  type           ClientType     @default(INDIVIDUAL)
-  isTemporary    Boolean        @default(false) // For "Cash Customer" etc.
-  notes          String?
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
-  deletedAt      DateTime?
-  deletedById    String?
-  jobOrders      JobOrder[]
-  quotations     Quotation[]
-  siteVisits     SiteVisit[]
-  sites          Site[]
-  invoices       Invoice[]
-  payments       Payment[]
-  customerNotes  CustomerNote[]
+  id               String        @id @default(cuid())
+  name             String
+  phone            String
+  alternatePhone   String?
+  whatsapp         String?
+  email            String?
+  type             ClientType    @default(INDIVIDUAL)
+  isTemporary      Boolean       @default(false) // For "Cash Customer" etc.
+  notes            String?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  deletedAt        DateTime?
+  deletedById      String?
+  jobOrders        JobOrder[]
+  quotations       Quotation[]
+  siteVisits       SiteVisit[]
+  sites            Site[]
+  invoices         Invoice[]
+  payments         Payment[]
+  customerNotes    CustomerNote[]
 
   @@index([phone])
   @@index([deletedAt])
@@ -155,7 +155,7 @@ model Client {
 }
 
 model Lead {
-  id                    String      @id @default(cuid())
+  id                    String        @id @default(cuid())
   name                  String
   phone                 String
   whatsapp              String?
@@ -163,15 +163,15 @@ model Lead {
   source                LeadSource
   serviceInterest       String?
   notes                 String?
-  status                LeadStatus  @default(NEW)
-  isTemporary           Boolean     @default(false)
-  duplicateCheckIgnored Boolean     @default(false)
+  status                LeadStatus    @default(NEW)
+  isTemporary           Boolean       @default(false)
+  duplicateCheckIgnored Boolean       @default(false)
   createdById           String
-  createdAt             DateTime    @default(now())
-  updatedAt             DateTime    @updatedAt
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
   deletedAt             DateTime?
   deletedById           String?
-  createdBy             User        @relation(fields: [createdById], references: [id])
+  createdBy             User          @relation(fields: [createdById], references: [id])
   quotations            Quotation[]
   siteVisits            SiteVisit[]
 
@@ -210,20 +210,20 @@ model Site {
 // ============================================
 
 model Room {
-  id          String     @id @default(cuid())
-  siteVisitId String
-  siteId      String?
-  roomType    String // From RoomTypeMaster
-  customName  String? // "Room 1", "Master Bedroom", etc.
-  notes       String?
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-  deletedAt   DateTime?
-  deletedById String?
-  siteVisit   SiteVisit  @relation(fields: [siteVisitId], references: [id], onDelete: Cascade)
-  site        Site?      @relation(fields: [siteId], references: [id])
-  items       RoomItem[]
-  photos      Photo[]
+  id              String            @id @default(cuid())
+  siteVisitId     String
+  siteId          String?
+  roomType        String            // From RoomTypeMaster
+  customName      String?           // "Room 1", "Master Bedroom", etc.
+  notes           String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  deletedAt       DateTime?
+  deletedById     String?
+  siteVisit       SiteVisit         @relation(fields: [siteVisitId], references: [id], onDelete: Cascade)
+  site            Site?             @relation(fields: [siteId], references: [id])
+  items           RoomItem[]
+  photos          Photo[]
 
   @@index([siteVisitId])
   @@index([siteId])
@@ -232,20 +232,20 @@ model Room {
 }
 
 model RoomItem {
-  id             String          @id @default(cuid())
-  roomId         String
-  itemType       String // From ItemTypeMaster: WINDOW, SOFA, etc.
-  subType        String? // From SofaTypeMaster, WindowSizeMaster, etc.
-  quantity       Int             @default(1)
-  size           String? // Dimensions or size descriptor
-  dirtLevel      DirtLevel       @default(MEDIUM)
-  notes          String?
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
-  deletedAt      DateTime?
-  deletedById    String?
-  room           Room            @relation(fields: [roomId], references: [id], onDelete: Cascade)
-  checklistItems ChecklistItem[]
+  id              String    @id @default(cuid())
+  roomId          String
+  itemType        String    // From ItemTypeMaster: WINDOW, SOFA, etc.
+  subType         String?   // From SofaTypeMaster, WindowSizeMaster, etc.
+  quantity        Int       @default(1)
+  size            String?   // Dimensions or size descriptor
+  dirtLevel       DirtLevel @default(MEDIUM)
+  notes           String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  deletedAt       DateTime?
+  deletedById     String?
+  room            Room      @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  checklistItems  ChecklistItem[]
 
   @@index([roomId])
   @@index([deletedAt])
@@ -284,19 +284,19 @@ model SiteVisit {
 }
 
 model MeasurementItem {
-  id          String    @id @default(cuid())
+  id          String      @id @default(cuid())
   siteVisitId String
   type        String
   sizeLabel   String?
   description String?
-  quantity    Int       @default(1)
-  dirtLevel   DirtLevel @default(MEDIUM)
+  quantity    Int         @default(1)
+  dirtLevel   DirtLevel   @default(MEDIUM)
   notes       String?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
   deletedAt   DateTime?
   deletedById String?
-  siteVisit   SiteVisit @relation(fields: [siteVisitId], references: [id], onDelete: Cascade)
+  siteVisit   SiteVisit   @relation(fields: [siteVisitId], references: [id], onDelete: Cascade)
 
   @@index([siteVisitId])
   @@index([deletedAt])
@@ -304,7 +304,7 @@ model MeasurementItem {
 }
 
 model Photo {
-  id           String     @id @default(cuid())
+  id           String       @id @default(cuid())
   siteVisitId  String?
   jobOrderId   String?
   roomId       String?
@@ -312,13 +312,13 @@ model Photo {
   url          String
   description  String?
   uploadedById String
-  createdAt    DateTime   @default(now())
+  createdAt    DateTime     @default(now())
   deletedAt    DateTime?
   deletedById  String?
-  jobOrder     JobOrder?  @relation(fields: [jobOrderId], references: [id])
-  room         Room?      @relation(fields: [roomId], references: [id])
-  siteVisit    SiteVisit? @relation(fields: [siteVisitId], references: [id])
-  uploadedBy   User       @relation(fields: [uploadedById], references: [id])
+  jobOrder     JobOrder?    @relation(fields: [jobOrderId], references: [id])
+  room         Room?        @relation(fields: [roomId], references: [id])
+  siteVisit    SiteVisit?   @relation(fields: [siteVisitId], references: [id])
+  uploadedBy   User         @relation(fields: [uploadedById], references: [id])
 
   @@index([siteVisitId])
   @@index([jobOrderId])
@@ -360,19 +360,19 @@ model Quotation {
 }
 
 model QuotationItem {
-  id          String    @id @default(cuid())
+  id          String     @id @default(cuid())
   quotationId String
   serviceId   String?
   description String
-  quantity    Decimal   @db.Decimal(10, 2)
+  quantity    Decimal    @db.Decimal(10, 2)
   unit        String
-  unitPrice   Decimal   @db.Decimal(10, 3)
-  total       Decimal   @db.Decimal(10, 3)
+  unitPrice   Decimal    @db.Decimal(10, 3)
+  total       Decimal    @db.Decimal(10, 3)
   optionGroup String?
-  createdAt   DateTime  @default(now())
+  createdAt   DateTime   @default(now())
   deletedAt   DateTime?
-  quotation   Quotation @relation(fields: [quotationId], references: [id], onDelete: Cascade)
-  service     Service?  @relation(fields: [serviceId], references: [id])
+  quotation   Quotation  @relation(fields: [quotationId], references: [id], onDelete: Cascade)
+  service     Service?   @relation(fields: [serviceId], references: [id])
 
   @@index([quotationId])
   @@index([deletedAt])
@@ -384,28 +384,28 @@ model QuotationItem {
 // ============================================
 
 model JobOrder {
-  id                 String            @id @default(cuid())
+  id                 String               @id @default(cuid())
   quotationId        String?
   clientId           String
   siteId             String
-  jobNumber          String            @unique
-  status             JobOrderStatus    @default(SCHEDULED)
-  scheduledDate      DateTime          @db.Date
+  jobNumber          String               @unique
+  status             JobOrderStatus       @default(SCHEDULED)
+  scheduledDate      DateTime             @db.Date
   scheduledStartTime DateTime?
   scheduledEndTime   DateTime?
-  isMultiDay         Boolean           @default(false)
-  endDate            DateTime?         @db.Date
-  materialsRequired  String? // JSON or Text
-  machineryRequired  String? // JSON or Text
+  isMultiDay         Boolean              @default(false)
+  endDate            DateTime?            @db.Date
+  materialsRequired  String?              // JSON or Text
+  machineryRequired  String?              // JSON or Text
   notes              String?
-  createdAt          DateTime          @default(now())
-  updatedAt          DateTime          @updatedAt
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
   deletedAt          DateTime?
   deletedById        String?
   assignments        JobAssignment[]
-  client             Client            @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  quotation          Quotation?        @relation(fields: [quotationId], references: [id])
-  site               Site              @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  client             Client               @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  quotation          Quotation?           @relation(fields: [quotationId], references: [id])
+  site               Site                 @relation(fields: [siteId], references: [id], onDelete: Cascade)
   statusUpdates      JobStatusUpdate[]
   photos             Photo[]
   invoices           Invoice[]
@@ -419,24 +419,24 @@ model JobOrder {
 }
 
 model ChecklistItem {
-  id            String    @id @default(cuid())
-  jobOrderId    String
-  roomItemId    String? // Link to RoomItem if from measurement
-  description   String
-  isCompleted   Boolean   @default(false)
-  completedAt   DateTime?
-  completedById String?
-  photoRequired Boolean   @default(true)
-  photoUrl      String?
-  notes         String?
-  sortOrder     Int       @default(0)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  deletedAt     DateTime?
-  deletedById   String?
-  jobOrder      JobOrder  @relation(fields: [jobOrderId], references: [id], onDelete: Cascade)
-  roomItem      RoomItem? @relation(fields: [roomItemId], references: [id])
-  completedBy   User?     @relation(fields: [completedById], references: [id])
+  id              String    @id @default(cuid())
+  jobOrderId      String
+  roomItemId      String?   // Link to RoomItem if from measurement
+  description     String
+  isCompleted     Boolean   @default(false)
+  completedAt     DateTime?
+  completedById   String?
+  photoRequired   Boolean   @default(true)
+  photoUrl        String?
+  notes           String?
+  sortOrder       Int       @default(0)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  deletedAt       DateTime?
+  deletedById     String?
+  jobOrder        JobOrder  @relation(fields: [jobOrderId], references: [id], onDelete: Cascade)
+  roomItem        RoomItem? @relation(fields: [roomItemId], references: [id])
+  completedBy     User?     @relation(fields: [completedById], references: [id])
 
   @@index([jobOrderId])
   @@index([isCompleted])
@@ -445,14 +445,14 @@ model ChecklistItem {
 }
 
 model JobAssignment {
-  id         String    @id @default(cuid())
+  id         String     @id @default(cuid())
   jobOrderId String
   userId     String
-  roleInJob  JobRole   @default(CLEANER)
-  createdAt  DateTime  @default(now())
+  roleInJob  JobRole    @default(CLEANER)
+  createdAt  DateTime   @default(now())
   deletedAt  DateTime?
-  jobOrder   JobOrder  @relation(fields: [jobOrderId], references: [id], onDelete: Cascade)
-  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  jobOrder   JobOrder   @relation(fields: [jobOrderId], references: [id], onDelete: Cascade)
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([jobOrderId, userId])
   @@index([userId])
@@ -481,33 +481,33 @@ model JobStatusUpdate {
 // ============================================
 
 model Invoice {
-  id                String        @id @default(cuid())
-  invoiceNumber     String        @unique
-  clientId          String
-  jobOrderId        String?
-  quotationId       String?
-  issueDate         DateTime      @default(now())
-  dueDate           DateTime?
-  status            InvoiceStatus @default(DRAFT)
-  currency          String        @default("OMR")
-  subtotal          Decimal       @db.Decimal(10, 3)
-  tax               Decimal       @default(0) @db.Decimal(10, 3)
-  total             Decimal       @db.Decimal(10, 3)
-  pdfUrl            String? // Stored PDF path
-  sharedViaWhatsApp Boolean       @default(false)
-  sharedAt          DateTime?
-  notes             String?
-  createdById       String
-  createdAt         DateTime      @default(now())
-  updatedAt         DateTime      @updatedAt
-  deletedAt         DateTime?
-  deletedById       String?
-  items             InvoiceItem[]
-  payments          Payment[]
-  client            Client        @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  createdBy         User          @relation(fields: [createdById], references: [id])
-  jobOrder          JobOrder?     @relation(fields: [jobOrderId], references: [id])
-  quotation         Quotation?    @relation(fields: [quotationId], references: [id])
+  id                  String        @id @default(cuid())
+  invoiceNumber       String        @unique
+  clientId            String
+  jobOrderId          String?
+  quotationId         String?
+  issueDate           DateTime      @default(now())
+  dueDate             DateTime?
+  status              InvoiceStatus @default(DRAFT)
+  currency            String        @default("OMR")
+  subtotal            Decimal       @db.Decimal(10, 3)
+  tax                 Decimal       @default(0) @db.Decimal(10, 3)
+  total               Decimal       @db.Decimal(10, 3)
+  pdfUrl              String?       // Stored PDF path
+  sharedViaWhatsApp   Boolean       @default(false)
+  sharedAt            DateTime?
+  notes               String?
+  createdById         String
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+  deletedAt           DateTime?
+  deletedById         String?
+  items               InvoiceItem[]
+  payments            Payment[]
+  client              Client        @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  createdBy           User          @relation(fields: [createdById], references: [id])
+  jobOrder            JobOrder?     @relation(fields: [jobOrderId], references: [id])
+  quotation           Quotation?    @relation(fields: [quotationId], references: [id])
 
   @@index([status])
   @@index([clientId])
@@ -516,15 +516,15 @@ model Invoice {
 }
 
 model InvoiceItem {
-  id          String    @id @default(cuid())
+  id          String   @id @default(cuid())
   invoiceId   String
   description String
-  quantity    Decimal   @db.Decimal(10, 2)
-  unitPrice   Decimal   @db.Decimal(10, 3)
-  total       Decimal   @db.Decimal(10, 3)
-  createdAt   DateTime  @default(now())
+  quantity    Decimal  @db.Decimal(10, 2)
+  unitPrice   Decimal  @db.Decimal(10, 3)
+  total       Decimal  @db.Decimal(10, 3)
+  createdAt   DateTime @default(now())
   deletedAt   DateTime?
-  invoice     Invoice   @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  invoice     Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
 
   @@index([invoiceId])
   @@index([deletedAt])
@@ -536,7 +536,7 @@ model Payment {
   invoiceId       String
   clientId        String
   amount          Decimal   @db.Decimal(10, 3)
-  paymentMethod   String // From PaymentMethodMaster
+  paymentMethod   String    // From PaymentMethodMaster
   paymentDate     DateTime  @default(now())
   referenceNumber String?
   notes           String?
@@ -561,20 +561,20 @@ model Payment {
 // ============================================
 
 model CustomerNote {
-  id           String    @id @default(cuid())
-  clientId     String
-  leadId       String?
-  jobOrderId   String?
-  content      String
-  isReminder   Boolean   @default(false)
+  id          String    @id @default(cuid())
+  clientId    String
+  leadId      String?
+  jobOrderId  String?
+  content     String
+  isReminder  Boolean   @default(false)
   reminderDate DateTime?
-  createdById  String
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
-  deletedAt    DateTime?
-  deletedById  String?
-  client       Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  createdBy    User      @relation(fields: [createdById], references: [id])
+  createdById String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+  deletedById String?
+  client      Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  createdBy   User      @relation(fields: [createdById], references: [id])
 
   @@index([clientId])
   @@index([createdById])
@@ -662,31 +662,31 @@ model UserRole {
 }
 
 model User {
-  id              String            @id @default(cuid())
-  name            String
-  email           String            @unique
-  phone           String?
-  whatsapp        String?
-  hashedPassword  String
-  isActive        Boolean           @default(true)
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
-  deletedAt       DateTime?
-  deletedById     String?
-  jobAssignments  JobAssignment[]
-  statusUpdates   JobStatusUpdate[]
-  leads           Lead[]
-  photos          Photo[]
-  quotations      Quotation[]
-  siteVisits      SiteVisit[]
-  roles           UserRole[]
-  invoices        Invoice[]
-  payments        Payment[]
-  customerNotes   CustomerNote[]
-  checklistItems  ChecklistItem[]
-  auditLogs       AuditLog[]
-  deletedRecords  DeletedRecord[]   @relation("DeletedBy")
-  restoredRecords DeletedRecord[]   @relation("RestoredBy")
+  id                 String            @id @default(cuid())
+  name               String
+  email              String            @unique
+  phone              String?
+  whatsapp           String?
+  hashedPassword     String
+  isActive           Boolean           @default(true)
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+  deletedAt          DateTime?
+  deletedById        String?
+  jobAssignments     JobAssignment[]
+  statusUpdates      JobStatusUpdate[]
+  leads              Lead[]
+  photos             Photo[]
+  quotations         Quotation[]
+  siteVisits         SiteVisit[]
+  roles              UserRole[]
+  invoices           Invoice[]
+  payments           Payment[]
+  customerNotes      CustomerNote[]
+  checklistItems     ChecklistItem[]
+  auditLogs          AuditLog[]
+  deletedRecords     DeletedRecord[]   @relation("DeletedBy")
+  restoredRecords    DeletedRecord[]   @relation("RestoredBy")
 
   @@index([email])
   @@index([deletedAt])
