@@ -13,9 +13,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { prisma } from '@/lib/prisma'
 import { formatDate, getStatusColor, enumToReadable } from '@/lib/utils'
 import { AddLeadDialog } from '@/components/add-lead-dialog'
+import { LeadActions } from '@/components/lead-actions'
 
 export default async function LeadsPage() {
   const leads = await prisma.lead.findMany({
+    where: {
+      deletedAt: null,
+    },
     orderBy: {
       createdAt: 'desc',
     },
@@ -24,6 +28,12 @@ export default async function LeadsPage() {
         select: {
           name: true,
           email: true,
+        },
+      },
+      convertedToClient: {
+        select: {
+          id: true,
+          name: true,
         },
       },
       siteVisits: {
@@ -47,6 +57,7 @@ export default async function LeadsPage() {
     new: leads.filter((l) => l.status === 'NEW').length,
     contacted: leads.filter((l) => l.status === 'CONTACTED').length,
     quoted: leads.filter((l) => l.status === 'QUOTED').length,
+    converted: leads.filter((l) => l.status === 'CONVERTED').length,
     won: leads.filter((l) => l.status === 'WON').length,
     lost: leads.filter((l) => l.status === 'LOST').length,
   }
@@ -62,7 +73,7 @@ export default async function LeadsPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid gap-4 md:grid-cols-6">
+      <div className="grid gap-4 md:grid-cols-7">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Total</CardTitle>
@@ -93,6 +104,14 @@ export default async function LeadsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-orange-600">{stats.quoted}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Converted</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-teal-600">{stats.converted}</div>
           </CardContent>
         </Card>
         <Card>
@@ -185,9 +204,13 @@ export default async function LeadsPage() {
                       <div className="text-sm">{lead.createdBy.name}</div>
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button variant="ghost" size="sm">
-                        View
-                      </Button>
+                      <LeadActions lead={{
+                        id: lead.id,
+                        name: lead.name,
+                        phone: lead.phone,
+                        status: lead.status,
+                        convertedToClientId: lead.convertedToClientId,
+                      }} />
                     </TableCell>
                   </TableRow>
                 ))
