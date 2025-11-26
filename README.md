@@ -154,6 +154,7 @@ npm run lint             # ESLint
 npm run db:push          # Push schema to DB
 npm run db:migrate       # Create migration
 npm run db:seed          # Seed database
+npm run db:seed-masters  # Seed master data only (NEW v1.2.0)
 npm run db:studio        # Prisma Studio GUI
 ```
 
@@ -181,29 +182,35 @@ npm run db:studio        # Prisma Studio GUI
 ## Admin Pages
 
 - /admin/dashboard - Overview with stats
-- /admin/leads - Lead management
+- /admin/schedule - Schedule & Activities Dashboard (NEW v1.2.0)
+- /admin/leads - Lead management with conversion to client (ENHANCED v1.2.0)
 - /admin/clients - Client management
 - /admin/sites - Site management
 - /admin/site-visits - Site visit scheduling
 - /admin/quotations - Quotations
-- /admin/invoices - Invoice management (NEW)
+- /admin/invoices - Invoice management (v1.1.0)
 - /admin/jobs - Job orders and assignments
-- /admin/jobs/calendar - Calendar view for job scheduling (NEW)
+- /admin/jobs/calendar - Calendar view for job scheduling (v1.1.0)
 - /admin/users - User management (OWNER only)
+
+All pages are fully mobile-responsive (v1.3.0)
 
 ## Typical Workflow
 
 1. Lead comes in (Website/WhatsApp/Phone)
 2. Lead created by Reception or Sales
-3. Site Visit scheduled
-4. Site Visit completed with measurements/photos
-5. Quotation created
-6. Quotation sent to client
-7. Job Order created when accepted
-8. Team assigned to job
-9. Job executed with updates and photos
-10. Invoice generated and sent to client (NEW)
-11. Payment tracking and status updates
+3. Lead converted to Client (NEW v1.2.0 - smart duplicate detection)
+4. Site created for the client
+5. Site Visit scheduled
+6. Site Visit completed with measurements/photos
+7. Quotation created using master data templates
+8. Quotation sent to client
+9. Job Order created when accepted
+10. Team assigned to job
+11. Job executed with updates and photos
+12. Invoice generated and sent to client
+13. Payment tracking and status updates
+14. Full audit trail maintained throughout process (v1.2.0)
 
 ## Database Models
 
@@ -212,10 +219,88 @@ npm run db:studio        # Prisma Studio GUI
 - Operations: SiteVisits, MeasurementItems, Photos
 - Services: ServiceCategories, Services, PricingRules
 - Sales: Quotations, QuotationItems
-- Finance: Invoices, InvoiceItems (NEW)
+- Finance: Invoices, InvoiceItems
 - Jobs: JobOrders, JobAssignments, JobStatusUpdates
+- Master Data: ItemTypes, RoomTypes, SofaTypes, WindowSizes, PaymentMethods (v1.2.0)
+- Audit: AuditLog (v1.2.0)
 
-## New Features (v1.1.0)
+**Note:** All models support soft delete with deletedAt and deletedById fields (v1.2.0)
+
+## Recent Updates
+
+### v1.3.0 - Mobile-First Responsive Design
+**Complete mobile optimization across the entire application:**
+
+- **All Admin Pages Mobile-Friendly**: Every page now features responsive layouts
+- **Responsive Stat Grids**: Adapt from 1-2 columns on mobile to full grid on desktop
+- **Scrollable Tables**: All data tables wrapped in horizontal scroll containers for mobile viewing
+- **Touch-Optimized Buttons**: All action buttons properly sized for touch devices
+- **Optimized Spacing**: Reduced padding and improved space usage on small screens
+- **Consistent UX**: Uniform mobile experience across all features
+
+**Pages Optimized:**
+- Leads, Clients, Sites, Site Visits, Quotations, Jobs, Users, Schedule, Dashboard
+
+### v1.2.0 - Lead Management & CRM Enhancements
+
+**Lead to Client Conversion:**
+- One-click conversion from Lead to Client
+- Smart duplicate detection by phone number
+- Automatic linking to existing clients
+- Client type selection (Individual/Corporate)
+- Conversion status tracking
+- Full audit trail of conversions
+
+**Schedule Dashboard (NEW):**
+- Centralized view of all upcoming activities
+- Today's site visits and jobs at a glance
+- Upcoming site visits with full details
+- Upcoming jobs with amounts
+- Pending quotations requiring attention
+- Tabbed interface for easy navigation
+- Color-coded status badges
+- Quick action buttons
+
+**Lead Actions Menu:**
+- Convert to Client button (desktop)
+- Call customer (tel: link)
+- View lead details
+- Schedule site visit (for converted leads)
+- Create quotation (for converted leads)
+- Create site (for converted leads)
+- Mobile-optimized dropdown menu
+
+**Master Data Management:**
+- Item Types (Service categories for quotation items)
+- Room Types (Bedroom, Living Room, Kitchen, etc.)
+- Sofa Types (2-seater, 3-seater, L-shape, etc.)
+- Window Sizes (Small, Medium, Large, Extra Large)
+- Payment Methods (Cash, Card, Bank Transfer, etc.)
+- Full CRUD operations with API endpoints
+- Used in quotations and service definitions
+
+**Audit Trail System:**
+- Track all CREATE, UPDATE, DELETE operations
+- User attribution for all changes
+- Timestamp tracking
+- Entity type and ID tracking
+- Old and new values logged
+- API endpoints to view audit logs
+
+**Soft Delete Pattern:**
+- All entities support soft delete
+- Deleted records kept in database with deletedAt timestamp
+- Track who deleted records with deletedById
+- API to view deleted records
+- Restore functionality for deleted records
+- Prevents accidental data loss
+
+**Admin Pages Added:**
+- /admin/schedule - Schedule & Activities Dashboard
+- /admin/leads - Enhanced with conversion features
+- API endpoints for lead conversion
+
+### v1.1.0 - Invoice & Calendar Module
 
 ### Invoice Module
 
@@ -316,19 +401,27 @@ npm run db:seed
 
 ## Known Issues / To-Do
 
-### Button Functionality
-Several "Add" and "View" buttons in admin pages currently don't have functionality:
-- **Add Lead, New Client, New Site, New Job, New User buttons**: Need form dialogs or pages
-- **View buttons in tables**: Need detail pages or slide-over panels
+### Implemented Features ✅
+- ✅ Lead to Client conversion (v1.2.0)
+- ✅ Schedule Dashboard (v1.2.0)
+- ✅ Mobile-responsive design for all pages (v1.3.0)
+- ✅ Master data management (v1.2.0)
+- ✅ Audit trail system (v1.2.0)
+
+### Pending Functionality
+
+Several "Add" and "View" buttons in admin pages still need form dialogs:
+- **Add Client, New Site, New Job, New User buttons**: Need form dialogs or pages
+- **View buttons in tables**: Need detail pages or slide-over panels for viewing individual records
 
 These can be implemented by:
-1. Creating form dialog components (using existing Dialog UI component)
-2. Adding detail pages for each entity (e.g., `/admin/leads/[id]`)
+1. Creating form dialog components (using existing Dialog UI component pattern - see Convert to Client Dialog)
+2. Adding detail pages for each entity (e.g., `/admin/clients/[id]`, `/admin/jobs/[id]`)
 3. Implementing create/edit API logic
 
 Example implementation approach:
-- Use React Hook Form + Zod for validation
-- Create reusable Dialog components
+- Use React Hook Form + Zod for validation (already set up)
+- Create reusable Dialog components following ConvertToClientDialog pattern
 - Add navigation to detail pages for View buttons
 
 ## Future Enhancements
@@ -350,7 +443,7 @@ Proprietary - Golden Services Company
 
 ## Version
 
-1.0.0 (MVP)
+1.3.0 (Latest - Mobile-Optimized with Enhanced CRM)
 
 ---
 
