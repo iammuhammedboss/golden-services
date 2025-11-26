@@ -1,0 +1,12 @@
+{
+  "HomePage": {
+    "title": "Golden Services",
+    "welcome": "Welcome to our cleaning services"
+  },
+  "Navigation": {
+    "home": "Home",
+    "about": "About",
+    "services": "Services",
+    "contact": "Contact"
+  }
+}
