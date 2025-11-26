@@ -5,7 +5,13 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
-import { Select } from '@/components/ui/select'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Form, FormField, FormControl, FormMessage } from '@/components/ui/form'
 
@@ -242,17 +248,21 @@ export default function BookNowPage() {
                       <Label htmlFor="serviceInterest">Service Type *</Label>
                       <FormControl>
                         <Select
-                          id="serviceInterest"
-                          name="serviceInterest"
                           value={formData.serviceInterest}
-                          onChange={handleChange}
+                          onValueChange={(value) =>
+                            setFormData({ ...formData, serviceInterest: value })
+                          }
                         >
-                          <option value="">Select a service...</option>
-                          {services.map((service) => (
-                            <option key={service.id} value={service.name}>
-                              {service.name}
-                            </option>
-                          ))}
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a service..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {services.map((service) => (
+                              <SelectItem key={service.id} value={service.name}>
+                                {service.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
                         </Select>
                       </FormControl>
                       {errors.serviceInterest && <FormMessage>{errors.serviceInterest}</FormMessage>}
@@ -294,13 +304,18 @@ export default function BookNowPage() {
                       <Label htmlFor="needsSiteVisit">Do you need a site visit?</Label>
                       <FormControl>
                         <Select
-                          id="needsSiteVisit"
-                          name="needsSiteVisit"
                           value={formData.needsSiteVisit}
-                          onChange={handleChange}
+                          onValueChange={(value) =>
+                            setFormData({ ...formData, needsSiteVisit: value })
+                          }
                         >
-                          <option value="true">Yes, schedule a site visit</option>
-                          <option value="false">No, just send a quotation</option>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="true">Yes, schedule a site visit</SelectItem>
+                            <SelectItem value="false">No, just send a quotation</SelectItem>
+                          </SelectContent>
                         </Select>
                       </FormControl>
                     </FormField>

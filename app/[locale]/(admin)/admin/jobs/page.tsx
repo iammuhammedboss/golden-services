@@ -78,22 +78,24 @@ export default async function JobsPage({ params }: { params: { locale: string } 
               Calendar View
             </Button>
           </Link>
-          <Button>
-            <svg
-              className="mr-2 h-4 w-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 4v16m8-8H4"
-              />
-            </svg>
-            New Job
-          </Button>
+          <Link href={`/${params.locale}/admin/jobs/new`}>
+            <Button>
+              <svg
+                className="mr-2 h-4 w-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 4v16m8-8H4"
+                />
+              </svg>
+              New Job
+            </Button>
+          </Link>
         </div>
       </div>
 

@@ -1,10 +1,14 @@
 'use client'
 
 import { Calendar, dateFnsLocalizer, View } from 'react-big-calendar'
+import withDragAndDrop from 'react-big-calendar/lib/addons/dragAndDrop'
 import { format, parse, startOfWeek, getDay } from 'date-fns'
 import { enUS } from 'date-fns/locale'
 import { useState } from 'react'
 import 'react-big-calendar/lib/css/react-big-calendar.css'
+import 'react-big-calendar/lib/addons/dragAndDrop/styles.css'
+
+const DnDCalendar = withDragAndDrop(Calendar)
 
 const locales = {
   'en-US': enUS,
@@ -39,6 +43,40 @@ interface JobsCalendarProps {
 export function JobsCalendar({ jobs, onSelectEvent }: JobsCalendarProps) {
   const [view, setView] = useState<View>('month')
   const [date, setDate] = useState(new Date())
+
+  // Handle event drag and drop
+  const handleEventDrop = async ({
+    event,
+    start,
+    end,
+  }: {
+    event: JobEvent
+    start: Date
+    end: Date
+  }) => {
+    try {
+      // Update job scheduled date via API
+      const response = await fetch(`/api/jobs/${event.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          scheduledDate: start.toISOString().split('T')[0],
+          scheduledStartTime: start.toISOString(),
+          scheduledEndTime: end.toISOString(),
+        }),
+      })
+
+      if (response.ok) {
+        // Refresh page to show updated event
+        window.location.reload()
+      } else {
+        alert('Failed to reschedule job')
+      }
+    } catch (error) {
+      console.error('Error rescheduling job:', error)
+      alert('Failed to reschedule job')
+    }
+  }
 
   // Transform jobs into calendar events
   const events: JobEvent[] = jobs.map((job) => {
@@ -110,18 +148,22 @@ export function JobsCalendar({ jobs, onSelectEvent }: JobsCalendarProps) {
 
   return (
     <div className="h-[700px] rounded-lg bg-white p-4">
-      <Calendar
+      <DnDCalendar
         localizer={localizer}
         events={events}
-        startAccessor="start"
-        endAccessor="end"
+        startAccessor={(event: any) => event.start}
+        endAccessor={(event: any) => event.end}
         style={{ height: '100%' }}
         view={view}
         onView={setView}
         date={date}
         onNavigate={setDate}
-        eventPropGetter={eventStyleGetter}
+        eventPropGetter={eventStyleGetter as any}
         onSelectEvent={onSelectEvent as any}
+        onEventDrop={handleEventDrop as any}
+        onEventResize={handleEventDrop as any}
+        draggableAccessor={() => true}
+        resizable
         popup
         views={['month', 'week', 'day']}
       />

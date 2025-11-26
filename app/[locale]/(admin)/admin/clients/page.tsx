@@ -11,6 +11,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { prisma } from '@/lib/prisma'
 import { formatDate, enumToReadable } from '@/lib/utils'
+import { AddClientDialog } from '@/components/add-client-dialog'
 
 export default async function ClientsPage() {
   const clients = await prisma.client.findMany({
@@ -39,22 +40,7 @@ export default async function ClientsPage() {
           <h1 className="text-3xl font-bold">Clients</h1>
           <p className="text-muted-foreground">Manage your client database</p>
         </div>
-        <Button>
-          <svg
-            className="mr-2 h-4 w-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M12 4v16m8-8H4"
-            />
-          </svg>
-          New Client
-        </Button>
+        <AddClientDialog />
       </div>
 
       {/* Stats */}
