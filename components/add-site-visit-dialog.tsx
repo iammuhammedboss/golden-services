@@ -93,17 +93,23 @@ export function AddSiteVisitDialog({
       // Fetch clients
       const clientsRes = await fetch('/api/clients')
       const clientsData = await clientsRes.json()
-      setClients(clientsData.clients || [])
+      if (Array.isArray(clientsData)) {
+        setClients(clientsData)
+      }
 
       // Fetch sites
       const sitesRes = await fetch('/api/sites')
       const sitesData = await sitesRes.json()
-      setSites(sitesData.sites || [])
+      if (Array.isArray(sitesData)) {
+        setSites(sitesData)
+      }
 
       // Fetch users
       const usersRes = await fetch('/api/users')
       const usersData = await usersRes.json()
-      setUsers(usersData.users || [])
+      if (usersData.users && Array.isArray(usersData.users)) {
+        setUsers(usersData.users)
+      }
     } catch (err) {
       console.error('Failed to fetch data:', err)
     }
