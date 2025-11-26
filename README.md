@@ -186,7 +186,9 @@ npm run db:studio        # Prisma Studio GUI
 - /admin/sites - Site management
 - /admin/site-visits - Site visit scheduling
 - /admin/quotations - Quotations
+- /admin/invoices - Invoice management (NEW)
 - /admin/jobs - Job orders and assignments
+- /admin/jobs/calendar - Calendar view for job scheduling (NEW)
 - /admin/users - User management (OWNER only)
 
 ## Typical Workflow
@@ -200,7 +202,8 @@ npm run db:studio        # Prisma Studio GUI
 7. Job Order created when accepted
 8. Team assigned to job
 9. Job executed with updates and photos
-10. (Future) Invoice and payment
+10. Invoice generated and sent to client (NEW)
+11. Payment tracking and status updates
 
 ## Database Models
 
@@ -209,7 +212,68 @@ npm run db:studio        # Prisma Studio GUI
 - Operations: SiteVisits, MeasurementItems, Photos
 - Services: ServiceCategories, Services, PricingRules
 - Sales: Quotations, QuotationItems
+- Finance: Invoices, InvoiceItems (NEW)
 - Jobs: JobOrders, JobAssignments, JobStatusUpdates
+
+## New Features (v1.1.0)
+
+### Invoice Module
+
+The Invoice module provides complete invoicing capabilities:
+
+**Features:**
+- Generate invoices from quotations or job orders
+- Track invoice status: DRAFT, SENT, PAID, OVERDUE, CANCELLED
+- Automatic invoice numbering (INV-YYYYMMDD-XXX format)
+- Line-item management with quantities and pricing
+- Tax calculation support
+- Due date tracking
+- Revenue reporting
+
+**Permissions:**
+- **OWNER**: Full access to all invoice functions
+- **ACCOUNTANT**: Full access to invoices
+- **SALES**: Can create and manage invoices
+- **OPERATIONS_MANAGER**: Read-only access to invoices
+
+**API Endpoints:**
+- `GET /api/invoices` - List all invoices with filtering
+- `POST /api/invoices` - Create new invoice
+- `GET /api/invoices/[id]` - Get invoice details
+- `PATCH /api/invoices/[id]` - Update invoice
+- `DELETE /api/invoices/[id]` - Delete invoice (except PAID)
+
+**Usage:**
+1. Navigate to /admin/invoices
+2. Click "New Invoice" to create from scratch or from a quotation
+3. Add line items with descriptions, quantities, and prices
+4. Set due date and status
+5. Save and send to client
+
+### Calendar View for Job Scheduling
+
+Visual calendar interface for job order management:
+
+**Features:**
+- Month, Week, and Day views
+- Color-coded by job status:
+  - Blue: Scheduled
+  - Orange: In Progress
+  - Green: Completed
+  - Red: Cancelled
+- Click events to view job details
+- Filter by status and assigned staff
+- Real-time schedule visualization
+
+**Access:**
+- Navigate to /admin/jobs
+- Click "Calendar View" button
+- Switch between Month/Week/Day views as needed
+
+**Permissions:**
+- **OPERATIONS_MANAGER**: Full access
+- **SUPERVISOR**: Full access
+- **OWNER**: Full access
 
 ## Troubleshooting
 
@@ -250,9 +314,27 @@ npm run db:seed
 - XSS protection (React)
 - CSRF protection (NextAuth)
 
+## Known Issues / To-Do
+
+### Button Functionality
+Several "Add" and "View" buttons in admin pages currently don't have functionality:
+- **Add Lead, New Client, New Site, New Job, New User buttons**: Need form dialogs or pages
+- **View buttons in tables**: Need detail pages or slide-over panels
+
+These can be implemented by:
+1. Creating form dialog components (using existing Dialog UI component)
+2. Adding detail pages for each entity (e.g., `/admin/leads/[id]`)
+3. Implementing create/edit API logic
+
+Example implementation approach:
+- Use React Hook Form + Zod for validation
+- Create reusable Dialog components
+- Add navigation to detail pages for View buttons
+
 ## Future Enhancements
 
-- Invoice & Payment module
+- Complete CRUD forms for all entities (Leads, Clients, Sites, Jobs, Users)
+- Detail pages for viewing/editing individual records
 - Attendance tracking
 - Inventory management
 - SMS/Email notifications

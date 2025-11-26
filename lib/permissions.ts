@@ -104,3 +104,17 @@ export function isOwner(user: UserWithRoles | null | undefined): boolean {
 export function canAudit(user: UserWithRoles | null | undefined): boolean {
   return hasAnyRole(user, ['OWNER', 'AUDITOR', 'OPERATIONS_MANAGER'])
 }
+
+/**
+ * Check if user can manage invoices (OWNER, ACCOUNTANT, SALES)
+ */
+export function canManageInvoices(user: UserWithRoles | null | undefined): boolean {
+  return hasAnyRole(user, ['OWNER', 'ACCOUNTANT', 'SALES'])
+}
+
+/**
+ * Check if user can view invoices (OWNER, ACCOUNTANT, SALES, OPERATIONS_MANAGER)
+ */
+export function canViewInvoices(user: UserWithRoles | null | undefined): boolean {
+  return hasAnyRole(user, ['OWNER', 'ACCOUNTANT', 'SALES', 'OPERATIONS_MANAGER'])
+}

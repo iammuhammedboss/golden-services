@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -12,7 +13,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { prisma } from '@/lib/prisma'
 import { formatDate, enumToReadable, getStatusColor } from '@/lib/utils'
 
-export default async function JobsPage() {
+export default async function JobsPage({ params }: { params: { locale: string } }) {
   const jobs = await prisma.jobOrder.findMany({
     orderBy: {
       scheduledDate: 'desc',
@@ -58,22 +59,42 @@ export default async function JobsPage() {
           <h1 className="text-3xl font-bold">Job Orders</h1>
           <p className="text-muted-foreground">Manage and track job orders</p>
         </div>
-        <Button>
-          <svg
-            className="mr-2 h-4 w-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M12 4v16m8-8H4"
-            />
-          </svg>
-          New Job
-        </Button>
+        <div className="flex gap-2">
+          <Link href={`/${params.locale}/admin/jobs/calendar`}>
+            <Button variant="outline">
+              <svg
+                className="mr-2 h-4 w-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                />
+              </svg>
+              Calendar View
+            </Button>
+          </Link>
+          <Button>
+            <svg
+              className="mr-2 h-4 w-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 4v16m8-8H4"
+              />
+            </svg>
+            New Job
+          </Button>
+        </div>
       </div>
 
       {/* Stats */}
