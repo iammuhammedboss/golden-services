@@ -168,7 +168,7 @@ export default async function SchedulePage() {
       </div>
 
       {/* Stats */}
-      <div className="grid gap-4 md:grid-cols-5">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
@@ -228,7 +228,7 @@ export default async function SchedulePage() {
 
       {/* Tabbed Content */}
       <Tabs defaultValue="site-visits" className="space-y-4">
-        <TabsList>
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="site-visits">
             Site Visits ({upcomingSiteVisits.length})
           </TabsTrigger>
@@ -247,8 +247,9 @@ export default async function SchedulePage() {
               <CardTitle>Upcoming Site Visits</CardTitle>
               <CardDescription>Scheduled site visits and assessments</CardDescription>
             </CardHeader>
-            <CardContent>
-              <Table>
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Date & Time</TableHead>
@@ -308,6 +309,7 @@ export default async function SchedulePage() {
                   )}
                 </TableBody>
               </Table>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -319,8 +321,9 @@ export default async function SchedulePage() {
               <CardTitle>Upcoming Jobs</CardTitle>
               <CardDescription>Scheduled job orders</CardDescription>
             </CardHeader>
-            <CardContent>
-              <Table>
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Job Number</TableHead>
@@ -386,6 +389,7 @@ export default async function SchedulePage() {
                   )}
                 </TableBody>
               </Table>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -397,8 +401,9 @@ export default async function SchedulePage() {
               <CardTitle>Pending Quotations</CardTitle>
               <CardDescription>Quotations awaiting customer response</CardDescription>
             </CardHeader>
-            <CardContent>
-              <Table>
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Quotation #</TableHead>
@@ -465,6 +470,7 @@ export default async function SchedulePage() {
                   )}
                 </TableBody>
               </Table>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>

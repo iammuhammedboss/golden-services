@@ -73,7 +73,7 @@ export default async function LeadsPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid gap-4 md:grid-cols-7">
+      <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Total</CardTitle>
@@ -138,8 +138,9 @@ export default async function LeadsPage() {
           <CardTitle>All Leads</CardTitle>
           <CardDescription>A list of all leads and their current status</CardDescription>
         </CardHeader>
-        <CardContent>
-          <Table>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Name</TableHead>
@@ -223,6 +224,7 @@ export default async function LeadsPage() {
               )}
             </TableBody>
           </Table>
+          </div>
         </CardContent>
       </Card>
     </div>

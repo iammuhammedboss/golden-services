@@ -110,10 +110,11 @@ export function ConvertToClientDialog({
       <DialogTrigger asChild>
         <Button variant={variant} size={size} className={className}>
           <UserCheck className="h-4 w-4 mr-2" />
-          Convert to Client
+          <span className="hidden sm:inline">Convert to Client</span>
+          <span className="sm:hidden">Convert</span>
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Convert Lead to Client</DialogTitle>
           <DialogDescription>
