@@ -24,8 +24,11 @@ export default async function UsersPage() {
   }
 
   // Fetch user with roles
+  // Note: We cast to 'any' to avoid TS errors if types/next-auth.d.ts isn't set up yet
+  const userId = (session.user as any).id
+
   const currentUser = await prisma.user.findUnique({
-    where: { id: (session.user as any).id },
+    where: { id: userId },
     include: {
       roles: {
         include: {
@@ -61,8 +64,9 @@ export default async function UsersPage() {
       },
       _count: {
         select: {
-          createdLeads: true,
-          assignedSiteVisits: true,
+          // FIXED: Updated to match correct Schema names
+          leads: true,
+          siteVisits: true,
           jobAssignments: true,
         },
       },
@@ -187,17 +191,18 @@ export default async function UsersPage() {
                     </TableCell>
                     <TableCell>
                       <div className="text-sm">
-                        {user._count.createdLeads > 0 && (
-                          <div>{user._count.createdLeads} leads</div>
+                        {/* FIXED: Using correct schema names */}
+                        {user._count.leads > 0 && (
+                          <div>{user._count.leads} leads</div>
                         )}
-                        {user._count.assignedSiteVisits > 0 && (
-                          <div>{user._count.assignedSiteVisits} site visits</div>
+                        {user._count.siteVisits > 0 && (
+                          <div>{user._count.siteVisits} site visits</div>
                         )}
                         {user._count.jobAssignments > 0 && (
                           <div>{user._count.jobAssignments} jobs</div>
                         )}
-                        {user._count.createdLeads === 0 &&
-                          user._count.assignedSiteVisits === 0 &&
+                        {user._count.leads === 0 &&
+                          user._count.siteVisits === 0 &&
                           user._count.jobAssignments === 0 && (
                             <span className="text-muted-foreground">No activity</span>
                           )}
