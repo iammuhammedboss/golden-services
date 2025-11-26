@@ -141,6 +141,7 @@ model Client {
   updatedAt      DateTime       @updatedAt
   deletedAt      DateTime?
   deletedById    String?
+  convertedLeads Lead[] // Leads that were converted to this client
   jobOrders      JobOrder[]
   quotations     Quotation[]
   siteVisits     SiteVisit[]
@@ -166,18 +167,21 @@ model Lead {
   status                LeadStatus  @default(NEW)
   isTemporary           Boolean     @default(false)
   duplicateCheckIgnored Boolean     @default(false)
+  convertedToClientId   String? // Link to Client if converted
   createdById           String
   createdAt             DateTime    @default(now())
   updatedAt             DateTime    @updatedAt
   deletedAt             DateTime?
   deletedById           String?
   createdBy             User        @relation(fields: [createdById], references: [id])
+  convertedToClient     Client?     @relation(fields: [convertedToClientId], references: [id])
   quotations            Quotation[]
   siteVisits            SiteVisit[]
 
   @@index([phone])
   @@index([status])
   @@index([createdById])
+  @@index([convertedToClientId])
   @@index([deletedAt])
   @@map("leads")
 }
@@ -754,6 +758,7 @@ enum LeadStatus {
   CONTACTED
   SITE_VISIT_SCHEDULED
   QUOTED
+  CONVERTED
   WON
   LOST
 }
