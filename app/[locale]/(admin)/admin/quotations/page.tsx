@@ -91,7 +91,7 @@ export default async function QuotationsPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid gap-4 md:grid-cols-5">
+      <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-5">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Total</CardTitle>
@@ -140,8 +140,9 @@ export default async function QuotationsPage() {
           <CardTitle>All Quotations</CardTitle>
           <CardDescription>A list of all quotations and their status</CardDescription>
         </CardHeader>
-        <CardContent>
-          <Table>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Client</TableHead>
@@ -226,6 +227,7 @@ export default async function QuotationsPage() {
               )}
             </TableBody>
           </Table>
+          </div>
         </CardContent>
       </Card>
     </div>

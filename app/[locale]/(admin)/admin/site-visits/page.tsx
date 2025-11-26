@@ -77,7 +77,7 @@ export default async function SiteVisitsPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-4 grid-cols-2 sm:grid-cols-2 md:grid-cols-4">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Total</CardTitle>
@@ -118,8 +118,9 @@ export default async function SiteVisitsPage() {
           <CardTitle>All Site Visits</CardTitle>
           <CardDescription>A list of all scheduled and completed site visits</CardDescription>
         </CardHeader>
-        <CardContent>
-          <Table>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Client/Lead</TableHead>
@@ -197,6 +198,7 @@ export default async function SiteVisitsPage() {
               )}
             </TableBody>
           </Table>
+          </div>
         </CardContent>
       </Card>
     </div>

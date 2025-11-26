@@ -60,8 +60,9 @@ export default async function SitesPage() {
           <CardTitle>All Sites</CardTitle>
           <CardDescription>A list of all registered sites</CardDescription>
         </CardHeader>
-        <CardContent>
-          <Table>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Site Name</TableHead>
@@ -134,6 +135,7 @@ export default async function SitesPage() {
               )}
             </TableBody>
           </Table>
+          </div>
         </CardContent>
       </Card>
     </div>
