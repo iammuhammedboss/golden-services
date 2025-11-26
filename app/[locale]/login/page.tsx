@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { signIn } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -12,6 +12,8 @@ import { Form, FormField, FormControl, FormMessage } from '@/components/ui/form'
 
 export default function LoginPage() {
   const router = useRouter()
+  const params = useParams()
+  const locale = params.locale as string || 'en'
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -63,7 +65,7 @@ export default function LoginPage() {
       if (result?.error) {
         setErrors({ submit: 'Invalid email or password' })
       } else if (result?.ok) {
-        router.push('/admin/dashboard')
+        router.push(`/${locale}/admin/dashboard`)
         router.refresh()
       }
     } catch (error) {
@@ -77,7 +79,7 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-muted/40 px-4">
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
-          <Link href="/" className="inline-flex items-center space-x-2">
+          <Link href={`/${locale}`} className="inline-flex items-center space-x-2">
             <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary text-primary-foreground">
               <span className="text-xl font-bold">GS</span>
             </div>
@@ -138,7 +140,7 @@ export default function LoginPage() {
             </Form>
 
             <div className="mt-6 text-center text-sm text-muted-foreground">
-              <Link href="/" className="hover:text-primary">
+              <Link href={`/${locale}`} className="hover:text-primary">
                 ← Back to Home
               </Link>
             </div>

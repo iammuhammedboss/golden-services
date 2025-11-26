@@ -1,7 +1,12 @@
+'use client'
+
 import Link from 'next/link'
+import { useParams } from 'next/navigation'
 
 export function PublicFooter() {
   const currentYear = new Date().getFullYear()
+  const params = useParams()
+  const locale = (params.locale as string) || 'en'
 
   return (
     <footer className="border-t bg-muted/40">
@@ -25,22 +30,22 @@ export function PublicFooter() {
             <h3 className="mb-4 text-sm font-semibold">Quick Links</h3>
             <ul className="space-y-2 text-sm">
               <li>
-                <Link href="/" className="text-muted-foreground hover:text-primary">
+                <Link href={`/${locale}`} className="text-muted-foreground hover:text-primary">
                   Home
                 </Link>
               </li>
               <li>
-                <Link href="/services" className="text-muted-foreground hover:text-primary">
+                <Link href={`/${locale}/services`} className="text-muted-foreground hover:text-primary">
                   Services
                 </Link>
               </li>
               <li>
-                <Link href="/about" className="text-muted-foreground hover:text-primary">
+                <Link href={`/${locale}/about`} className="text-muted-foreground hover:text-primary">
                   About Us
                 </Link>
               </li>
               <li>
-                <Link href="/faq" className="text-muted-foreground hover:text-primary">
+                <Link href={`/${locale}/faq`} className="text-muted-foreground hover:text-primary">
                   FAQ
                 </Link>
               </li>

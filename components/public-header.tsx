@@ -2,23 +2,26 @@
 
 import Link from 'next/link'
 import { useState } from 'react'
+import { useParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 
 export function PublicHeader() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const params = useParams()
+  const locale = (params.locale as string) || 'en'
 
   const navigation = [
-    { name: 'Home', href: '/' },
-    { name: 'Services', href: '/services' },
-    { name: 'About', href: '/about' },
-    { name: 'FAQ', href: '/faq' },
-    { name: 'Contact', href: '/contact' },
+    { name: 'Home', href: '' },
+    { name: 'Services', href: 'services' },
+    { name: 'About', href: 'about' },
+    { name: 'FAQ', href: 'faq' },
+    { name: 'Contact', href: 'contact' },
   ]
 
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <nav className="container mx-auto flex h-16 items-center justify-between px-4">
-        <Link href="/" className="flex items-center space-x-2">
+        <Link href={`/${locale}`} className="flex items-center space-x-2">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
             <span className="text-xl font-bold">GS</span>
           </div>
@@ -30,7 +33,7 @@ export function PublicHeader() {
           {navigation.map((item) => (
             <Link
               key={item.name}
-              href={item.href}
+              href={`/${locale}/${item.href}`}
               className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
             >
               {item.name}
@@ -39,10 +42,10 @@ export function PublicHeader() {
         </div>
 
         <div className="hidden md:flex md:items-center md:space-x-4">
-          <Link href="/book-now">
+          <Link href={`/${locale}/book-now`}>
             <Button>Book Now</Button>
           </Link>
-          <Link href="/login">
+          <Link href={`/${locale}/login`}>
             <Button variant="ghost">Login</Button>
           </Link>
         </div>
@@ -86,7 +89,7 @@ export function PublicHeader() {
             {navigation.map((item) => (
               <Link
                 key={item.name}
-                href={item.href}
+                href={`/${locale}/${item.href}`}
                 className="block rounded-md px-3 py-2 text-base font-medium text-muted-foreground hover:bg-accent hover:text-primary"
                 onClick={() => setMobileMenuOpen(false)}
               >
@@ -94,10 +97,10 @@ export function PublicHeader() {
               </Link>
             ))}
             <div className="space-y-2 pt-4">
-              <Link href="/book-now" className="block" onClick={() => setMobileMenuOpen(false)}>
+              <Link href={`/${locale}/book-now`} className="block" onClick={() => setMobileMenuOpen(false)}>
                 <Button className="w-full">Book Now</Button>
               </Link>
-              <Link href="/login" className="block" onClick={() => setMobileMenuOpen(false)}>
+              <Link href={`/${locale}/login`} className="block" onClick={() => setMobileMenuOpen(false)}>
                 <Button variant="ghost" className="w-full">Login</Button>
               </Link>
             </div>

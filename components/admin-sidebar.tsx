@@ -1,13 +1,13 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useParams } from 'next/navigation'
 import { cn } from '@/lib/utils'
 
 const navigation = [
   {
     name: 'Dashboard',
-    href: '/admin/dashboard',
+    href: 'admin/dashboard',
     icon: (
       <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path
@@ -21,7 +21,7 @@ const navigation = [
   },
   {
     name: 'Leads',
-    href: '/admin/leads',
+    href: 'admin/leads',
     icon: (
       <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path
@@ -35,7 +35,7 @@ const navigation = [
   },
   {
     name: 'Clients',
-    href: '/admin/clients',
+    href: 'admin/clients',
     icon: (
       <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path
@@ -49,7 +49,7 @@ const navigation = [
   },
   {
     name: 'Sites',
-    href: '/admin/sites',
+    href: 'admin/sites',
     icon: (
       <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path
@@ -63,7 +63,7 @@ const navigation = [
   },
   {
     name: 'Site Visits',
-    href: '/admin/site-visits',
+    href: 'admin/site-visits',
     icon: (
       <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path
@@ -77,7 +77,7 @@ const navigation = [
   },
   {
     name: 'Quotations',
-    href: '/admin/quotations',
+    href: 'admin/quotations',
     icon: (
       <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path
@@ -91,7 +91,7 @@ const navigation = [
   },
   {
     name: 'Jobs',
-    href: '/admin/jobs',
+    href: 'admin/jobs',
     icon: (
       <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path
@@ -105,7 +105,7 @@ const navigation = [
   },
   {
     name: 'Users',
-    href: '/admin/users',
+    href: 'admin/users',
     icon: (
       <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path
@@ -121,13 +121,15 @@ const navigation = [
 
 export function AdminSidebar() {
   const pathname = usePathname()
+  const params = useParams()
+  const locale = (params.locale as string) || 'en'
 
   return (
     <aside className="fixed inset-y-0 left-0 z-50 w-64 border-r bg-background">
       <div className="flex h-full flex-col">
         {/* Logo */}
         <div className="flex h-16 items-center border-b px-6">
-          <Link href="/admin/dashboard" className="flex items-center space-x-2">
+          <Link href={`/${locale}/admin/dashboard`} className="flex items-center space-x-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
               <span className="text-sm font-bold">GS</span>
             </div>
@@ -138,11 +140,12 @@ export function AdminSidebar() {
         {/* Navigation */}
         <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
           {navigation.map((item) => {
-            const isActive = pathname === item.href || pathname?.startsWith(`${item.href}/`)
+            const fullHref = `/${locale}/${item.href}`
+            const isActive = pathname === fullHref || pathname?.startsWith(`${fullHref}/`)
             return (
               <Link
                 key={item.name}
-                href={item.href}
+                href={fullHref}
                 className={cn(
                   'flex items-center space-x-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
                   isActive

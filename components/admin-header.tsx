@@ -1,14 +1,17 @@
 'use client'
 
 import { signOut, useSession } from 'next-auth/react'
+import { useParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { getInitials } from '@/lib/utils'
 
 export function AdminHeader() {
   const { data: session } = useSession()
+  const params = useParams()
+  const locale = (params.locale as string) || 'en'
 
   const handleLogout = async () => {
-    await signOut({ callbackUrl: '/login' })
+    await signOut({ callbackUrl: `/${locale}/login` })
   }
 
   return (
