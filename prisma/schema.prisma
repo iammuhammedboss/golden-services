@@ -7,8 +7,8 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model clients {
-  id          String        @id
+model Client {
+  id          String        @id @default(cuid())
   name        String
   phone       String
   whatsapp    String?
@@ -16,27 +16,30 @@ model clients {
   type        ClientType    @default(INDIVIDUAL)
   notes       String?
   createdAt   DateTime      @default(now())
-  updatedAt   DateTime
-  job_orders  job_orders[]
-  quotations  quotations[]
-  site_visits site_visits[]
-  sites       sites[]
+  updatedAt   DateTime      @updatedAt
+  jobOrders   JobOrder[]
+  quotations  Quotation[]
+  siteVisits  SiteVisit[]
+  sites       Site[]
+
+  @@map("clients")
 }
 
-model job_assignments {
-  id         String     @id
+model JobAssignment {
+  id         String     @id @default(cuid())
   jobOrderId String
   userId     String
   roleInJob  JobRole    @default(CLEANER)
   createdAt  DateTime   @default(now())
-  job_orders job_orders @relation(fields: [jobOrderId], references: [id], onDelete: Cascade)
-  users      users      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  jobOrder   JobOrder   @relation(fields: [jobOrderId], references: [id], onDelete: Cascade)
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([jobOrderId, userId])
+  @@map("job_assignments")
 }
 
-model job_orders {
-  id                 String               @id
+model JobOrder {
+  id                 String               @id @default(cuid())
   quotationId        String?
   clientId           String
   siteId             String
@@ -47,29 +50,33 @@ model job_orders {
   scheduledEndTime   DateTime?
   notes              String?
   createdAt          DateTime             @default(now())
-  updatedAt          DateTime
-  job_assignments    job_assignments[]
-  clients            clients              @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  quotations         quotations?          @relation(fields: [quotationId], references: [id])
-  sites              sites                @relation(fields: [siteId], references: [id], onDelete: Cascade)
-  job_status_updates job_status_updates[]
-  photos             photos[]
+  updatedAt          DateTime             @updatedAt
+  assignments        JobAssignment[]
+  client             Client               @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  quotation          Quotation?           @relation(fields: [quotationId], references: [id])
+  site               Site                 @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  statusUpdates      JobStatusUpdate[]
+  photos             Photo[]
+
+  @@map("job_orders")
 }
 
-model job_status_updates {
-  id              String            @id
+model JobStatusUpdate {
+  id              String            @id @default(cuid())
   jobOrderId      String
   createdById     String
   status          JobProgressStatus
   progressPercent Int               @default(0)
   note            String?
   createdAt       DateTime          @default(now())
-  users           users             @relation(fields: [createdById], references: [id])
-  job_orders      job_orders        @relation(fields: [jobOrderId], references: [id], onDelete: Cascade)
+  createdBy       User              @relation(fields: [createdById], references: [id])
+  jobOrder        JobOrder          @relation(fields: [jobOrderId], references: [id], onDelete: Cascade)
+
+  @@map("job_status_updates")
 }
 
-model leads {
-  id              String        @id
+model Lead {
+  id              String        @id @default(cuid())
   name            String
   phone           String
   whatsapp        String?
@@ -80,14 +87,16 @@ model leads {
   status          LeadStatus    @default(NEW)
   createdById     String
   createdAt       DateTime      @default(now())
-  updatedAt       DateTime
-  users           users         @relation(fields: [createdById], references: [id])
-  quotations      quotations[]
-  site_visits     site_visits[]
+  updatedAt       DateTime      @updatedAt
+  createdBy       User          @relation(fields: [createdById], references: [id])
+  quotations      Quotation[]
+  siteVisits      SiteVisit[]
+
+  @@map("leads")
 }
 
-model measurement_items {
-  id          String      @id
+model MeasurementItem {
+  id          String      @id @default(cuid())
   siteVisitId String
   type        String
   sizeLabel   String?
@@ -96,11 +105,13 @@ model measurement_items {
   dirtLevel   DirtLevel   @default(MEDIUM)
   notes       String?
   createdAt   DateTime    @default(now())
-  site_visits site_visits @relation(fields: [siteVisitId], references: [id], onDelete: Cascade)
+  siteVisit   SiteVisit   @relation(fields: [siteVisitId], references: [id], onDelete: Cascade)
+
+  @@map("measurement_items")
 }
 
-model photos {
-  id           String       @id
+model Photo {
+  id           String       @id @default(cuid())
   siteVisitId  String?
   jobOrderId   String?
   phase        PhotoPhase
@@ -108,13 +119,15 @@ model photos {
   description  String?
   uploadedById String
   createdAt    DateTime     @default(now())
-  job_orders   job_orders?  @relation(fields: [jobOrderId], references: [id])
-  site_visits  site_visits? @relation(fields: [siteVisitId], references: [id])
-  users        users        @relation(fields: [uploadedById], references: [id])
+  jobOrder     JobOrder?    @relation(fields: [jobOrderId], references: [id])
+  siteVisit    SiteVisit?   @relation(fields: [siteVisitId], references: [id])
+  uploadedBy   User         @relation(fields: [uploadedById], references: [id])
+
+  @@map("photos")
 }
 
-model quotation_items {
-  id          String     @id
+model QuotationItem {
+  id          String     @id @default(cuid())
   quotationId String
   serviceId   String?
   description String
@@ -124,134 +137,153 @@ model quotation_items {
   total       Decimal    @db.Decimal(10, 3)
   optionGroup String?
   createdAt   DateTime   @default(now())
-  quotations  quotations @relation(fields: [quotationId], references: [id], onDelete: Cascade)
-  services    services?  @relation(fields: [serviceId], references: [id])
+  quotation   Quotation  @relation(fields: [quotationId], references: [id], onDelete: Cascade)
+  service     Service?   @relation(fields: [serviceId], references: [id])
+
+  @@map("quotation_items")
 }
 
-model quotations {
-  id              String            @id
-  clientId        String
-  siteId          String?
-  leadId          String?
-  createdById     String
-  status          QuotationStatus   @default(DRAFT)
-  validUntil      DateTime?
-  notes           String?
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime
-  job_orders      job_orders[]
-  quotation_items quotation_items[]
-  clients         clients           @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  users           users             @relation(fields: [createdById], references: [id])
-  leads           leads?            @relation(fields: [leadId], references: [id])
-  sites           sites?            @relation(fields: [siteId], references: [id])
+model Quotation {
+  id          String          @id @default(cuid())
+  clientId    String
+  siteId      String?
+  leadId      String?
+  createdById String
+  status      QuotationStatus @default(DRAFT)
+  validUntil  DateTime?
+  notes       String?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  jobOrders   JobOrder[]
+  items       QuotationItem[]
+  client      Client          @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  createdBy   User            @relation(fields: [createdById], references: [id])
+  lead        Lead?           @relation(fields: [leadId], references: [id])
+  site        Site?           @relation(fields: [siteId], references: [id])
+
+  @@map("quotations")
 }
 
-model roles {
-  id          String       @id
-  name        String       @unique
-  description String?
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime
-  user_roles  user_roles[]
-}
-
-model service_categories {
-  id          String     @id
-  name        String
+model Role {
+  id          String     @id @default(cuid())
+  name        String     @unique
   description String?
   createdAt   DateTime   @default(now())
-  updatedAt   DateTime
-  services    services[]
+  updatedAt   DateTime   @updatedAt
+  users       UserRole[]
+
+  @@map("roles")
 }
 
-model service_pricing_rules {
-  id          String      @id
+model ServiceCategory {
+  id          String    @id @default(cuid())
+  name        String
+  description String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  services    Service[]
+
+  @@map("service_categories")
+}
+
+model ServicePricingRule {
+  id          String      @id @default(cuid())
   serviceId   String
   pricingType PricingType
   unitLabel   String
   basePrice   Decimal     @db.Decimal(10, 3)
   currency    String      @default("OMR")
   createdAt   DateTime    @default(now())
-  updatedAt   DateTime
-  services    services    @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  updatedAt   DateTime    @updatedAt
+  service     Service     @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@map("service_pricing_rules")
 }
 
-model services {
-  id                    String                  @id
-  categoryId            String
-  name                  String
-  slug                  String                  @unique
-  description           String?
-  isActive              Boolean                 @default(true)
-  createdAt             DateTime                @default(now())
-  updatedAt             DateTime
-  quotation_items       quotation_items[]
-  service_pricing_rules service_pricing_rules[]
-  service_categories    service_categories      @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+model Service {
+  id           String               @id @default(cuid())
+  categoryId   String
+  name         String
+  slug         String               @unique
+  description  String?
+  isActive     Boolean              @default(true)
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+  quoteItems   QuotationItem[]
+  pricingRules ServicePricingRule[]
+  category     ServiceCategory      @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@map("services")
 }
 
-model site_visits {
-  id                String              @id
-  leadId            String?
-  clientId          String?
-  siteId            String?
-  scheduledAt       DateTime
-  status            SiteVisitStatus     @default(SCHEDULED)
-  assignedToId      String
-  notes             String?
-  createdAt         DateTime            @default(now())
-  updatedAt         DateTime
-  measurement_items measurement_items[]
-  photos            photos[]
-  users             users               @relation(fields: [assignedToId], references: [id])
-  clients           clients?            @relation(fields: [clientId], references: [id])
-  leads             leads?              @relation(fields: [leadId], references: [id])
-  sites             sites?              @relation(fields: [siteId], references: [id])
+model SiteVisit {
+  id               String            @id @default(cuid())
+  leadId           String?
+  clientId         String?
+  siteId           String?
+  scheduledAt      DateTime
+  status           SiteVisitStatus   @default(SCHEDULED)
+  assignedToId     String
+  notes            String?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  measurementItems MeasurementItem[]
+  photos           Photo[]
+  assignedTo       User              @relation(fields: [assignedToId], references: [id])
+  client           Client?           @relation(fields: [clientId], references: [id])
+  lead             Lead?             @relation(fields: [leadId], references: [id])
+  site             Site?             @relation(fields: [siteId], references: [id])
+
+  @@map("site_visits")
 }
 
-model sites {
-  id          String        @id
+model Site {
+  id          String      @id @default(cuid())
   clientId    String
   name        String
   address     String?
   city        String?
   locationUrl String?
   notes       String?
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime
-  job_orders  job_orders[]
-  quotations  quotations[]
-  site_visits site_visits[]
-  clients     clients       @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  jobOrders   JobOrder[]
+  quotations  Quotation[]
+  siteVisits  SiteVisit[]
+  client      Client      @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@map("sites")
 }
 
-model user_roles {
+model UserRole {
   userId String
   roleId String
-  roles  roles  @relation(fields: [roleId], references: [id], onDelete: Cascade)
-  users  users  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role   Role   @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([userId, roleId])
+  @@map("user_roles")
 }
 
-model users {
-  id                 String               @id
+model User {
+  id                 String            @id @default(cuid())
   name               String
-  email              String               @unique
+  email              String            @unique
   phone              String?
   whatsapp           String?
   hashedPassword     String
-  isActive           Boolean              @default(true)
-  createdAt          DateTime             @default(now())
-  updatedAt          DateTime
-  job_assignments    job_assignments[]
-  job_status_updates job_status_updates[]
-  leads              leads[]
-  photos             photos[]
-  quotations         quotations[]
-  site_visits        site_visits[]
-  user_roles         user_roles[]
+  isActive           Boolean           @default(true)
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+  jobAssignments     JobAssignment[]
+  statusUpdates      JobStatusUpdate[]
+  leads              Lead[]
+  photos             Photo[]
+  quotations         Quotation[]
+  siteVisits         SiteVisit[]
+  roles              UserRole[]
+
+  @@map("users")
 }
 
 enum ClientType {

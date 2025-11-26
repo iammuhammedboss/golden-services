@@ -25,7 +25,7 @@ export default async function UsersPage() {
 
   // Fetch user with roles
   const currentUser = await prisma.user.findUnique({
-    where: { id: session.user.id },
+    where: { id: (session.user as any).id },
     include: {
       roles: {
         include: {
