@@ -180,14 +180,6 @@ export default async function SiteVisitDetailPage({
               <span className="text-sm font-medium">Completed At:</span>{' '}
               <span className="text-sm">{formatDate(siteVisit.completedAt, 'PPp')}</span>
             </div>
-            {siteVisit.completionNotes && (
-              <div>
-                <span className="text-sm font-medium">Completion Notes:</span>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {siteVisit.completionNotes}
-                </p>
-              </div>
-            )}
           </CardContent>
         </Card>
       )}
