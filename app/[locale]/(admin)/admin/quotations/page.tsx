@@ -12,6 +12,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { prisma } from '@/lib/prisma'
 import { formatDate, formatCurrency, enumToReadable, getStatusColor } from '@/lib/utils'
 import { Decimal } from '@prisma/client/runtime/library'
+import { AddQuotationDialog } from '@/components/add-quotation-dialog'
+import Link from 'next/link'
 
 export default async function QuotationsPage() {
   const quotations = await prisma.quotation.findMany({
@@ -72,22 +74,7 @@ export default async function QuotationsPage() {
           <h1 className="text-3xl font-bold">Quotations</h1>
           <p className="text-muted-foreground">Manage quotations and proposals</p>
         </div>
-        <Button>
-          <svg
-            className="mr-2 h-4 w-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M12 4v16m8-8H4"
-            />
-          </svg>
-          New Quotation
-        </Button>
+        <AddQuotationDialog />
       </div>
 
       {/* Stats */}
@@ -211,8 +198,8 @@ export default async function QuotationsPage() {
                         <div className="text-sm">{quotation.createdBy.name}</div>
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button variant="ghost" size="sm">
-                          View
+                        <Button variant="ghost" size="sm" asChild>
+                          <Link href={`/admin/quotations/${quotation.id}`}>View</Link>
                         </Button>
                       </TableCell>
                     </TableRow>

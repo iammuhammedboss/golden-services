@@ -12,6 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { prisma } from '@/lib/prisma'
 import { formatDate, formatDateTime, enumToReadable, getStatusColor } from '@/lib/utils'
 import { AddSiteVisitDialog } from '@/components/add-site-visit-dialog'
+import Link from 'next/link'
 
 export default async function SiteVisitsPage() {
   const siteVisits = await prisma.siteVisit.findMany({
@@ -168,8 +169,8 @@ export default async function SiteVisitsPage() {
                         <div className="text-sm">{formatDate(visit.createdAt, 'PP')}</div>
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button variant="ghost" size="sm">
-                          View
+                        <Button variant="ghost" size="sm" asChild>
+                          <Link href={`/admin/site-visits/${visit.id}`}>View</Link>
                         </Button>
                       </TableCell>
                     </TableRow>

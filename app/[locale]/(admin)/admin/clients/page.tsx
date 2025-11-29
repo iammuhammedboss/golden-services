@@ -12,6 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { prisma } from '@/lib/prisma'
 import { formatDate, enumToReadable } from '@/lib/utils'
 import { AddClientDialog } from '@/components/add-client-dialog'
+import Link from 'next/link'
 
 export default async function ClientsPage() {
   const clients = await prisma.client.findMany({
@@ -128,8 +129,8 @@ export default async function ClientsPage() {
                       </div>
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button variant="ghost" size="sm">
-                        View
+                      <Button variant="ghost" size="sm" asChild>
+                        <Link href={`/admin/clients/${client.id}`}>View</Link>
                       </Button>
                     </TableCell>
                   </TableRow>
