@@ -186,7 +186,7 @@ export default async function QuotationDetailPage({
                   <TableRow key={item.id}>
                     <TableCell>{index + 1}</TableCell>
                     <TableCell className="font-medium">{item.description}</TableCell>
-                    <TableCell>{item.quantity}</TableCell>
+                    <TableCell>{Number(item.quantity)}</TableCell>
                     <TableCell>{item.unit}</TableCell>
                     <TableCell>{formatCurrency(Number(item.unitPrice))}</TableCell>
                     <TableCell className="text-right font-medium">
