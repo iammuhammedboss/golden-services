@@ -14,6 +14,8 @@ import { formatDate, enumToReadable } from '@/lib/utils'
 import { redirect } from 'next/navigation'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
+import Link from 'next/link'
+import { AddUserDialog } from '@/components/add-user-dialog'
 
 export default async function UsersPage() {
   // Check authentication and authorization
@@ -86,22 +88,7 @@ export default async function UsersPage() {
           <h1 className="text-3xl font-bold">Users</h1>
           <p className="text-muted-foreground">Manage system users and roles</p>
         </div>
-        <Button>
-          <svg
-            className="mr-2 h-4 w-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M12 4v16m8-8H4"
-            />
-          </svg>
-          New User
-        </Button>
+        <AddUserDialog />
       </div>
 
       {/* Stats */}
@@ -223,8 +210,8 @@ export default async function UsersPage() {
                       </div>
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button variant="ghost" size="sm">
-                        View
+                      <Button variant="ghost" size="sm" asChild>
+                        <Link href={`/admin/users/${user.id}`}>View</Link>
                       </Button>
                     </TableCell>
                   </TableRow>

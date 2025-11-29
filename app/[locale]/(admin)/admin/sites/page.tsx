@@ -12,6 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { prisma } from '@/lib/prisma'
 import { formatDate } from '@/lib/utils'
 import { AddSiteDialog } from '@/components/add-site-dialog'
+import Link from 'next/link'
 
 export default async function SitesPage() {
   const sites = await prisma.site.findMany({
@@ -120,8 +121,8 @@ export default async function SitesPage() {
                       </div>
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button variant="ghost" size="sm">
-                        View
+                      <Button variant="ghost" size="sm" asChild>
+                        <Link href={`/admin/sites/${site.id}`}>View</Link>
                       </Button>
                     </TableCell>
                   </TableRow>

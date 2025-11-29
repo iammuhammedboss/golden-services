@@ -223,8 +223,8 @@ export default async function JobsPage({ params }: { params: { locale: string } 
                       <div className="text-sm">{formatDate(job.createdAt, 'PP')}</div>
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button variant="ghost" size="sm">
-                        View
+                      <Button variant="ghost" size="sm" asChild>
+                        <Link href={`/admin/jobs/${job.id}`}>View</Link>
                       </Button>
                     </TableCell>
                   </TableRow>
