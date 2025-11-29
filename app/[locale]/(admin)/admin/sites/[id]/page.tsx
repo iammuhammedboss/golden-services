@@ -79,9 +79,11 @@ export default async function SiteDetailPage({
             <p className="text-muted-foreground">Site Details</p>
           </div>
         </div>
-        <Badge variant="outline" className="text-sm">
-          {enumToReadable(site.siteType)}
-        </Badge>
+        {site.city && (
+          <Badge variant="outline" className="text-sm">
+            {site.city}
+          </Badge>
+        )}
       </div>
 
       {/* Site & Client Information */}
@@ -95,8 +97,7 @@ export default async function SiteDetailPage({
               <MapPin className="h-4 w-4 text-muted-foreground mt-0.5" />
               <div>
                 <span className="text-sm font-medium">Address:</span>
-                <p className="text-sm text-muted-foreground">{site.address}</p>
-                {site.area && <p className="text-sm text-muted-foreground">{site.area}</p>}
+                <p className="text-sm text-muted-foreground">{site.address || '-'}</p>
                 {site.city && <p className="text-sm text-muted-foreground">{site.city}</p>}
               </div>
             </div>

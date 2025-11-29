@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useReactToPrint } from 'react-to-print'
 import { Button } from '@/components/ui/button'
@@ -25,11 +25,7 @@ export default function InvoiceDetailPage() {
   const [loading, setLoading] = useState(true)
   const printRef = useRef<HTMLDivElement>(null)
 
-  useEffect(() => {
-    fetchInvoice()
-  }, [invoiceId])
-
-  const fetchInvoice = async () => {
+  const fetchInvoice = useCallback(async () => {
     try {
       const response = await fetch(`/api/invoices/${invoiceId}`)
       if (response.ok) {
@@ -43,7 +39,11 @@ export default function InvoiceDetailPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [invoiceId])
+
+  useEffect(() => {
+    fetchInvoice()
+  }, [fetchInvoice])
 
   const handlePrint = useReactToPrint({
     contentRef: printRef,
