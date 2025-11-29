@@ -241,13 +241,13 @@ export default async function JobDetailPage({
                   job.statusUpdates.map((update) => (
                     <TableRow key={update.id}>
                       <TableCell>
-                        <Badge className={getStatusColor(update.newStatus)}>
-                          {enumToReadable(update.newStatus)}
+                        <Badge className={getStatusColor(update.status)}>
+                          {enumToReadable(update.status)}
                         </Badge>
                       </TableCell>
                       <TableCell className="max-w-md">
-                        {update.notes ? (
-                          <span className="text-sm">{update.notes}</span>
+                        {update.note ? (
+                          <span className="text-sm">{update.note}</span>
                         ) : (
                           <span className="text-sm text-muted-foreground">-</span>
                         )}
