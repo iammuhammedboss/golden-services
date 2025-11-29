@@ -122,10 +122,10 @@ export default async function JobDetailPage({
                 {formatDate(job.createdAt, 'PPp')}
               </span>
             </div>
-            {job.description && (
+            {job.notes && (
               <div>
-                <span className="text-sm font-medium">Description:</span>
-                <p className="text-sm text-muted-foreground mt-1">{job.description}</p>
+                <span className="text-sm font-medium">Notes:</span>
+                <p className="text-sm text-muted-foreground mt-1">{job.notes}</p>
               </div>
             )}
           </CardContent>
