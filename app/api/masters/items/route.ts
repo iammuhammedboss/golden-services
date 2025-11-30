@@ -108,7 +108,7 @@ export async function POST(request: NextRequest) {
       newValues: item,
     })
 
-    return NextResponse.json(itemType, { status: 201 })
+    return NextResponse.json(item, { status: 201 })
   } catch (error) {
     console.error('POST /api/masters/item-types error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

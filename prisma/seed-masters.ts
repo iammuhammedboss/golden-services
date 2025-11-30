@@ -5,87 +5,71 @@ const prisma = new PrismaClient()
 async function seedMasters() {
   console.log('🌱 Seeding master data...')
 
+  // Unit Masters
+  const units = [
+    { name: 'PIECE', description: 'Individual piece or unit' },
+    { name: 'SET', description: 'Set of items' },
+    { name: 'SQM', description: 'Square meter' },
+    { name: 'SQF', description: 'Square foot' },
+    { name: 'PAIR', description: 'Pair of items' },
+  ]
+
+  for (const unit of units) {
+    await prisma.unitMaster.upsert({
+      where: { name: unit.name },
+      update: unit,
+      create: unit,
+    })
+  }
+  console.log(`✅ Created ${units.length} units`)
+
+  // Get the default unit (PIECE) for item masters
+  const defaultUnit = await prisma.unitMaster.findFirst({
+    where: { name: 'PIECE' }
+  })
+
+  if (!defaultUnit) {
+    throw new Error('Default unit (PIECE) not found')
+  }
+
   // Item Type Masters
   const itemTypes = [
-    { name: 'WINDOW', category: 'FIXTURES', description: 'Windows and glass panels', sortOrder: 1 },
-    { name: 'SOFA', category: 'FURNITURE', description: 'Sofas and couches', sortOrder: 2 },
-    { name: 'CURTAIN', category: 'TEXTILE', description: 'Curtains and drapes', sortOrder: 3 },
-    { name: 'CUSHION', category: 'TEXTILE', description: 'Cushions and pillows', sortOrder: 4 },
-    { name: 'CARPET', category: 'TEXTILE', description: 'Carpets and rugs', sortOrder: 5 },
-    { name: 'TABLE', category: 'FURNITURE', description: 'Tables and desks', sortOrder: 6 },
-    { name: 'CHAIR', category: 'FURNITURE', description: 'Chairs and seating', sortOrder: 7 },
-    { name: 'MATTRESS', category: 'TEXTILE', description: 'Mattresses and bedding', sortOrder: 8 },
-    { name: 'STOVE', category: 'APPLIANCE', description: 'Stoves and cooktops', sortOrder: 9 },
-    { name: 'OVEN', category: 'APPLIANCE', description: 'Ovens and ranges', sortOrder: 10 },
-    { name: 'REFRIGERATOR', category: 'APPLIANCE', description: 'Refrigerators and freezers', sortOrder: 11 },
-    { name: 'SINK', category: 'FIXTURES', description: 'Sinks and basins', sortOrder: 12 },
-    { name: 'TOILET', category: 'FIXTURES', description: 'Toilets and commodes', sortOrder: 13 },
-    { name: 'SHOWER', category: 'FIXTURES', description: 'Showers and bathtubs', sortOrder: 14 },
-    { name: 'MIRROR', category: 'FIXTURES', description: 'Mirrors and glass', sortOrder: 15 },
-    { name: 'CABINET', category: 'FURNITURE', description: 'Cabinets and storage', sortOrder: 16 },
-    { name: 'WARDROBE', category: 'FURNITURE', description: 'Wardrobes and closets', sortOrder: 17 },
-    { name: 'BED', category: 'FURNITURE', description: 'Beds and bed frames', sortOrder: 18 },
-    { name: 'FLOOR', category: 'SURFACE', description: 'Floor surfaces', sortOrder: 19 },
-    { name: 'WALL', category: 'SURFACE', description: 'Wall surfaces', sortOrder: 20 },
-    { name: 'CEILING', category: 'SURFACE', description: 'Ceiling surfaces', sortOrder: 21 },
-    { name: 'DOOR', category: 'FIXTURES', description: 'Doors and frames', sortOrder: 22 },
-    { name: 'FAN', category: 'APPLIANCE', description: 'Ceiling and standing fans', sortOrder: 23 },
-    { name: 'AC_UNIT', category: 'APPLIANCE', description: 'Air conditioning units', sortOrder: 24 },
-    { name: 'LIGHT_FIXTURE', category: 'FIXTURES', description: 'Light fixtures and lamps', sortOrder: 25 },
-    { name: 'OTHER', category: 'MISC', description: 'Other items', sortOrder: 99 },
+    { name: 'WINDOW', category: 'FIXTURES', description: 'Windows and glass panels', sortOrder: 1, unitId: defaultUnit.id },
+    { name: 'SOFA', category: 'FURNITURE', description: 'Sofas and couches', sortOrder: 2, unitId: defaultUnit.id },
+    { name: 'CURTAIN', category: 'TEXTILE', description: 'Curtains and drapes', sortOrder: 3, unitId: defaultUnit.id },
+    { name: 'CUSHION', category: 'TEXTILE', description: 'Cushions and pillows', sortOrder: 4, unitId: defaultUnit.id },
+    { name: 'CARPET', category: 'TEXTILE', description: 'Carpets and rugs', sortOrder: 5, unitId: defaultUnit.id },
+    { name: 'TABLE', category: 'FURNITURE', description: 'Tables and desks', sortOrder: 6, unitId: defaultUnit.id },
+    { name: 'CHAIR', category: 'FURNITURE', description: 'Chairs and seating', sortOrder: 7, unitId: defaultUnit.id },
+    { name: 'MATTRESS', category: 'TEXTILE', description: 'Mattresses and bedding', sortOrder: 8, unitId: defaultUnit.id },
+    { name: 'STOVE', category: 'APPLIANCE', description: 'Stoves and cooktops', sortOrder: 9, unitId: defaultUnit.id },
+    { name: 'OVEN', category: 'APPLIANCE', description: 'Ovens and ranges', sortOrder: 10, unitId: defaultUnit.id },
+    { name: 'REFRIGERATOR', category: 'APPLIANCE', description: 'Refrigerators and freezers', sortOrder: 11, unitId: defaultUnit.id },
+    { name: 'SINK', category: 'FIXTURES', description: 'Sinks and basins', sortOrder: 12, unitId: defaultUnit.id },
+    { name: 'TOILET', category: 'FIXTURES', description: 'Toilets and commodes', sortOrder: 13, unitId: defaultUnit.id },
+    { name: 'SHOWER', category: 'FIXTURES', description: 'Showers and bathtubs', sortOrder: 14, unitId: defaultUnit.id },
+    { name: 'MIRROR', category: 'FIXTURES', description: 'Mirrors and glass', sortOrder: 15, unitId: defaultUnit.id },
+    { name: 'CABINET', category: 'FURNITURE', description: 'Cabinets and storage', sortOrder: 16, unitId: defaultUnit.id },
+    { name: 'WARDROBE', category: 'FURNITURE', description: 'Wardrobes and closets', sortOrder: 17, unitId: defaultUnit.id },
+    { name: 'BED', category: 'FURNITURE', description: 'Beds and bed frames', sortOrder: 18, unitId: defaultUnit.id },
+    { name: 'FLOOR', category: 'SURFACE', description: 'Floor surfaces', sortOrder: 19, unitId: defaultUnit.id },
+    { name: 'WALL', category: 'SURFACE', description: 'Wall surfaces', sortOrder: 20, unitId: defaultUnit.id },
+    { name: 'CEILING', category: 'SURFACE', description: 'Ceiling surfaces', sortOrder: 21, unitId: defaultUnit.id },
+    { name: 'DOOR', category: 'FIXTURES', description: 'Doors and frames', sortOrder: 22, unitId: defaultUnit.id },
+    { name: 'FAN', category: 'APPLIANCE', description: 'Ceiling and standing fans', sortOrder: 23, unitId: defaultUnit.id },
+    { name: 'AC_UNIT', category: 'APPLIANCE', description: 'Air conditioning units', sortOrder: 24, unitId: defaultUnit.id },
+    { name: 'LIGHT_FIXTURE', category: 'FIXTURES', description: 'Light fixtures and lamps', sortOrder: 25, unitId: defaultUnit.id },
+    { name: 'OTHER', category: 'MISC', description: 'Other items', sortOrder: 99, unitId: defaultUnit.id },
   ]
 
   for (const itemType of itemTypes) {
-    await prisma.itemTypeMaster.upsert({
+    await prisma.itemMaster.upsert({
       where: { name: itemType.name },
       update: itemType,
       create: itemType,
     })
   }
   console.log(`✅ Created ${itemTypes.length} item types`)
-
-  // Sofa Type Masters
-  const sofaTypes = [
-    { name: 'TWO_SEATER', description: '2-seater sofa', sortOrder: 1 },
-    { name: 'THREE_SEATER', description: '3-seater sofa', sortOrder: 2 },
-    { name: 'FOUR_SEATER', description: '4-seater sofa', sortOrder: 3 },
-    { name: 'L_SHAPE', description: 'L-shaped sectional', sortOrder: 4 },
-    { name: 'U_SHAPE', description: 'U-shaped sectional', sortOrder: 5 },
-    { name: 'CORNER', description: 'Corner sofa', sortOrder: 6 },
-    { name: 'RECLINER', description: 'Recliner sofa', sortOrder: 7 },
-    { name: 'LOVESEAT', description: 'Loveseat', sortOrder: 8 },
-    { name: 'CHAISE', description: 'Chaise lounge', sortOrder: 9 },
-    { name: 'OTHER', description: 'Other sofa type', sortOrder: 99 },
-  ]
-
-  for (const sofaType of sofaTypes) {
-    await prisma.sofaTypeMaster.upsert({
-      where: { name: sofaType.name },
-      update: sofaType,
-      create: sofaType,
-    })
-  }
-  console.log(`✅ Created ${sofaTypes.length} sofa types`)
-
-  // Window Size Masters
-  const windowSizes = [
-    { name: 'SMALL', dimensions: '2ft x 3ft', description: 'Small window', sortOrder: 1 },
-    { name: 'MEDIUM', dimensions: '3ft x 4ft', description: 'Medium window', sortOrder: 2 },
-    { name: 'LARGE', dimensions: '4ft x 5ft', description: 'Large window', sortOrder: 3 },
-    { name: 'EXTRA_LARGE', dimensions: '5ft x 6ft+', description: 'Extra large window', sortOrder: 4 },
-    { name: 'SLIDING', dimensions: 'Varies', description: 'Sliding glass door', sortOrder: 5 },
-    { name: 'BAY', dimensions: 'Varies', description: 'Bay window', sortOrder: 6 },
-    { name: 'CUSTOM', dimensions: 'Custom', description: 'Custom size', sortOrder: 99 },
-  ]
-
-  for (const windowSize of windowSizes) {
-    await prisma.windowSizeMaster.upsert({
-      where: { name: windowSize.name },
-      update: windowSize,
-      create: windowSize,
-    })
-  }
-  console.log(`✅ Created ${windowSizes.length} window sizes`)
 
   // Room Type Masters
   const roomTypes = [
