@@ -315,7 +315,7 @@ function NewInvoiceForm() {
                 >
                    <SelectTrigger>
                      <SelectValue />
-                   </Trigger>
+                   </SelectTrigger>
                    <SelectContent>
                      <SelectItem value="DRAFT">Draft</SelectItem>
                      <SelectItem value="SENT">Sent</SelectItem>
