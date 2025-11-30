@@ -36,9 +36,10 @@ export async function POST(request: NextRequest) {
 
     // Map entity types to Prisma models
     const entityModelMap: Record<string, any> = {
-      ItemTypeMaster: prisma.itemTypeMaster,
-      SofaTypeMaster: prisma.sofaTypeMaster,
-      WindowSizeMaster: prisma.windowSizeMaster,
+      ItemMaster: prisma.itemMaster,
+      UnitMaster: prisma.unitMaster,
+      EquipmentMaster: prisma.equipmentMaster,
+      MaterialMaster: prisma.materialMaster,
       RoomTypeMaster: prisma.roomTypeMaster,
       PaymentMethodMaster: prisma.paymentMethodMaster,
       Lead: prisma.lead,
