@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useState, useEffect } from 'react'
+import { Suspense, useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -30,14 +30,36 @@ interface InvoiceItem {
   total: number
 }
 
+// Define types for better type safety
+interface Client {
+  id: string;
+  name: string;
+  phone: string;
+}
+
+interface Job {
+  id: string;
+  jobNumber: string;
+  client: {
+    name: string;
+  };
+}
+
+interface QuotationItem {
+  description: string;
+  quantity: string | number;
+  unitPrice: string | number;
+  total: string | number;
+}
+
 function NewInvoiceForm() {
   const params = useParams()
   const router = useRouter()
   const searchParams = useSearchParams()
   const locale = (params.locale as string) || 'en'
 
-  const [clients, setClients] = useState<any[]>([])
-  const [jobs, setJobs] = useState<any[]>([])
+  const [clients, setClients] = useState<Client[]>([])
+  const [jobs, setJobs] = useState<Job[]>([])
   const [loading, setLoading] = useState(false)
 
   const [formData, setFormData] = useState({
@@ -53,52 +75,14 @@ function NewInvoiceForm() {
     { description: '', quantity: 1, unitPrice: 0, total: 0 },
   ])
 
-  useEffect(() => {
-    fetchClients()
-    fetchJobs().then((fetchedJobs) => {
-      const jobIdFromUrl = searchParams.get('jobId')
-      if (jobIdFromUrl && fetchedJobs?.find(j => j.id === jobIdFromUrl)) {
-        handleJobChange(jobIdFromUrl)
-      }
-    })
-  }, [searchParams])
-
-  const fetchClients = async () => {
-    try {
-      const response = await fetch('/api/clients')
-      if (response.ok) {
-        const data = await response.json()
-        setClients(data)
-        return data
-      }
-    } catch (error) {
-      console.error('Error fetching clients:', error)
-    }
-    return []
-  }
-
-  const fetchJobs = async () => {
-    try {
-      const response = await fetch('/api/jobs')
-      if (response.ok) {
-        const data = await response.json()
-        setJobs(data)
-        return data
-      }
-    } catch (error) {
-      console.error('Error fetching jobs:', error)
-    }
-    return []
-  }
-
-  const handleJobChange = async (jobId: string) => {
+  const handleJobChange = useCallback(async (jobId: string) => {
     if (!jobId) {
-      setFormData({
-        ...formData,
+      setFormData((prev) => ({
+        ...prev,
         clientId: '',
         quotationId: '',
         jobOrderId: '',
-      })
+      }))
       setItems([{ description: '', quantity: 1, unitPrice: 0, total: 0 }])
       return
     }
@@ -110,19 +94,19 @@ function NewInvoiceForm() {
       }
       const job = await response.json()
 
-      setFormData({
-        ...formData,
+      setFormData((prev) => ({
+        ...prev,
         clientId: job.clientId,
         quotationId: job.quotationId || '',
         jobOrderId: job.id,
-      })
+      }))
 
       if (job.quotation && job.quotation.items) {
-        const newItems = job.quotation.items.map((item: any) => ({
+        const newItems = job.quotation.items.map((item: QuotationItem) => ({
           description: item.description,
-          quantity: parseFloat(item.quantity),
-          unitPrice: parseFloat(item.unitPrice),
-          total: parseFloat(item.total),
+          quantity: parseFloat(item.quantity.toString()),
+          unitPrice: parseFloat(item.unitPrice.toString()),
+          total: parseFloat(item.total.toString()),
         }))
         setItems(newItems.length > 0 ? newItems : [{ description: '', quantity: 1, unitPrice: 0, total: 0 }])
       } else {
@@ -132,7 +116,43 @@ function NewInvoiceForm() {
       console.error('Error handling job change:', error)
       alert('Failed to load job details. Please try again.')
     }
-  }
+  }, []) // Empty dependency array, as it doesn't depend on props or state from this component
+
+  useEffect(() => {
+    const fetchClients = async () => {
+      try {
+        const response = await fetch('/api/clients')
+        if (response.ok) {
+          const data = await response.json()
+          setClients(data)
+        }
+      } catch (error) {
+        console.error('Error fetching clients:', error)
+      }
+    }
+
+    const fetchJobs = async (): Promise<Job[]> => {
+      try {
+        const response = await fetch('/api/jobs')
+        if (response.ok) {
+          const data = await response.json()
+          setJobs(data)
+          return data
+        }
+      } catch (error) {
+        console.error('Error fetching jobs:', error)
+      }
+      return []
+    }
+
+    fetchClients()
+    fetchJobs().then((fetchedJobs) => {
+      const jobIdFromUrl = searchParams.get('jobId')
+      if (jobIdFromUrl && fetchedJobs?.find((j: Job) => j.id === jobIdFromUrl)) {
+        handleJobChange(jobIdFromUrl)
+      }
+    })
+  }, [searchParams, handleJobChange])
 
   const handleAddItem = () => {
     setItems([...items, { description: '', quantity: 1, unitPrice: 0, total: 0 }])
@@ -295,7 +315,7 @@ function NewInvoiceForm() {
                 >
                    <SelectTrigger>
                      <SelectValue />
-                   </SelectTrigger>
+                   </Trigger>
                    <SelectContent>
                      <SelectItem value="DRAFT">Draft</SelectItem>
                      <SelectItem value="SENT">Sent</SelectItem>
