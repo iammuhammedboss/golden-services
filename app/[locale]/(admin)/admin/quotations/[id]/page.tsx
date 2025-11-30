@@ -18,7 +18,7 @@ import { ChevronLeft } from 'lucide-react'
 export default async function QuotationDetailPage({
   params,
 }: {
-  params: { id: string }
+  params: { id: string; locale: string }
 }) {
   const quotation = await prisma.quotation.findUnique({
     where: { id: params.id },
@@ -69,7 +69,7 @@ export default async function QuotationDetailPage({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" asChild>
-            <Link href="/admin/quotations">
+            <Link href={`/${params.locale}/admin/quotations`}>
               <ChevronLeft className="h-5 w-5" />
             </Link>
           </Button>
@@ -94,7 +94,7 @@ export default async function QuotationDetailPage({
               <span className="text-sm font-medium">Name:</span>{' '}
               {quotation.client ? (
                 <Link
-                  href={`/admin/clients/${quotation.client.id}`}
+                  href={`/${params.locale}/admin/clients/${quotation.client.id}`}
                   className="text-sm text-blue-600 hover:underline"
                 >
                   {quotation.client.name}
@@ -121,7 +121,7 @@ export default async function QuotationDetailPage({
               <div>
                 <span className="text-sm font-medium">Site:</span>{' '}
                 <Link
-                  href={`/admin/sites/${quotation.site.id}`}
+                  href={`/${params.locale}/admin/sites/${quotation.site.id}`}
                   className="text-sm text-blue-600 hover:underline"
                 >
                   {quotation.site.name}

@@ -18,7 +18,7 @@ import { ChevronLeft, Calendar, Users, MapPin } from 'lucide-react'
 export default async function JobDetailPage({
   params,
 }: {
-  params: { id: string }
+  params: { id: string; locale: string }
 }) {
   const job = await prisma.jobOrder.findUnique({
     where: { id: params.id },
@@ -79,7 +79,7 @@ export default async function JobDetailPage({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" asChild>
-            <Link href="/admin/jobs">
+            <Link href={`/${params.locale}/admin/jobs`}>
               <ChevronLeft className="h-5 w-5" />
             </Link>
           </Button>
@@ -139,7 +139,7 @@ export default async function JobDetailPage({
             <div>
               <span className="text-sm font-medium">Client:</span>{' '}
               <Link
-                href={`/admin/clients/${job.client.id}`}
+                href={`/${params.locale}/admin/clients/${job.client.id}`}
                 className="text-sm text-blue-600 hover:underline"
               >
                 {job.client.name}
@@ -153,7 +153,7 @@ export default async function JobDetailPage({
               <MapPin className="h-4 w-4 text-muted-foreground mt-0.5" />
               <div>
                 <Link
-                  href={`/admin/sites/${job.site.id}`}
+                  href={`/${params.locale}/admin/sites/${job.site.id}`}
                   className="text-sm font-medium text-blue-600 hover:underline"
                 >
                   {job.site.name}
@@ -193,7 +193,7 @@ export default async function JobDetailPage({
                     <TableRow key={assignment.id}>
                       <TableCell className="font-medium">
                         <Link
-                          href={`/admin/users/${assignment.user.id}`}
+                          href={`/${params.locale}/admin/users/${assignment.user.id}`}
                           className="text-blue-600 hover:underline"
                         >
                           {assignment.user.name}

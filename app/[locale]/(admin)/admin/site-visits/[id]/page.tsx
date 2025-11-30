@@ -10,7 +10,7 @@ import { ChevronLeft, Calendar, User, MapPin } from 'lucide-react'
 export default async function SiteVisitDetailPage({
   params,
 }: {
-  params: { id: string }
+  params: { id: string; locale: string }
 }) {
   const siteVisit = await prisma.siteVisit.findUnique({
     where: { id: params.id },
@@ -59,7 +59,7 @@ export default async function SiteVisitDetailPage({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" asChild>
-            <Link href="/admin/site-visits">
+            <Link href={`/${params.locale}/admin/site-visits`}>
               <ChevronLeft className="h-5 w-5" />
             </Link>
           </Button>
@@ -96,7 +96,7 @@ export default async function SiteVisitDetailPage({
               <div>
                 <span className="text-sm font-medium">Assigned To:</span>{' '}
                 <Link
-                  href={`/admin/users/${siteVisit.assignedTo.id}`}
+                  href={`/${params.locale}/admin/users/${siteVisit.assignedTo.id}`}
                   className="text-sm text-blue-600 hover:underline"
                 >
                   {siteVisit.assignedTo.name}
@@ -127,7 +127,7 @@ export default async function SiteVisitDetailPage({
               <span className="text-sm font-medium">Client:</span>{' '}
               {siteVisit.client ? (
                 <Link
-                  href={`/admin/clients/${siteVisit.client.id}`}
+                  href={`/${params.locale}/admin/clients/${siteVisit.client.id}`}
                   className="text-sm text-blue-600 hover:underline"
                 >
                   {siteVisit.client.name}
@@ -152,7 +152,7 @@ export default async function SiteVisitDetailPage({
                   <MapPin className="h-4 w-4 text-muted-foreground mt-0.5" />
                   <div>
                     <Link
-                      href={`/admin/sites/${siteVisit.site.id}`}
+                      href={`/${params.locale}/admin/sites/${siteVisit.site.id}`}
                       className="text-sm font-medium text-blue-600 hover:underline"
                     >
                       {siteVisit.site.name}

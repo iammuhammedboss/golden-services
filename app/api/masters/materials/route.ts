@@ -6,7 +6,7 @@ import { canManageMasters } from '@/lib/permissions'
 import { createAuditLog } from '@/lib/audit'
 import type { UserWithRoles } from '@/lib/permissions'
 
-// GET /api/masters/sofa-types - List all sofa types (including deleted if requested)
+// GET /api/masters/materials - List all materials (including deleted if requested)
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
@@ -29,22 +29,21 @@ export async function GET(request: NextRequest) {
       where.isActive = true
     }
 
-    const sofaTypes = await prisma.sofaTypeMaster.findMany({
+    const materials = await prisma.materialMaster.findMany({
       where,
-      orderBy: [
-        { sortOrder: 'asc' },
-        { name: 'asc' },
-      ],
+      orderBy: {
+        name: 'asc',
+      },
     })
 
-    return NextResponse.json(sofaTypes)
+    return NextResponse.json(materials)
   } catch (error) {
-    console.error('GET /api/masters/sofa-types error:', error)
+    console.error('GET /api/masters/materials error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
-// POST /api/masters/sofa-types - Create new sofa type (OWNER only)
+// POST /api/masters/materials - Create new material (OWNER only)
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
@@ -60,7 +59,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { name, description, isActive, sortOrder } = body
+    const { name, description, isActive } = body
 
     if (!name) {
       return NextResponse.json(
@@ -70,7 +69,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check for duplicate name
-    const existing = await prisma.sofaTypeMaster.findFirst({
+    const existing = await prisma.materialMaster.findFirst({
       where: {
         name,
         deletedAt: null,
@@ -79,17 +78,16 @@ export async function POST(request: NextRequest) {
 
     if (existing) {
       return NextResponse.json(
-        { error: 'Sofa type with this name already exists' },
+        { error: 'Material with this name already exists' },
         { status: 409 }
       )
     }
 
-    const sofaType = await prisma.sofaTypeMaster.create({
+    const material = await prisma.materialMaster.create({
       data: {
-        name: name.toUpperCase(),
+        name,
         description,
         isActive: isActive !== undefined ? isActive : true,
-        sortOrder: sortOrder || 0,
       },
     })
 
@@ -97,14 +95,14 @@ export async function POST(request: NextRequest) {
     await createAuditLog({
       userId: user.id,
       action: 'CREATE',
-      entityType: 'SofaTypeMaster',
-      entityId: sofaType.id,
-      newValues: sofaType,
+      entityType: 'MaterialMaster',
+      entityId: material.id,
+      newValues: material,
     })
 
-    return NextResponse.json(sofaType, { status: 201 })
+    return NextResponse.json(material, { status: 201 })
   } catch (error) {
-    console.error('POST /api/masters/sofa-types error:', error)
+    console.error('POST /api/masters/materials error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

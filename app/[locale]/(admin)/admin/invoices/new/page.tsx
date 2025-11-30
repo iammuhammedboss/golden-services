@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { Suspense, useState, useEffect } from 'react'
+import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -30,13 +30,13 @@ interface InvoiceItem {
   total: number
 }
 
-export default function NewInvoicePage() {
+function NewInvoiceForm() {
   const params = useParams()
   const router = useRouter()
+  const searchParams = useSearchParams()
   const locale = (params.locale as string) || 'en'
 
   const [clients, setClients] = useState<any[]>([])
-  const [quotations, setQuotations] = useState<any[]>([])
   const [jobs, setJobs] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
 
@@ -55,7 +55,13 @@ export default function NewInvoicePage() {
 
   useEffect(() => {
     fetchClients()
-  }, [])
+    fetchJobs().then((fetchedJobs) => {
+      const jobIdFromUrl = searchParams.get('jobId')
+      if (jobIdFromUrl && fetchedJobs?.find(j => j.id === jobIdFromUrl)) {
+        handleJobChange(jobIdFromUrl)
+      }
+    })
+  }, [searchParams])
 
   const fetchClients = async () => {
     try {
@@ -63,9 +69,68 @@ export default function NewInvoicePage() {
       if (response.ok) {
         const data = await response.json()
         setClients(data)
+        return data
       }
     } catch (error) {
       console.error('Error fetching clients:', error)
+    }
+    return []
+  }
+
+  const fetchJobs = async () => {
+    try {
+      const response = await fetch('/api/jobs')
+      if (response.ok) {
+        const data = await response.json()
+        setJobs(data)
+        return data
+      }
+    } catch (error) {
+      console.error('Error fetching jobs:', error)
+    }
+    return []
+  }
+
+  const handleJobChange = async (jobId: string) => {
+    if (!jobId) {
+      setFormData({
+        ...formData,
+        clientId: '',
+        quotationId: '',
+        jobOrderId: '',
+      })
+      setItems([{ description: '', quantity: 1, unitPrice: 0, total: 0 }])
+      return
+    }
+
+    try {
+      const response = await fetch(`/api/jobs/${jobId}`)
+      if (!response.ok) {
+        throw new Error('Failed to fetch job details')
+      }
+      const job = await response.json()
+
+      setFormData({
+        ...formData,
+        clientId: job.clientId,
+        quotationId: job.quotationId || '',
+        jobOrderId: job.id,
+      })
+
+      if (job.quotation && job.quotation.items) {
+        const newItems = job.quotation.items.map((item: any) => ({
+          description: item.description,
+          quantity: parseFloat(item.quantity),
+          unitPrice: parseFloat(item.unitPrice),
+          total: parseFloat(item.total),
+        }))
+        setItems(newItems.length > 0 ? newItems : [{ description: '', quantity: 1, unitPrice: 0, total: 0 }])
+      } else {
+        setItems([{ description: '', quantity: 1, unitPrice: 0, total: 0 }])
+      }
+    } catch (error) {
+      console.error('Error handling job change:', error)
+      alert('Failed to load job details. Please try again.')
     }
   }
 
@@ -81,7 +146,6 @@ export default function NewInvoicePage() {
     const newItems = [...items]
     newItems[index] = { ...newItems[index], [field]: value }
 
-    // Recalculate total for this item
     if (field === 'quantity' || field === 'unitPrice') {
       newItems[index].total = newItems[index].quantity * newItems[index].unitPrice
     }
@@ -94,7 +158,7 @@ export default function NewInvoicePage() {
   }
 
   const calculateTax = () => {
-    return calculateSubtotal() * 0.0 // 0% tax, can be changed
+    return calculateSubtotal() * 0.0
   }
 
   const calculateTotal = () => {
@@ -145,52 +209,72 @@ export default function NewInvoicePage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Create New Invoice</h1>
-          <p className="text-muted-foreground">Generate an invoice for your client</p>
-        </div>
-        <Button
+       <div className="flex items-center justify-between">
+         <div>
+           <h1 className="text-3xl font-bold">Create New Invoice</h1>
+           <p className="text-muted-foreground">Generate an invoice for your client</p>
+         </div>
+         <Button
           variant="outline"
           onClick={() => router.push(`/${locale}/admin/invoices`)}
         >
           Cancel
         </Button>
-      </div>
-
-      <form onSubmit={handleSubmit}>
-        <div className="grid gap-6">
-          {/* Client & Reference Info */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Invoice Details</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="clientId">Client *</Label>
-                  <Select
+       </div>
+ 
+       <form onSubmit={handleSubmit}>
+         <div className="grid gap-6">
+           <Card>
+             <CardHeader>
+               <CardTitle>Invoice Details</CardTitle>
+             </CardHeader>
+             <CardContent className="space-y-4">
+               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                 <div className="space-y-2">
+                   <Label htmlFor="jobOrderId">Job (Optional)</Label>
+                   <Select
+                    value={formData.jobOrderId}
+                    onValueChange={handleJobChange}
+                  >
+                     <SelectTrigger>
+                       <SelectValue placeholder="Select a job to auto-fill" />
+                     </SelectTrigger>
+                     <SelectContent>
+                       <SelectItem value="">None</SelectItem>
+                       {jobs.map((job) => (
+                        <SelectItem key={job.id} value={job.id}>
+                          {job.jobNumber} - {job.client.name}
+                        </SelectItem>
+                      ))}
+                     </SelectContent>
+                   </Select>
+                 </div>
+ 
+                 <div className="space-y-2">
+                   <Label htmlFor="clientId">Client *</Label>
+                   <Select
                     value={formData.clientId}
                     onValueChange={(value) =>
                       setFormData({ ...formData, clientId: value })
                     }
+                    disabled={!!formData.jobOrderId}
                   >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select client" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {clients.map((client) => (
+                     <SelectTrigger>
+                       <SelectValue placeholder="Select client" />
+                     </SelectTrigger>
+                     <SelectContent>
+                       {clients.map((client) => (
                         <SelectItem key={client.id} value={client.id}>
                           {client.name} - {client.phone}
                         </SelectItem>
                       ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="dueDate">Due Date</Label>
-                  <Input
+                     </SelectContent>
+                   </Select>
+                 </div>
+ 
+                 <div className="space-y-2">
+                   <Label htmlFor="dueDate">Due Date</Label>
+                   <Input
                     id="dueDate"
                     type="date"
                     value={formData.dueDate}
@@ -198,31 +282,31 @@ export default function NewInvoicePage() {
                       setFormData({ ...formData, dueDate: e.target.value })
                     }
                   />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="status">Status</Label>
-                <Select
+                 </div>
+               </div>
+ 
+               <div className="space-y-2">
+                 <Label htmlFor="status">Status</Label>
+                 <Select
                   value={formData.status}
                   onValueChange={(value) =>
                     setFormData({ ...formData, status: value })
                   }
                 >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="DRAFT">Draft</SelectItem>
-                    <SelectItem value="SENT">Sent</SelectItem>
-                    <SelectItem value="PAID">Paid</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="notes">Notes (Optional)</Label>
-                <Textarea
+                   <SelectTrigger>
+                     <SelectValue />
+                   </SelectTrigger>
+                   <SelectContent>
+                     <SelectItem value="DRAFT">Draft</SelectItem>
+                     <SelectItem value="SENT">Sent</SelectItem>
+                     <SelectItem value="PAID">Paid</SelectItem>
+                   </SelectContent>
+                 </Select>
+               </div>
+ 
+               <div className="space-y-2">
+                 <Label htmlFor="notes">Notes (Optional)</Label>
+                 <Textarea
                   id="notes"
                   value={formData.notes}
                   onChange={(e) =>
@@ -231,45 +315,44 @@ export default function NewInvoicePage() {
                   placeholder="Add any additional notes or payment terms..."
                   rows={3}
                 />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Line Items */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle>Invoice Items</CardTitle>
-                <Button type="button" variant="outline" onClick={handleAddItem}>
+               </div>
+             </CardContent>
+           </Card>
+ 
+           <Card>
+             <CardHeader>
+               <div className="flex items-center justify-between">
+                 <CardTitle>Invoice Items</CardTitle>
+                 <Button type="button" variant="outline" onClick={handleAddItem}>
                   + Add Item
                 </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-[40%]">Description</TableHead>
-                    <TableHead className="w-[15%]">Quantity</TableHead>
-                    <TableHead className="w-[20%]">Unit Price</TableHead>
-                    <TableHead className="w-[20%]">Total</TableHead>
-                    <TableHead className="w-[5%]"></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {items.map((item, index) => (
+               </div>
+             </CardHeader>
+             <CardContent>
+               <Table>
+                 <TableHeader>
+                   <TableRow>
+                     <TableHead className="w-[40%]">Description</TableHead>
+                     <TableHead className="w-[15%]">Quantity</TableHead>
+                     <TableHead className="w-[20%]">Unit Price</TableHead>
+                     <TableHead className="w-[20%]">Total</TableHead>
+                     <TableHead className="w-[5%]"></TableHead>
+                   </TableRow>
+                 </TableHeader>
+                 <TableBody>
+                   {items.map((item, index) => (
                     <TableRow key={index}>
-                      <TableCell>
-                        <Input
+                       <TableCell>
+                         <Input
                           value={item.description}
                           onChange={(e) =>
                             handleItemChange(index, 'description', e.target.value)
                           }
                           placeholder="Item description"
                         />
-                      </TableCell>
-                      <TableCell>
-                        <Input
+                       </TableCell>
+                       <TableCell>
+                         <Input
                           type="number"
                           step="0.01"
                           min="0"
@@ -278,9 +361,9 @@ export default function NewInvoicePage() {
                             handleItemChange(index, 'quantity', parseFloat(e.target.value) || 0)
                           }
                         />
-                      </TableCell>
-                      <TableCell>
-                        <Input
+                       </TableCell>
+                       <TableCell>
+                         <Input
                           type="number"
                           step="0.001"
                           min="0"
@@ -289,14 +372,14 @@ export default function NewInvoicePage() {
                             handleItemChange(index, 'unitPrice', parseFloat(e.target.value) || 0)
                           }
                         />
-                      </TableCell>
-                      <TableCell>
-                        <div className="font-medium">
+                       </TableCell>
+                       <TableCell>
+                         <div className="font-medium">
                           {item.total.toFixed(3)} OMR
                         </div>
-                      </TableCell>
-                      <TableCell>
-                        {items.length > 1 && (
+                       </TableCell>
+                       <TableCell>
+                         {items.length > 1 && (
                           <Button
                             type="button"
                             variant="ghost"
@@ -306,49 +389,56 @@ export default function NewInvoicePage() {
                             ×
                           </Button>
                         )}
-                      </TableCell>
-                    </TableRow>
+                       </TableCell>
+                     </TableRow>
                   ))}
-                </TableBody>
-              </Table>
-
-              {/* Totals */}
-              <div className="mt-6 flex justify-end">
-                <div className="w-64 space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Subtotal:</span>
-                    <span className="font-medium">{calculateSubtotal().toFixed(3)} OMR</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Tax:</span>
-                    <span className="font-medium">{calculateTax().toFixed(3)} OMR</span>
-                  </div>
-                  <div className="border-t pt-2 flex justify-between">
-                    <span className="font-semibold">Total:</span>
-                    <span className="font-bold text-primary">
+                 </TableBody>
+               </Table>
+ 
+               <div className="mt-6 flex justify-end">
+                 <div className="w-64 space-y-2">
+                   <div className="flex justify-between text-sm">
+                     <span className="text-muted-foreground">Subtotal:</span>
+                     <span className="font-medium">{calculateSubtotal().toFixed(3)} OMR</span>
+                   </div>
+                   <div className="flex justify-between text-sm">
+                     <span className="text-muted-foreground">Tax:</span>
+                     <span className="font-medium">{calculateTax().toFixed(3)} OMR</span>
+                   </div>
+                   <div className="border-t pt-2 flex justify-between">
+                     <span className="font-semibold">Total:</span>
+                     <span className="font-bold text-primary">
                       {calculateTotal().toFixed(3)} OMR
                     </span>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Submit Button */}
-          <div className="flex justify-end gap-2">
-            <Button
+                   </div>
+                 </div>
+               </div>
+             </CardContent>
+           </Card>
+ 
+           <div className="flex justify-end gap-2">
+             <Button
               type="button"
               variant="outline"
               onClick={() => router.push(`/${locale}/admin/invoices`)}
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={loading}>
+             <Button type="submit" disabled={loading}>
               {loading ? 'Creating...' : 'Create Invoice'}
             </Button>
-          </div>
-        </div>
-      </form>
-    </div>
+           </div>
+         </div>
+       </form>
+     </div>
+  )
+}
+
+
+export default function NewInvoicePage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <NewInvoiceForm />
+    </Suspense>
   )
 }

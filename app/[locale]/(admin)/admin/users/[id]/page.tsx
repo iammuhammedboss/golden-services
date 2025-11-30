@@ -20,7 +20,7 @@ import { authOptions } from '@/lib/auth'
 export default async function UserDetailPage({
   params,
 }: {
-  params: { id: string }
+  params: { id: string; locale: string }
 }) {
   // Check authentication
   const session = await getServerSession(authOptions)
@@ -109,7 +109,7 @@ export default async function UserDetailPage({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" asChild>
-            <Link href="/admin/users">
+            <Link href={`/${params.locale}/admin/users`}>
               <ChevronLeft className="h-5 w-5" />
             </Link>
           </Button>
@@ -301,7 +301,7 @@ export default async function UserDetailPage({
                     <TableRow key={assignment.id}>
                       <TableCell className="font-medium">
                         <Link
-                          href={`/admin/jobs/${assignment.jobOrder.id}`}
+                          href={`/${params.locale}/admin/jobs/${assignment.jobOrder.id}`}
                           className="text-blue-600 hover:underline"
                         >
                           {assignment.jobOrder.jobNumber}

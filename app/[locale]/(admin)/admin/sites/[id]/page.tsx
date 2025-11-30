@@ -18,7 +18,7 @@ import { ChevronLeft, MapPin, Building, Phone, Mail } from 'lucide-react'
 export default async function SiteDetailPage({
   params,
 }: {
-  params: { id: string }
+  params: { id: string; locale: string }
 }) {
   const site = await prisma.site.findUnique({
     where: { id: params.id },
@@ -70,7 +70,7 @@ export default async function SiteDetailPage({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" asChild>
-            <Link href="/admin/sites">
+            <Link href={`/${params.locale}/admin/sites`}>
               <ChevronLeft className="h-5 w-5" />
             </Link>
           </Button>
@@ -130,7 +130,7 @@ export default async function SiteDetailPage({
             <div>
               <span className="text-sm font-medium">Name:</span>{' '}
               <Link
-                href={`/admin/clients/${site.client.id}`}
+                href={`/${params.locale}/admin/clients/${site.client.id}`}
                 className="text-sm text-blue-600 hover:underline"
               >
                 {site.client.name}

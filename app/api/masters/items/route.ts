@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
       where.isActive = true
     }
 
-    const itemTypes = await prisma.itemTypeMaster.findMany({
+    const itemTypes = await prisma.itemMaster.findMany({
       where,
       orderBy: [
         { sortOrder: 'asc' },
@@ -60,17 +60,17 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { name, category, description, isActive, sortOrder } = body
+    const { name, category, description, isActive, sortOrder, unitId, defaultPrice, requiresPhotos, requiresChecklist, tags } = body
 
-    if (!name || !category) {
+    if (!name || !category || !unitId) {
       return NextResponse.json(
-        { error: 'Name and category are required' },
+        { error: 'Name, category, and unit are required' },
         { status: 400 }
       )
     }
 
     // Check for duplicate name
-    const existing = await prisma.itemTypeMaster.findFirst({
+    const existing = await prisma.itemMaster.findFirst({
       where: {
         name,
         deletedAt: null,
@@ -79,18 +79,23 @@ export async function POST(request: NextRequest) {
 
     if (existing) {
       return NextResponse.json(
-        { error: 'Item type with this name already exists' },
+        { error: 'Item with this name already exists' },
         { status: 409 }
       )
     }
 
-    const itemType = await prisma.itemTypeMaster.create({
+    const item = await prisma.itemMaster.create({
       data: {
         name: name.toUpperCase(),
         category: category.toUpperCase(),
         description,
         isActive: isActive !== undefined ? isActive : true,
         sortOrder: sortOrder || 0,
+        unitId,
+        defaultPrice: defaultPrice ? parseFloat(defaultPrice) : null,
+        requiresPhotos: requiresPhotos !== undefined ? requiresPhotos : false,
+        requiresChecklist: requiresChecklist !== undefined ? requiresChecklist : true,
+        tags: tags || [],
       },
     })
 
@@ -98,9 +103,9 @@ export async function POST(request: NextRequest) {
     await createAuditLog({
       userId: user.id,
       action: 'CREATE',
-      entityType: 'ItemTypeMaster',
-      entityId: itemType.id,
-      newValues: itemType,
+      entityType: 'ItemMaster',
+      entityId: item.id,
+      newValues: item,
     })
 
     return NextResponse.json(itemType, { status: 201 })

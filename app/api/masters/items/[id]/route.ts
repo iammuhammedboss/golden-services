@@ -18,7 +18,7 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const itemType = await prisma.itemTypeMaster.findUnique({
+    const itemType = await prisma.itemMaster.findUnique({
       where: { id: params.id },
     })
 
@@ -51,22 +51,22 @@ export async function PATCH(
       return NextResponse.json({ error: 'Forbidden: Owner access required' }, { status: 403 })
     }
 
-    const existingItemType = await prisma.itemTypeMaster.findUnique({
+    const existingItem = await prisma.itemMaster.findUnique({
       where: { id: params.id },
     })
 
-    if (!existingItemType || existingItemType.deletedAt) {
-      return NextResponse.json({ error: 'Item type not found' }, { status: 404 })
+    if (!existingItem || existingItem.deletedAt) {
+      return NextResponse.json({ error: 'Item not found' }, { status: 404 })
     }
 
     const body = await request.json()
-    const { name, category, description, isActive, sortOrder } = body
+    const { name, category, description, isActive, sortOrder, unitId, defaultPrice, requiresPhotos, requiresChecklist, tags } = body
 
     // Check for duplicate name if name is being changed
-    if (name && name !== existingItemType.name) {
-      const duplicate = await prisma.itemTypeMaster.findFirst({
+    if (name && name.toUpperCase() !== existingItem.name) {
+      const duplicate = await prisma.itemMaster.findFirst({
         where: {
-          name,
+          name: name.toUpperCase(),
           id: { not: params.id },
           deletedAt: null,
         },
@@ -74,7 +74,7 @@ export async function PATCH(
 
       if (duplicate) {
         return NextResponse.json(
-          { error: 'Item type with this name already exists' },
+          { error: 'Item with this name already exists' },
           { status: 409 }
         )
       }
@@ -86,8 +86,13 @@ export async function PATCH(
     if (description !== undefined) updateData.description = description
     if (isActive !== undefined) updateData.isActive = isActive
     if (sortOrder !== undefined) updateData.sortOrder = sortOrder
+    if (unitId !== undefined) updateData.unitId = unitId
+    if (defaultPrice !== undefined) updateData.defaultPrice = parseFloat(defaultPrice)
+    if (requiresPhotos !== undefined) updateData.requiresPhotos = requiresPhotos
+    if (requiresChecklist !== undefined) updateData.requiresChecklist = requiresChecklist
+    if (tags !== undefined) updateData.tags = tags
 
-    const itemType = await prisma.itemTypeMaster.update({
+    const item = await prisma.itemMaster.update({
       where: { id: params.id },
       data: updateData,
     })
@@ -96,15 +101,15 @@ export async function PATCH(
     await createAuditLog({
       userId: user.id,
       action: 'UPDATE',
-      entityType: 'ItemTypeMaster',
-      entityId: itemType.id,
-      oldValues: existingItemType,
-      newValues: itemType,
+      entityType: 'ItemMaster',
+      entityId: item.id,
+      oldValues: existingItem,
+      newValues: item,
     })
 
-    return NextResponse.json(itemType)
+    return NextResponse.json(item)
   } catch (error) {
-    console.error('PATCH /api/masters/item-types/[id] error:', error)
+    console.error('PATCH /api/masters/items/[id] error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -127,16 +132,16 @@ export async function DELETE(
       return NextResponse.json({ error: 'Forbidden: Owner access required' }, { status: 403 })
     }
 
-    const itemType = await prisma.itemTypeMaster.findUnique({
+    const itemType = await prisma.itemMaster.findUnique({
       where: { id: params.id },
     })
 
     if (!itemType || itemType.deletedAt) {
-      return NextResponse.json({ error: 'Item type not found' }, { status: 404 })
+      return NextResponse.json({ error: 'Item not found' }, { status: 404 })
     }
 
     // Soft delete: Update deletedAt and deletedById
-    const deleted = await prisma.itemTypeMaster.update({
+    const deleted = await prisma.itemMaster.update({
       where: { id: params.id },
       data: {
         deletedAt: new Date(),
@@ -145,11 +150,11 @@ export async function DELETE(
     })
 
     // Create deleted record snapshot
-    await softDelete('ItemTypeMaster', params.id, user.id, itemType)
+    await softDelete('ItemMaster', params.id, user.id, itemType)
 
-    return NextResponse.json({ message: 'Item type deleted successfully', data: deleted })
+    return NextResponse.json({ message: 'Item deleted successfully', data: deleted })
   } catch (error) {
-    console.error('DELETE /api/masters/item-types/[id] error:', error)
+    console.error('DELETE /api/masters/items/[id] error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

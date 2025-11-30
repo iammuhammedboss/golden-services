@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/table'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { prisma } from '@/lib/prisma'
-import { formatDate, enumToReadable, getStatusColor } from '@/lib/utils'
+import { formatDate, enumToReadable, getStatusColor, formatTime } from '@/lib/utils'
 
 export default async function JobsPage({ params }: { params: { locale: string } }) {
   const jobs = await prisma.jobOrder.findMany({
@@ -39,6 +39,11 @@ export default async function JobsPage({ params }: { params: { locale: string } 
             },
           },
           roleInJob: true,
+        },
+      },
+      _count: {
+        select: {
+          invoices: true,
         },
       },
     },
@@ -190,9 +195,9 @@ export default async function JobsPage({ params }: { params: { locale: string } 
                     <TableCell>
                       {job.scheduledStartTime && job.scheduledEndTime ? (
                         <div className="text-sm">
-                          <div>{formatDate(job.scheduledStartTime, 'p')}</div>
+                          <div>{formatTime(job.scheduledStartTime)}</div>
                           <div className="text-muted-foreground">
-                            to {formatDate(job.scheduledEndTime, 'p')}
+                            to {formatTime(job.scheduledEndTime)}
                           </div>
                         </div>
                       ) : (
@@ -223,9 +228,18 @@ export default async function JobsPage({ params }: { params: { locale: string } 
                       <div className="text-sm">{formatDate(job.createdAt, 'PP')}</div>
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button variant="ghost" size="sm" asChild>
-                        <Link href={`/admin/jobs/${job.id}`}>View</Link>
-                      </Button>
+                      <div className="flex justify-end items-center gap-2">
+                        <Button variant="ghost" size="sm" asChild>
+                          <Link href={`/${params.locale}/admin/jobs/${job.id}`}>View</Link>
+                        </Button>
+                        {job.quotationId && job._count.invoices === 0 && (
+                           <Button variant="outline" size="sm" asChild>
+                           <Link href={`/${params.locale}/admin/invoices/new?jobId=${job.id}`}>
+                             Create Invoice
+                           </Link>
+                         </Button>
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))

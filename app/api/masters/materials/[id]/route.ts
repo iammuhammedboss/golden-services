@@ -6,7 +6,7 @@ import { canManageMasters } from '@/lib/permissions'
 import { createAuditLog, softDelete } from '@/lib/audit'
 import type { UserWithRoles } from '@/lib/permissions'
 
-// GET /api/masters/sofa-types/[id] - Get single sofa type
+// GET /api/masters/materials/[id] - Get single material
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -18,22 +18,22 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const sofaType = await prisma.sofaTypeMaster.findUnique({
+    const material = await prisma.materialMaster.findUnique({
       where: { id: params.id },
     })
 
-    if (!sofaType || sofaType.deletedAt) {
-      return NextResponse.json({ error: 'Sofa type not found' }, { status: 404 })
+    if (!material || material.deletedAt) {
+      return NextResponse.json({ error: 'Material not found' }, { status: 404 })
     }
 
-    return NextResponse.json(sofaType)
+    return NextResponse.json(material)
   } catch (error) {
-    console.error('GET /api/masters/sofa-types/[id] error:', error)
+    console.error('GET /api/masters/materials/[id] error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
-// PATCH /api/masters/sofa-types/[id] - Update sofa type (OWNER only)
+// PATCH /api/masters/materials/[id] - Update material (OWNER only)
 export async function PATCH(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -51,20 +51,20 @@ export async function PATCH(
       return NextResponse.json({ error: 'Forbidden: Owner access required' }, { status: 403 })
     }
 
-    const existingSofaType = await prisma.sofaTypeMaster.findUnique({
+    const existingMaterial = await prisma.materialMaster.findUnique({
       where: { id: params.id },
     })
 
-    if (!existingSofaType || existingSofaType.deletedAt) {
-      return NextResponse.json({ error: 'Sofa type not found' }, { status: 404 })
+    if (!existingMaterial || existingMaterial.deletedAt) {
+      return NextResponse.json({ error: 'Material not found' }, { status: 404 })
     }
 
     const body = await request.json()
-    const { name, description, isActive, sortOrder } = body
+    const { name, description, isActive } = body
 
     // Check for duplicate name if name is being changed
-    if (name && name !== existingSofaType.name) {
-      const duplicate = await prisma.sofaTypeMaster.findFirst({
+    if (name && name !== existingMaterial.name) {
+      const duplicate = await prisma.materialMaster.findFirst({
         where: {
           name,
           id: { not: params.id },
@@ -74,19 +74,18 @@ export async function PATCH(
 
       if (duplicate) {
         return NextResponse.json(
-          { error: 'Sofa type with this name already exists' },
+          { error: 'Material with this name already exists' },
           { status: 409 }
         )
       }
     }
 
     const updateData: any = {}
-    if (name !== undefined) updateData.name = name.toUpperCase()
+    if (name !== undefined) updateData.name = name
     if (description !== undefined) updateData.description = description
     if (isActive !== undefined) updateData.isActive = isActive
-    if (sortOrder !== undefined) updateData.sortOrder = sortOrder
 
-    const sofaType = await prisma.sofaTypeMaster.update({
+    const material = await prisma.materialMaster.update({
       where: { id: params.id },
       data: updateData,
     })
@@ -95,20 +94,20 @@ export async function PATCH(
     await createAuditLog({
       userId: user.id,
       action: 'UPDATE',
-      entityType: 'SofaTypeMaster',
-      entityId: sofaType.id,
-      oldValues: existingSofaType,
-      newValues: sofaType,
+      entityType: 'MaterialMaster',
+      entityId: material.id,
+      oldValues: existingMaterial,
+      newValues: material,
     })
 
-    return NextResponse.json(sofaType)
+    return NextResponse.json(material)
   } catch (error) {
-    console.error('PATCH /api/masters/sofa-types/[id] error:', error)
+    console.error('PATCH /api/masters/materials/[id] error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
-// DELETE /api/masters/sofa-types/[id] - Soft delete sofa type (OWNER only)
+// DELETE /api/masters/materials/[id] - Soft delete material (OWNER only)
 export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -126,16 +125,16 @@ export async function DELETE(
       return NextResponse.json({ error: 'Forbidden: Owner access required' }, { status: 403 })
     }
 
-    const sofaType = await prisma.sofaTypeMaster.findUnique({
+    const material = await prisma.materialMaster.findUnique({
       where: { id: params.id },
     })
 
-    if (!sofaType || sofaType.deletedAt) {
-      return NextResponse.json({ error: 'Sofa type not found' }, { status: 404 })
+    if (!material || material.deletedAt) {
+      return NextResponse.json({ error: 'Material not found' }, { status: 404 })
     }
 
     // Soft delete: Update deletedAt and deletedById
-    const deleted = await prisma.sofaTypeMaster.update({
+    const deleted = await prisma.materialMaster.update({
       where: { id: params.id },
       data: {
         deletedAt: new Date(),
@@ -144,11 +143,11 @@ export async function DELETE(
     })
 
     // Create deleted record snapshot
-    await softDelete('SofaTypeMaster', params.id, user.id, sofaType)
+    await softDelete('MaterialMaster', params.id, user.id, material)
 
-    return NextResponse.json({ message: 'Sofa type deleted successfully', data: deleted })
+    return NextResponse.json({ message: 'Material deleted successfully', data: deleted })
   } catch (error) {
-    console.error('DELETE /api/masters/sofa-types/[id] error:', error)
+    console.error('DELETE /api/masters/materials/[id] error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

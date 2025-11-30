@@ -6,7 +6,7 @@ import { canManageMasters } from '@/lib/permissions'
 import { createAuditLog } from '@/lib/audit'
 import type { UserWithRoles } from '@/lib/permissions'
 
-// GET /api/masters/window-sizes - List all window sizes (including deleted if requested)
+// GET /api/masters/units - List all units (including deleted if requested)
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
@@ -29,22 +29,21 @@ export async function GET(request: NextRequest) {
       where.isActive = true
     }
 
-    const windowSizes = await prisma.windowSizeMaster.findMany({
+    const units = await prisma.unitMaster.findMany({
       where,
-      orderBy: [
-        { sortOrder: 'asc' },
-        { name: 'asc' },
-      ],
+      orderBy: {
+        name: 'asc',
+      },
     })
 
-    return NextResponse.json(windowSizes)
+    return NextResponse.json(units)
   } catch (error) {
-    console.error('GET /api/masters/window-sizes error:', error)
+    console.error('GET /api/masters/units error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
-// POST /api/masters/window-sizes - Create new window size (OWNER only)
+// POST /api/masters/units - Create new unit (OWNER only)
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
@@ -60,7 +59,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { name, description, isActive, sortOrder } = body
+    const { name, description, isActive } = body
 
     if (!name) {
       return NextResponse.json(
@@ -70,7 +69,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check for duplicate name
-    const existing = await prisma.windowSizeMaster.findFirst({
+    const existing = await prisma.unitMaster.findFirst({
       where: {
         name,
         deletedAt: null,
@@ -79,17 +78,16 @@ export async function POST(request: NextRequest) {
 
     if (existing) {
       return NextResponse.json(
-        { error: 'Window size with this name already exists' },
+        { error: 'Unit with this name already exists' },
         { status: 409 }
       )
     }
 
-    const windowSize = await prisma.windowSizeMaster.create({
+    const unit = await prisma.unitMaster.create({
       data: {
-        name: name.toUpperCase(),
+        name,
         description,
         isActive: isActive !== undefined ? isActive : true,
-        sortOrder: sortOrder || 0,
       },
     })
 
@@ -97,14 +95,14 @@ export async function POST(request: NextRequest) {
     await createAuditLog({
       userId: user.id,
       action: 'CREATE',
-      entityType: 'WindowSizeMaster',
-      entityId: windowSize.id,
-      newValues: windowSize,
+      entityType: 'UnitMaster',
+      entityId: unit.id,
+      newValues: unit,
     })
 
-    return NextResponse.json(windowSize, { status: 201 })
+    return NextResponse.json(unit, { status: 201 })
   } catch (error) {
-    console.error('POST /api/masters/window-sizes error:', error)
+    console.error('POST /api/masters/units error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

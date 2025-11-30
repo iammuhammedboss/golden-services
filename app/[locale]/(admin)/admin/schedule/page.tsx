@@ -15,7 +15,11 @@ import { prisma } from '@/lib/prisma'
 import { formatDate, getStatusColor, enumToReadable } from '@/lib/utils'
 import { Calendar, MapPin, FileText, Briefcase, Clock } from 'lucide-react'
 
-export default async function SchedulePage() {
+export default async function SchedulePage({
+  params,
+}: {
+  params: { locale: string }
+}) {
   // Get today's date at midnight
   const today = new Date()
   today.setHours(0, 0, 0, 0)
@@ -158,7 +162,7 @@ export default async function SchedulePage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Link href="/admin/jobs/calendar">
+          <Link href={`/${params.locale}/admin/jobs/calendar`}>
             <Button variant="outline">
               <Calendar className="h-4 w-4 mr-2" />
               Calendar View
@@ -292,7 +296,7 @@ export default async function SchedulePage() {
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right">
-                          <Link href={`/admin/site-visits/${visit.id}`}>
+                          <Link href={`/${params.locale}/admin/site-visits/${visit.id}`}>
                             <Button variant="ghost" size="sm">
                               View
                             </Button>
@@ -372,7 +376,7 @@ export default async function SchedulePage() {
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right">
-                          <Link href={`/admin/jobs/${job.id}`}>
+                          <Link href={`/${params.locale}/admin/jobs/${job.id}`}>
                             <Button variant="ghost" size="sm">
                               View
                             </Button>
@@ -453,7 +457,7 @@ export default async function SchedulePage() {
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right">
-                          <Link href={`/admin/quotations/${quotation.id}`}>
+                          <Link href={`/${params.locale}/admin/quotations/${quotation.id}`}>
                             <Button variant="ghost" size="sm">
                               View
                             </Button>

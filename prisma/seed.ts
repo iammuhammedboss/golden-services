@@ -52,6 +52,15 @@ async function main() {
           roleId: ownerRole.id,
         },
       },
+      // Initialize notification settings for the owner
+      notificationSettings: {
+        create: {
+          reminders: {
+            job_scheduled: { email: true, sms: false },
+            job_reminder_30min: { push: true },
+          },
+        },
+      },
     },
   })
   console.log('✓ Owner user created:', ownerUser.email)
@@ -80,7 +89,7 @@ async function main() {
   const createdCategories: { [key: string]: any } = {}
   for (const categoryData of categories) {
     const category = await prisma.serviceCategory.upsert({
-      where: { id: categoryData.name },
+      where: { name: categoryData.name }, // Use name for upsert where to avoid conflicts
       update: {},
       create: categoryData,
     })
@@ -88,7 +97,185 @@ async function main() {
   }
   console.log('✓ Service categories created')
 
-  // 4. Create Services
+  // 4. Create Units Master
+  console.log('Creating units master...')
+  const unitsData = [
+    { name: 'Piece', description: 'Individual item' },
+    { name: 'Sq Meter', description: 'Square meter' },
+    { name: 'Running Meter', description: 'Linear meter' },
+    { name: 'Hour', description: 'Per hour' },
+    { name: 'Visit', description: 'Per visit' },
+    { name: 'Lump Sum', description: 'Fixed price' },
+    { name: 'Set', description: 'A collection of items' },
+    { name: 'Kilogram', description: 'Weight in kilograms' },
+  ]
+  const createdUnits: { [key: string]: any } = {}
+  for (const unitData of unitsData) {
+    const unit = await prisma.unitMaster.upsert({
+      where: { name: unitData.name },
+      update: {},
+      create: unitData,
+    })
+    createdUnits[unitData.name] = unit
+  }
+  console.log('✓ Units master created')
+
+  // 5. Create Item Master
+  console.log('Creating item master...')
+  const itemMasterData = [
+    {
+      name: 'Sofa',
+      category: 'Furniture',
+      unitName: 'Piece',
+      defaultPrice: '3.000',
+      requiresPhotos: true,
+      requiresChecklist: true,
+      tags: ['fabric', 'leather'],
+    },
+    {
+      name: 'Carpet',
+      category: 'Flooring',
+      unitName: 'Sq Meter',
+      defaultPrice: '1.500',
+      requiresPhotos: true,
+      requiresChecklist: true,
+      tags: ['rug', 'textile'],
+    },
+    {
+      name: 'Window',
+      category: 'Fixture',
+      unitName: 'Piece',
+      defaultPrice: '2.000',
+      requiresPhotos: true,
+      requiresChecklist: true,
+      tags: ['glass'],
+    },
+    {
+      name: 'Mattress',
+      category: 'Bedding',
+      unitName: 'Piece',
+      defaultPrice: '5.000',
+      requiresPhotos: true,
+      requiresChecklist: true,
+      tags: ['bed'],
+    },
+    {
+      name: 'Curtain Panel',
+      category: 'Textile',
+      unitName: 'Piece',
+      defaultPrice: '4.000',
+      requiresPhotos: true,
+      requiresChecklist: true,
+      tags: ['fabric', 'window'],
+    },
+    {
+      name: 'Office Chair',
+      category: 'Furniture',
+      unitName: 'Piece',
+      defaultPrice: '2.000',
+      requiresPhotos: false,
+      requiresChecklist: true,
+      tags: ['office'],
+    },
+  ]
+  for (const itemData of itemMasterData) {
+    const unit = createdUnits[itemData.unitName]
+    if (!unit) {
+      console.error(`Unit not found for item ${itemData.name}: ${itemData.unitName}`)
+      continue
+    }
+    await prisma.itemMaster.upsert({
+      where: { name: itemData.name },
+      update: {},
+      create: {
+        name: itemData.name,
+        category: itemData.category,
+        unitId: unit.id,
+        defaultPrice: itemData.defaultPrice,
+        requiresPhotos: itemData.requiresPhotos,
+        requiresChecklist: itemData.requiresChecklist,
+        tags: itemData.tags,
+        isActive: true,
+      },
+    })
+  }
+  console.log('✓ Item master created')
+
+  // 6. Create Equipment Master
+  console.log('Creating equipment master...')
+  const equipmentData = [
+    { name: 'Vacuum Cleaner', description: 'Industrial vacuum cleaner' },
+    { name: 'Injection Extraction Machine', description: 'For deep cleaning carpets/upholstery' },
+    { name: 'Scrubbing Machine', description: 'Floor scrubbing machine' },
+    { name: 'Polisher', description: 'Floor polishing machine' },
+    { name: 'Steam Cleaner', description: 'High-pressure steam cleaner' },
+  ]
+  for (const eqData of equipmentData) {
+    await prisma.equipmentMaster.upsert({
+      where: { name: eqData.name },
+      update: {},
+      create: eqData,
+    })
+  }
+  console.log('✓ Equipment master created')
+
+  // 7. Create Material Master
+  console.log('Creating material master...')
+  const materialData = [
+    { name: 'All-purpose Cleaner', description: 'General cleaning solution' },
+    { name: 'Window Cleaner', description: 'Glass cleaning solution' },
+    { name: 'Carpet Shampoo', description: 'Specialized carpet cleaning shampoo' },
+    { name: 'Disinfectant', description: 'Hospital-grade disinfectant' },
+    { name: 'Pest Control Spray', description: 'Insecticide for general pests' },
+  ]
+  for (const matData of materialData) {
+    await prisma.materialMaster.upsert({
+      where: { name: matData.name },
+      update: {},
+      create: matData,
+    })
+  }
+  console.log('✓ Material master created')
+
+  // 8. Create Room Type Master
+  console.log('Creating room type master...')
+  const roomTypeData = [
+    { name: 'Hall', description: 'Living area' },
+    { name: 'Bedroom', description: 'Sleeping area' },
+    { name: 'Kitchen', description: 'Food preparation area' },
+    { name: 'Bathroom', description: 'Restroom' },
+    { name: 'Office Cubicle', description: 'Individual office workspace' },
+    { name: 'Conference Room', description: 'Meeting room' },
+    { name: 'Warehouse Zone', description: 'Storage area' },
+    { name: 'Dental Treatment Room', description: 'Medical treatment room' },
+  ]
+  for (const rtData of roomTypeData) {
+    await prisma.roomTypeMaster.upsert({
+      where: { name: rtData.name },
+      update: {},
+      create: rtData,
+    })
+  }
+  console.log('✓ Room type master created')
+
+  // 9. Create Payment Method Master
+  console.log('Creating payment method master...')
+  const paymentMethodData = [
+    { name: 'CASH', description: 'Cash payment' },
+    { name: 'CARD', description: 'Credit/Debit Card' },
+    { name: 'BANK_TRANSFER', description: 'Bank Transfer' },
+    { name: 'CHEQUE', description: 'Cheque payment' },
+  ]
+  for (const pmData of paymentMethodData) {
+    await prisma.paymentMethodMaster.upsert({
+      where: { name: pmData.name },
+      update: {},
+      create: pmData,
+    })
+  }
+  console.log('✓ Payment method master created')
+
+  // 10. Create Services (Existing logic for services remains)
   console.log('Creating services...')
   const services = [
     // Cleaning Services
@@ -309,3 +496,4 @@ main()
     await prisma.$disconnect()
     process.exit(1)
   })
+

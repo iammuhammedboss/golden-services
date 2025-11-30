@@ -6,7 +6,7 @@ import { canManageMasters } from '@/lib/permissions'
 import { createAuditLog, softDelete } from '@/lib/audit'
 import type { UserWithRoles } from '@/lib/permissions'
 
-// GET /api/masters/window-sizes/[id] - Get single window size
+// GET /api/masters/equipment/[id] - Get single equipment
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -18,22 +18,22 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const windowSize = await prisma.windowSizeMaster.findUnique({
+    const equipment = await prisma.equipmentMaster.findUnique({
       where: { id: params.id },
     })
 
-    if (!windowSize || windowSize.deletedAt) {
-      return NextResponse.json({ error: 'Window size not found' }, { status: 404 })
+    if (!equipment || equipment.deletedAt) {
+      return NextResponse.json({ error: 'Equipment not found' }, { status: 404 })
     }
 
-    return NextResponse.json(windowSize)
+    return NextResponse.json(equipment)
   } catch (error) {
-    console.error('GET /api/masters/window-sizes/[id] error:', error)
+    console.error('GET /api/masters/equipment/[id] error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
-// PATCH /api/masters/window-sizes/[id] - Update window size (OWNER only)
+// PATCH /api/masters/equipment/[id] - Update equipment (OWNER only)
 export async function PATCH(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -51,20 +51,20 @@ export async function PATCH(
       return NextResponse.json({ error: 'Forbidden: Owner access required' }, { status: 403 })
     }
 
-    const existingWindowSize = await prisma.windowSizeMaster.findUnique({
+    const existingEquipment = await prisma.equipmentMaster.findUnique({
       where: { id: params.id },
     })
 
-    if (!existingWindowSize || existingWindowSize.deletedAt) {
-      return NextResponse.json({ error: 'Window size not found' }, { status: 404 })
+    if (!existingEquipment || existingEquipment.deletedAt) {
+      return NextResponse.json({ error: 'Equipment not found' }, { status: 404 })
     }
 
     const body = await request.json()
-    const { name, description, isActive, sortOrder } = body
+    const { name, description, isActive } = body
 
     // Check for duplicate name if name is being changed
-    if (name && name !== existingWindowSize.name) {
-      const duplicate = await prisma.windowSizeMaster.findFirst({
+    if (name && name !== existingEquipment.name) {
+      const duplicate = await prisma.equipmentMaster.findFirst({
         where: {
           name,
           id: { not: params.id },
@@ -74,19 +74,18 @@ export async function PATCH(
 
       if (duplicate) {
         return NextResponse.json(
-          { error: 'Window size with this name already exists' },
+          { error: 'Equipment with this name already exists' },
           { status: 409 }
         )
       }
     }
 
     const updateData: any = {}
-    if (name !== undefined) updateData.name = name.toUpperCase()
+    if (name !== undefined) updateData.name = name
     if (description !== undefined) updateData.description = description
     if (isActive !== undefined) updateData.isActive = isActive
-    if (sortOrder !== undefined) updateData.sortOrder = sortOrder
 
-    const windowSize = await prisma.windowSizeMaster.update({
+    const equipment = await prisma.equipmentMaster.update({
       where: { id: params.id },
       data: updateData,
     })
@@ -95,20 +94,20 @@ export async function PATCH(
     await createAuditLog({
       userId: user.id,
       action: 'UPDATE',
-      entityType: 'WindowSizeMaster',
-      entityId: windowSize.id,
-      oldValues: existingWindowSize,
-      newValues: windowSize,
+      entityType: 'EquipmentMaster',
+      entityId: equipment.id,
+      oldValues: existingEquipment,
+      newValues: equipment,
     })
 
-    return NextResponse.json(windowSize)
+    return NextResponse.json(equipment)
   } catch (error) {
-    console.error('PATCH /api/masters/window-sizes/[id] error:', error)
+    console.error('PATCH /api/masters/equipment/[id] error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
-// DELETE /api/masters/window-sizes/[id] - Soft delete window size (OWNER only)
+// DELETE /api/masters/equipment/[id] - Soft delete equipment (OWNER only)
 export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -126,16 +125,16 @@ export async function DELETE(
       return NextResponse.json({ error: 'Forbidden: Owner access required' }, { status: 403 })
     }
 
-    const windowSize = await prisma.windowSizeMaster.findUnique({
+    const equipment = await prisma.equipmentMaster.findUnique({
       where: { id: params.id },
     })
 
-    if (!windowSize || windowSize.deletedAt) {
-      return NextResponse.json({ error: 'Window size not found' }, { status: 404 })
+    if (!equipment || equipment.deletedAt) {
+      return NextResponse.json({ error: 'Equipment not found' }, { status: 404 })
     }
 
     // Soft delete: Update deletedAt and deletedById
-    const deleted = await prisma.windowSizeMaster.update({
+    const deleted = await prisma.equipmentMaster.update({
       where: { id: params.id },
       data: {
         deletedAt: new Date(),
@@ -144,11 +143,11 @@ export async function DELETE(
     })
 
     // Create deleted record snapshot
-    await softDelete('WindowSizeMaster', params.id, user.id, windowSize)
+    await softDelete('EquipmentMaster', params.id, user.id, equipment)
 
-    return NextResponse.json({ message: 'Window size deleted successfully', data: deleted })
+    return NextResponse.json({ message: 'Equipment deleted successfully', data: deleted })
   } catch (error) {
-    console.error('DELETE /api/masters/window-sizes/[id] error:', error)
+    console.error('DELETE /api/masters/equipment/[id] error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

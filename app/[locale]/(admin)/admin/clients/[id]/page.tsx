@@ -18,7 +18,7 @@ import { ChevronLeft, Mail, Phone, MapPin } from 'lucide-react'
 export default async function ClientDetailPage({
   params,
 }: {
-  params: { id: string }
+  params: { id: string; locale: string }
 }) {
   const client = await prisma.client.findUnique({
     where: { id: params.id },
@@ -78,7 +78,7 @@ export default async function ClientDetailPage({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" asChild>
-            <Link href="/admin/clients">
+            <Link href={`/${params.locale}/admin/clients`}>
               <ChevronLeft className="h-5 w-5" />
             </Link>
           </Button>

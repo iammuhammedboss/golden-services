@@ -1,5 +1,6 @@
 import React from 'react'
 import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer'
+import { format } from 'date-fns'
 
 const styles = StyleSheet.create({
   page: {
@@ -177,14 +178,14 @@ export const InvoicePDF = ({ invoice }: { invoice: InvoiceData }) => (
         <View style={styles.row}>
           <Text style={styles.label}>Invoice Date:</Text>
           <Text style={styles.value}>
-            {new Date(invoice.invoiceDate).toLocaleDateString()}
+            {format(new Date(invoice.invoiceDate), 'PP')}
           </Text>
         </View>
         {invoice.dueDate && (
           <View style={styles.row}>
             <Text style={styles.label}>Due Date:</Text>
             <Text style={styles.value}>
-              {new Date(invoice.dueDate).toLocaleDateString()}
+              {format(new Date(invoice.dueDate), 'PP')}
             </Text>
           </View>
         )}
@@ -216,7 +217,7 @@ export const InvoicePDF = ({ invoice }: { invoice: InvoiceData }) => (
           <View style={styles.row}>
             <Text style={styles.label}>Scheduled Date:</Text>
             <Text style={styles.value}>
-              {new Date(invoice.jobOrder.scheduledDate).toLocaleDateString()}
+              {format(new Date(invoice.jobOrder.scheduledDate), 'PP')}
             </Text>
           </View>
         </View>
@@ -235,9 +236,9 @@ export const InvoicePDF = ({ invoice }: { invoice: InvoiceData }) => (
             <Text style={styles.tableColDesc}>{item.description}</Text>
             <Text style={styles.tableColQty}>{item.quantity}</Text>
             <Text style={styles.tableColPrice}>
-              {item.unitPrice.toFixed(3)} AED
+              {item.unitPrice.toFixed(3)} OMR
             </Text>
-            <Text style={styles.tableColTotal}>{item.total.toFixed(3)} AED</Text>
+            <Text style={styles.tableColTotal}>{item.total.toFixed(3)} OMR</Text>
           </View>
         ))}
       </View>
@@ -246,16 +247,16 @@ export const InvoicePDF = ({ invoice }: { invoice: InvoiceData }) => (
       <View style={styles.totalsSection}>
         <View style={styles.totalRow}>
           <Text style={styles.totalLabel}>Subtotal:</Text>
-          <Text style={styles.totalValue}>{invoice.subtotal.toFixed(3)} AED</Text>
+          <Text style={styles.totalValue}>{invoice.subtotal.toFixed(3)} OMR</Text>
         </View>
         <View style={styles.totalRow}>
           <Text style={styles.totalLabel}>Tax:</Text>
-          <Text style={styles.totalValue}>{invoice.tax.toFixed(3)} AED</Text>
+          <Text style={styles.totalValue}>{invoice.tax.toFixed(3)} OMR</Text>
         </View>
         <View style={styles.grandTotal}>
           <Text style={styles.grandTotalLabel}>Total:</Text>
           <Text style={styles.grandTotalValue}>
-            {invoice.total.toFixed(3)} AED
+            {invoice.total.toFixed(3)} OMR
           </Text>
         </View>
       </View>
