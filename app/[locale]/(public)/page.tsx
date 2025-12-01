@@ -13,55 +13,70 @@ export default async function HomePage() {
   return (
     <div className="flex flex-col">
       {/* Hero Section */}
-      <section className="bg-gradient-to-b from-primary/10 to-background">
-        <div className="container mx-auto px-4 py-20 md:py-32">
-          <div className="mx-auto max-w-3xl text-center">
-            <h1 className="mb-6 text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
-              Professional Services for Your Home and Business
+      <section className="relative overflow-hidden bg-gradient-to-br from-gold-50 via-white to-gold-50/30">
+        <div className="absolute inset-0 bg-grid-slate-100 [mask-image:linear-gradient(0deg,white,rgba(255,255,255,0.6))] opacity-20"></div>
+        <div className="container relative mx-auto px-4 py-24 md:py-40">
+          <div className="mx-auto max-w-4xl text-center">
+            <div className="mb-6 inline-block rounded-full bg-gold-100 px-4 py-1.5">
+              <span className="text-sm font-semibold text-gold-800">Premium Quality Services</span>
+            </div>
+            <h1 className="mb-6 text-5xl font-bold tracking-tight sm:text-6xl md:text-7xl">
+              Professional Services for Your{' '}
+              <span className="bg-gradient-to-r from-gold-600 to-gold-400 bg-clip-text text-transparent">
+                Home & Business
+              </span>
             </h1>
-            <p className="mb-8 text-lg text-muted-foreground sm:text-xl">
+            <p className="mb-10 text-xl text-gray-600 sm:text-2xl">
               Expert cleaning, pest control, and manpower services in Oman. We deliver quality you can trust.
             </p>
             <div className="flex flex-col justify-center gap-4 sm:flex-row">
               <Link href="/book-now">
-                <Button size="lg" className="w-full sm:w-auto">
-                  Book Now
+                <Button size="lg" className="w-full bg-gold-500 hover:bg-gold-600 text-gray-900 font-semibold shadow-lg hover:shadow-xl transition-all sm:w-auto text-lg px-8 py-6">
+                  Book Now →
                 </Button>
               </Link>
               <Link href="/services">
-                <Button size="lg" variant="outline" className="w-full sm:w-auto">
+                <Button size="lg" variant="outline" className="w-full sm:w-auto border-2 border-gold-400 text-gray-900 hover:bg-gold-50 text-lg px-8 py-6">
                   View Services
                 </Button>
               </Link>
             </div>
           </div>
         </div>
+        <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-background to-transparent"></div>
       </section>
 
       {/* Services Section */}
-      <section className="py-20">
+      <section className="py-24 bg-white">
         <div className="container mx-auto px-4">
-          <div className="mb-12 text-center">
-            <h2 className="mb-4 text-3xl font-bold">Our Services</h2>
-            <p className="text-lg text-muted-foreground">
-              Comprehensive solutions for all your service needs
+          <div className="mb-16 text-center">
+            <div className="mb-4 inline-block rounded-lg bg-gold-100 px-3 py-1">
+              <span className="text-sm font-semibold text-gold-800">What We Offer</span>
+            </div>
+            <h2 className="mb-4 text-4xl font-bold md:text-5xl">Our <span className="text-gold-600">Services</span></h2>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+              Comprehensive solutions tailored to meet all your service needs with excellence
             </p>
           </div>
 
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {services.map((service) => (
-              <Card key={service.id} className="transition-all hover:shadow-lg">
-                <CardHeader>
-                  <CardTitle>{service.name}</CardTitle>
-                  <CardDescription>{service.category.name}</CardDescription>
+          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+            {services.map((service, index) => (
+              <Card key={service.id} className="group relative overflow-hidden border-2 border-transparent hover:border-gold-400 transition-all duration-300 hover:shadow-2xl hover:-translate-y-1">
+                <div className="absolute top-0 left-0 w-2 h-full bg-gradient-to-b from-gold-400 to-gold-600"></div>
+                <CardHeader className="pb-4">
+                  <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-gold-400 to-gold-600 text-white shadow-lg group-hover:scale-110 transition-transform">
+                    <span className="text-2xl font-bold">{index + 1}</span>
+                  </div>
+                  <CardTitle className="text-2xl group-hover:text-gold-600 transition-colors">{service.name}</CardTitle>
+                  <CardDescription className="text-base text-gold-700 font-medium">{service.category.name}</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <p className="mb-4 text-sm text-muted-foreground">
-                    {service.description || 'Professional service with attention to detail.'}
+                  <p className="mb-6 text-gray-600 leading-relaxed">
+                    {service.description || 'Professional service with meticulous attention to detail and guaranteed satisfaction.'}
                   </p>
                   <Link href={`/services/${service.slug}`}>
-                    <Button variant="outline" className="w-full">
-                      Learn More
+                    <Button variant="outline" className="w-full border-2 border-gold-400 text-gold-700 hover:bg-gold-500 hover:text-white hover:border-gold-500 transition-all font-semibold">
+                      Learn More →
                     </Button>
                   </Link>
                 </CardContent>
@@ -69,10 +84,10 @@ export default async function HomePage() {
             ))}
           </div>
 
-          <div className="mt-12 text-center">
+          <div className="mt-16 text-center">
             <Link href="/services">
-              <Button variant="outline" size="lg">
-                View All Services
+              <Button size="lg" className="bg-gold-500 hover:bg-gold-600 text-gray-900 font-semibold shadow-lg px-8">
+                View All Services →
               </Button>
             </Link>
           </div>
@@ -80,42 +95,52 @@ export default async function HomePage() {
       </section>
 
       {/* How It Works Section */}
-      <section className="bg-muted/40 py-20">
+      <section className="relative bg-gradient-to-br from-gray-50 to-gold-50/20 py-24">
         <div className="container mx-auto px-4">
-          <div className="mb-12 text-center">
-            <h2 className="mb-4 text-3xl font-bold">How It Works</h2>
-            <p className="text-lg text-muted-foreground">
-              Simple steps to get the service you need
+          <div className="mb-16 text-center">
+            <div className="mb-4 inline-block rounded-lg bg-gold-100 px-3 py-1">
+              <span className="text-sm font-semibold text-gold-800">Simple Process</span>
+            </div>
+            <h2 className="mb-4 text-4xl font-bold md:text-5xl">How It <span className="text-gold-600">Works</span></h2>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+              Get started in three simple steps
             </p>
           </div>
 
-          <div className="grid gap-8 md:grid-cols-3">
-            <div className="text-center">
-              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary text-2xl font-bold text-primary-foreground">
+          <div className="grid gap-12 md:grid-cols-3 max-w-5xl mx-auto">
+            <div className="group relative text-center">
+              <div className="relative mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-2xl bg-gradient-to-br from-gold-400 to-gold-600 text-3xl font-bold text-white shadow-2xl transition-transform group-hover:scale-110">
                 1
+                <div className="absolute -inset-2 rounded-2xl bg-gold-400 opacity-20 blur-xl group-hover:opacity-40 transition-opacity"></div>
               </div>
-              <h3 className="mb-2 text-xl font-semibold">Book Online</h3>
-              <p className="text-muted-foreground">
+              <h3 className="mb-3 text-2xl font-bold text-gray-900">Book Online</h3>
+              <p className="text-gray-600 leading-relaxed text-lg">
                 Choose your service and schedule a convenient time through our website or WhatsApp.
               </p>
+              {/* Connector Arrow */}
+              <div className="hidden md:block absolute top-12 -right-6 text-gold-400 text-4xl">→</div>
             </div>
 
-            <div className="text-center">
-              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary text-2xl font-bold text-primary-foreground">
+            <div className="group relative text-center">
+              <div className="relative mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-2xl bg-gradient-to-br from-gold-400 to-gold-600 text-3xl font-bold text-white shadow-2xl transition-transform group-hover:scale-110">
                 2
+                <div className="absolute -inset-2 rounded-2xl bg-gold-400 opacity-20 blur-xl group-hover:opacity-40 transition-opacity"></div>
               </div>
-              <h3 className="mb-2 text-xl font-semibold">Get a Quote</h3>
-              <p className="text-muted-foreground">
+              <h3 className="mb-3 text-2xl font-bold text-gray-900">Get a Quote</h3>
+              <p className="text-gray-600 leading-relaxed text-lg">
                 Our team will visit your site, assess your needs, and provide a detailed quotation.
               </p>
+              {/* Connector Arrow */}
+              <div className="hidden md:block absolute top-12 -right-6 text-gold-400 text-4xl">→</div>
             </div>
 
-            <div className="text-center">
-              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary text-2xl font-bold text-primary-foreground">
+            <div className="group relative text-center">
+              <div className="relative mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-2xl bg-gradient-to-br from-gold-400 to-gold-600 text-3xl font-bold text-white shadow-2xl transition-transform group-hover:scale-110">
                 3
+                <div className="absolute -inset-2 rounded-2xl bg-gold-400 opacity-20 blur-xl group-hover:opacity-40 transition-opacity"></div>
               </div>
-              <h3 className="mb-2 text-xl font-semibold">Relax</h3>
-              <p className="text-muted-foreground">
+              <h3 className="mb-3 text-2xl font-bold text-gray-900">Relax</h3>
+              <p className="text-gray-600 leading-relaxed text-lg">
                 Our professional team delivers quality service on time, every time.
               </p>
             </div>
@@ -124,24 +149,28 @@ export default async function HomePage() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20">
+      <section className="py-24">
         <div className="container mx-auto px-4">
-          <div className="rounded-lg bg-primary px-8 py-12 text-center text-primary-foreground">
-            <h2 className="mb-4 text-3xl font-bold">Ready to Get Started?</h2>
-            <p className="mb-8 text-lg opacity-90">
-              Book your service today and experience the difference of professional quality.
-            </p>
-            <div className="flex flex-col justify-center gap-4 sm:flex-row">
-              <Link href="/book-now">
-                <Button size="lg" variant="secondary" className="w-full sm:w-auto">
-                  Book Now
-                </Button>
-              </Link>
-              <Link href="/contact">
-                <Button size="lg" variant="outline" className="w-full border-white bg-transparent text-white hover:bg-white/10 sm:w-auto">
-                  Contact Us
-                </Button>
-              </Link>
+          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-gold-500 via-gold-400 to-gold-600 px-8 py-16 md:py-20 text-center shadow-2xl">
+            <div className="absolute top-0 right-0 -mt-12 -mr-12 h-64 w-64 rounded-full bg-white opacity-10 blur-3xl"></div>
+            <div className="absolute bottom-0 left-0 -mb-12 -ml-12 h-64 w-64 rounded-full bg-white opacity-10 blur-3xl"></div>
+            <div className="relative z-10">
+              <h2 className="mb-5 text-4xl font-bold text-gray-900 md:text-5xl">Ready to Get Started?</h2>
+              <p className="mb-10 text-xl text-gray-800 max-w-2xl mx-auto leading-relaxed">
+                Book your service today and experience the difference of professional quality and exceptional service.
+              </p>
+              <div className="flex flex-col justify-center gap-4 sm:flex-row">
+                <Link href="/book-now">
+                  <Button size="lg" className="w-full sm:w-auto bg-gray-900 hover:bg-gray-800 text-white font-bold shadow-xl text-lg px-10 py-6">
+                    Book Now →
+                  </Button>
+                </Link>
+                <Link href="/contact">
+                  <Button size="lg" variant="outline" className="w-full sm:w-auto border-2 border-gray-900 bg-transparent text-gray-900 hover:bg-gray-900 hover:text-white font-bold text-lg px-10 py-6">
+                    Contact Us
+                  </Button>
+                </Link>
+              </div>
             </div>
           </div>
         </div>

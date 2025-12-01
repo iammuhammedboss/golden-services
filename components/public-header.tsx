@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { useState } from 'react'
 import { useParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
@@ -21,11 +22,16 @@ export function PublicHeader() {
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <nav className="container mx-auto flex h-16 items-center justify-between px-4">
-        <Link href={`/${locale}`} className="flex items-center space-x-2">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <span className="text-xl font-bold">GS</span>
-          </div>
-          <span className="text-xl font-bold">Golden Services</span>
+        <Link href={`/${locale}`} className="flex items-center space-x-3">
+          <Image
+            src="/logo.png"
+            alt="Golden Services Logo"
+            width={50}
+            height={50}
+            className="h-12 w-auto"
+            priority
+          />
+          <span className="text-xl font-bold bg-gradient-to-r from-gold-600 to-gold-400 bg-clip-text text-transparent">Golden Services</span>
         </Link>
 
         {/* Desktop Navigation */}
