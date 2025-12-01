@@ -3,6 +3,8 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { prisma } from '@/lib/prisma'
 
+import VideoBackground from '@/components/video-background'
+
 export default async function HomePage() {
   const services = await prisma.service.findMany({
     where: { isActive: true },
@@ -13,8 +15,8 @@ export default async function HomePage() {
   return (
     <div className="flex flex-col">
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-gold-50 via-white to-gold-50/30">
-        <div className="absolute inset-0 bg-grid-slate-100 [mask-image:linear-gradient(0deg,white,rgba(255,255,255,0.6))] opacity-20"></div>
+      <section className="relative overflow-hidden">
+        <VideoBackground src="/bg-video.mp4" type="video/mp4" />
         <div className="container relative mx-auto px-4 py-24 md:py-40">
           <div className="mx-auto max-w-4xl text-center">
             <div className="mb-6 inline-block rounded-full bg-gold-100 px-4 py-1.5">
