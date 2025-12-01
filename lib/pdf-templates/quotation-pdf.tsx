@@ -1,105 +1,154 @@
 import React from 'react'
 import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer'
 import { format } from 'date-fns'
+import { LOGO_BASE64 } from '@/lib/logo-base64'
 
 const styles = StyleSheet.create({
   page: {
     padding: 40,
     fontFamily: 'Helvetica',
     fontSize: 10,
+    backgroundColor: '#FFFFFF',
+  },
+  headerBanner: {
+    backgroundColor: '#FFC92B',
+    marginLeft: -40,
+    marginRight: -40,
+    marginTop: -40,
+    marginBottom: 25,
+    padding: 20,
+    paddingLeft: 40,
+    paddingRight: 40,
   },
   header: {
-    marginBottom: 30,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    alignItems: 'center',
   },
   logoSection: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 12,
   },
   logo: {
-    width: 60,
-    height: 60,
+    width: 70,
+    height: 70,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 35,
+    padding: 5,
   },
   companyInfo: {
-    marginLeft: 10,
+    marginLeft: 5,
   },
   companyName: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 3,
-    color: '#FFC92B',
-  },
-  companyDetails: {
-    fontSize: 9,
-    color: '#666',
-    marginBottom: 2,
-  },
-  quotationTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 5,
+    marginBottom: 4,
     color: '#1a1a1a',
   },
-  quotationNumber: {
-    fontSize: 12,
-    color: '#666',
+  companyTagline: {
+    fontSize: 10,
+    color: '#333',
+    fontStyle: 'italic',
+  },
+  companyDetails: {
+    fontSize: 8,
+    color: '#333',
+    marginTop: 2,
+  },
+  quotationTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#1a1a1a',
     marginBottom: 5,
+    textAlign: 'right',
+  },
+  quotationNumber: {
+    fontSize: 14,
+    color: '#333',
+    marginBottom: 6,
+    textAlign: 'right',
   },
   statusBadge: {
-    padding: 5,
-    backgroundColor: '#FFF3CC',
-    color: '#8F6E00',
+    padding: 6,
+    paddingLeft: 12,
+    paddingRight: 12,
+    backgroundColor: '#1a1a1a',
+    color: '#FFC92B',
     fontSize: 10,
+    fontWeight: 'bold',
     borderRadius: 3,
-    alignSelf: 'flex-start',
+    alignSelf: 'flex-end',
   },
   section: {
     marginBottom: 20,
   },
+  infoCard: {
+    backgroundColor: '#FFF9E5',
+    padding: 15,
+    borderRadius: 5,
+    marginBottom: 20,
+    borderLeft: '4 solid #FFC92B',
+  },
   row: {
     flexDirection: 'row',
-    marginBottom: 5,
+    marginBottom: 6,
   },
   label: {
-    width: 120,
+    width: 100,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#1a1a1a',
+    fontSize: 10,
   },
   value: {
     flex: 1,
-    color: '#666',
+    color: '#333',
+    fontSize: 10,
   },
   billToSection: {
+    backgroundColor: '#f9f9f9',
+    padding: 15,
+    borderRadius: 5,
     marginBottom: 20,
+    borderLeft: '4 solid #FFC92B',
   },
   billToHeader: {
     fontWeight: 'bold',
     marginBottom: 8,
-    fontSize: 12,
-    color: '#333',
+    fontSize: 11,
+    color: '#1a1a1a',
+    textTransform: 'uppercase',
   },
   billToText: {
-    marginBottom: 3,
-    color: '#666',
+    marginBottom: 4,
+    color: '#333',
+    fontSize: 10,
   },
   table: {
     marginTop: 20,
     marginBottom: 20,
+    borderRadius: 5,
+    overflow: 'hidden',
   },
   tableHeader: {
     flexDirection: 'row',
-    backgroundColor: '#FFC92B',
-    padding: 8,
+    backgroundColor: '#1a1a1a',
+    padding: 10,
     fontWeight: 'bold',
-    color: '#1a1a1a',
+    color: '#FFC92B',
+    fontSize: 10,
   },
   tableRow: {
     flexDirection: 'row',
-    padding: 8,
-    borderBottom: '1 solid #ddd',
+    padding: 10,
+    borderBottom: '1 solid #e0e0e0',
+    backgroundColor: '#FFFFFF',
+  },
+  tableRowAlt: {
+    flexDirection: 'row',
+    padding: 10,
+    borderBottom: '1 solid #e0e0e0',
+    backgroundColor: '#FAFAFA',
   },
   tableColNum: {
     width: '8%',
@@ -124,80 +173,98 @@ const styles = StyleSheet.create({
     textAlign: 'right',
   },
   totalsSection: {
-    marginTop: 20,
+    marginTop: 25,
     alignItems: 'flex-end',
   },
   totalRow: {
     flexDirection: 'row',
-    width: 250,
-    marginBottom: 5,
+    width: 280,
+    marginBottom: 8,
+    paddingBottom: 8,
   },
   totalLabel: {
     flex: 1,
     textAlign: 'right',
     paddingRight: 20,
-    fontWeight: 'bold',
+    fontSize: 10,
+    color: '#333',
   },
   totalValue: {
-    width: 80,
+    width: 100,
     textAlign: 'right',
+    fontSize: 10,
+    color: '#333',
   },
   grandTotal: {
     flexDirection: 'row',
-    width: 250,
-    marginTop: 10,
-    paddingTop: 10,
-    borderTop: '2 solid #FFC92B',
-    backgroundColor: '#FFF9E5',
-    padding: 10,
+    width: 280,
+    marginTop: 5,
+    paddingTop: 15,
+    paddingBottom: 15,
+    paddingLeft: 15,
+    paddingRight: 15,
+    borderTop: '3 solid #FFC92B',
+    borderBottom: '3 solid #FFC92B',
+    backgroundColor: '#1a1a1a',
   },
   grandTotalLabel: {
     flex: 1,
     textAlign: 'right',
     paddingRight: 20,
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: 'bold',
-    color: '#1a1a1a',
+    color: '#FFC92B',
   },
   grandTotalValue: {
-    width: 80,
+    width: 100,
     textAlign: 'right',
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: 'bold',
     color: '#FFC92B',
   },
   notesSection: {
     marginTop: 30,
-    padding: 10,
-    backgroundColor: '#f9f9f9',
-    borderLeft: '3 solid #FFC92B',
+    padding: 15,
+    backgroundColor: '#FFF9E5',
+    borderLeft: '4 solid #FFC92B',
+    borderRadius: 5,
   },
   notesHeader: {
     fontWeight: 'bold',
-    marginBottom: 5,
-    color: '#333',
+    marginBottom: 8,
+    color: '#1a1a1a',
+    fontSize: 11,
+    textTransform: 'uppercase',
   },
   notesText: {
-    color: '#666',
+    color: '#333',
+    fontSize: 10,
+    lineHeight: 1.5,
   },
   footer: {
     position: 'absolute',
-    bottom: 40,
+    bottom: 30,
     left: 40,
     right: 40,
     textAlign: 'center',
     color: '#666',
     fontSize: 9,
-    borderTop: '1 solid #ddd',
-    paddingTop: 10,
+    borderTop: '2 solid #FFC92B',
+    paddingTop: 15,
+  },
+  footerText: {
+    marginBottom: 3,
+    color: '#333',
   },
   validUntil: {
-    marginTop: 10,
-    padding: 8,
-    backgroundColor: '#FFF3CC',
-    borderRadius: 3,
+    marginBottom: 20,
+    padding: 12,
+    backgroundColor: '#FFC92B',
+    borderRadius: 5,
     textAlign: 'center',
-    fontSize: 10,
+    fontSize: 11,
+    fontWeight: 'bold',
+    color: '#1a1a1a',
   },
 })
 
@@ -241,30 +308,37 @@ export const QuotationPDF = ({ quotation }: { quotation: QuotationData }) => {
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-        {/* Header */}
-        <View style={styles.header}>
-          <View style={styles.logoSection}>
-            <Image
-              src="/logo.png"
-              style={styles.logo}
-            />
-            <View style={styles.companyInfo}>
-              <Text style={styles.companyName}>Golden Services</Text>
-              <Text style={styles.companyDetails}>Professional Cleaning & Pest Control</Text>
-              <Text style={styles.companyDetails}>Muscat, Sultanate of Oman</Text>
-              <Text style={styles.companyDetails}>Phone: +968 1234 5678</Text>
-              <Text style={styles.companyDetails}>Email: info@goldenservices.om</Text>
+        {/* Header Banner */}
+        <View style={styles.headerBanner}>
+          <View style={styles.header}>
+            <View style={styles.logoSection}>
+              <Image
+                src={LOGO_BASE64}
+                style={styles.logo}
+              />
+              <View style={styles.companyInfo}>
+                <Text style={styles.companyName}>Golden Services</Text>
+                <Text style={styles.companyTagline}>Professional Cleaning & Pest Control</Text>
+                <Text style={styles.companyDetails}>Muscat, Sultanate of Oman | +968 1234 5678 | info@goldenservices.om</Text>
+              </View>
             </View>
-          </View>
-          <View>
-            <Text style={styles.quotationTitle}>QUOTATION</Text>
-            <Text style={styles.quotationNumber}>#{quotation.quotationNumber || quotation.id.substring(0, 8).toUpperCase()}</Text>
-            <Text style={styles.statusBadge}>{quotation.status}</Text>
+            <View>
+              <Text style={styles.quotationTitle}>QUOTATION</Text>
+              <Text style={styles.quotationNumber}>#{quotation.quotationNumber || quotation.id.substring(0, 8).toUpperCase()}</Text>
+              <Text style={styles.statusBadge}>{quotation.status}</Text>
+            </View>
           </View>
         </View>
 
+        {/* Valid Until Banner */}
+        {quotation.validUntil && (
+          <View style={styles.validUntil}>
+            <Text>⏰ This quotation is valid until {format(new Date(quotation.validUntil), 'PP')}</Text>
+          </View>
+        )}
+
         {/* Quotation Details */}
-        <View style={styles.section}>
+        <View style={styles.infoCard}>
           <View style={styles.row}>
             <Text style={styles.label}>Date:</Text>
             <Text style={styles.value}>
@@ -301,13 +375,6 @@ export const QuotationPDF = ({ quotation }: { quotation: QuotationData }) => {
           )}
         </View>
 
-        {/* Valid Until Banner */}
-        {quotation.validUntil && (
-          <View style={styles.validUntil}>
-            <Text>This quotation is valid until {format(new Date(quotation.validUntil), 'PP')}</Text>
-          </View>
-        )}
-
         {/* Items Table */}
         <View style={styles.table}>
           <View style={styles.tableHeader}>
@@ -319,7 +386,7 @@ export const QuotationPDF = ({ quotation }: { quotation: QuotationData }) => {
             <Text style={styles.tableColTotal}>Total</Text>
           </View>
           {quotation.items.map((item, index) => (
-            <View key={index} style={styles.tableRow}>
+            <View key={index} style={index % 2 === 0 ? styles.tableRow : styles.tableRowAlt}>
               <Text style={styles.tableColNum}>{index + 1}</Text>
               <Text style={styles.tableColDesc}>{item.description}</Text>
               <Text style={styles.tableColQty}>{item.quantity}</Text>
@@ -352,8 +419,9 @@ export const QuotationPDF = ({ quotation }: { quotation: QuotationData }) => {
 
         {/* Footer */}
         <View style={styles.footer}>
-          <Text>Thank you for considering our services!</Text>
-          <Text>For any queries, please contact us at info@goldenservices.om</Text>
+          <Text style={styles.footerText}>Thank you for considering our services!</Text>
+          <Text style={styles.footerText}>Golden Services - Professional Cleaning & Pest Control</Text>
+          <Text style={{ marginTop: 5, color: '#666' }}>For any queries, please contact us at info@goldenservices.om or call +968 1234 5678</Text>
         </View>
       </Page>
     </Document>
