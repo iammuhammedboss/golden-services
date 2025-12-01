@@ -36,7 +36,7 @@ interface User { id: string; name: string; }
 type TView = 'calendar' | 'list';
 
 
-// --- Dialog Components ---
+// --- Dialog Components (Moved to Top Level) ---
 function ScheduleDetailView({ event, onClose }: { event: ScheduleEvent | null, onClose: () => void }) {
     if (!event) return null;
     return (
@@ -60,6 +60,8 @@ function ScheduleDetailView({ event, onClose }: { event: ScheduleEvent | null, o
 
 function ScheduleForm({ slot, onClose, onSave }: { slot: { start: Date, end: Date } | null; onClose: () => void; onSave: () => void; }) {
   if (!slot) return null;
+  
+  // All hooks are now at the top level of this component
   const [formData, setFormData] = useState({ type: ScheduleEntryType.JOB_EXECUTION, startDateTime: moment(slot.start).format('YYYY-MM-DDTHH:mm'), endDateTime: moment(slot.end).format('YYYY-MM-DDTHH:mm'), clientId: '', locationText: '', notes: '', assigneeIds: [] as string[] });
   const [clients, setClients] = useState<Client[]>([]);
   const [users, setUsers] = useState<User[]>([]);
