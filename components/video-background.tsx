@@ -18,7 +18,7 @@ const VideoBackground: React.FC<VideoBackgroundProps> = ({ src, type }) => {
         <source src={src} type={type} />
         Your browser does not support the video tag.
       </video>
-      <div className="absolute inset-0 bg-gradient-to-b from-black/70 to-gold-900/50"></div>
+      <div className="absolute inset-0 bg-gradient-to-b from-black/50 to-gold-900/20"></div>
     </div>
   );
 };

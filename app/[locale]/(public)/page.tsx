@@ -19,16 +19,14 @@ export default async function HomePage() {
         <VideoBackground src="/bg-video.mp4" type="video/mp4" />
         <div className="container relative mx-auto px-4 py-24 md:py-40">
           <div className="mx-auto max-w-4xl text-center">
-            <div className="mb-6 inline-block rounded-full bg-gold-100 px-4 py-1.5">
-              <span className="text-sm font-semibold text-gold-800">Premium Quality Services</span>
-            </div>
-            <h1 className="mb-6 text-5xl font-bold tracking-tight sm:text-6xl md:text-7xl">
+            
+            <h1 className="mb-6 text-5xl font-bold tracking-tight text-white sm:text-6xl md:text-7xl">
               Professional Services for Your{' '}
               <span className="bg-gradient-to-r from-gold-600 to-gold-400 bg-clip-text text-transparent">
                 Home & Business
               </span>
             </h1>
-            <p className="mb-10 text-xl text-gray-600 sm:text-2xl">
+            <p className="mb-10 text-xl text-gray-200 sm:text-2xl">
               Expert cleaning, pest control, and manpower services in Oman. We deliver quality you can trust.
             </p>
             <div className="flex flex-col justify-center gap-4 sm:flex-row">
