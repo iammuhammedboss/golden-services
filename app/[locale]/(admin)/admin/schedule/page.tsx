@@ -59,10 +59,8 @@ function ScheduleDetailView({ event, onClose }: { event: ScheduleEvent | null, o
 }
 
 function ScheduleForm({ slot, onClose, onSave }: { slot: { start: Date, end: Date } | null; onClose: () => void; onSave: () => void; }) {
-  if (!slot) return null;
-  
-  // All hooks are now at the top level of this component
-  const [formData, setFormData] = useState({ type: ScheduleEntryType.JOB_EXECUTION, startDateTime: moment(slot.start).format('YYYY-MM-DDTHH:mm'), endDateTime: moment(slot.end).format('YYYY-MM-DDTHH:mm'), clientId: '', locationText: '', notes: '', assigneeIds: [] as string[] });
+  // All hooks must be at the top level before any conditional returns
+  const [formData, setFormData] = useState({ type: ScheduleEntryType.JOB_EXECUTION as ScheduleEntryType, startDateTime: '', endDateTime: '', clientId: '', locationText: '', notes: '', assigneeIds: [] as string[] });
   const [clients, setClients] = useState<Client[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -77,6 +75,14 @@ function ScheduleForm({ slot, onClose, onSave }: { slot: { start: Date, end: Dat
     };
     fetchData();
   }, []);
+
+  useEffect(() => {
+    if (slot) {
+      setFormData({ type: ScheduleEntryType.JOB_EXECUTION as ScheduleEntryType, startDateTime: moment(slot.start).format('YYYY-MM-DDTHH:mm'), endDateTime: moment(slot.end).format('YYYY-MM-DDTHH:mm'), clientId: '', locationText: '', notes: '', assigneeIds: [] as string[] });
+    }
+  }, [slot]);
+
+  if (!slot) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -96,7 +102,7 @@ function ScheduleForm({ slot, onClose, onSave }: { slot: { start: Date, end: Dat
         <form onSubmit={handleSubmit}>
             <DialogHeader><DialogTitle>Create Schedule Entry</DialogTitle></DialogHeader>
             <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="type" className="text-right">Type</Label><Select value={formData.type} onValueChange={(value) => setFormData({...formData, type: value as ScheduleEntryType})}><SelectTrigger className="col-span-3"><SelectValue placeholder="Select type" /></SelectTrigger><SelectContent>{Object.values(ScheduleEntryType).map(type => (<SelectItem key={type} value={type}>{type.replace(/_/g, ' ')}</SelectItem>))}</SelectContent></Select></div>
+                <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="type" className="text-right">Type</Label><Select value={formData.type as string} onValueChange={(value) => setFormData({...formData, type: value as ScheduleEntryType})}><SelectTrigger className="col-span-3"><SelectValue placeholder="Select type" /></SelectTrigger><SelectContent>{Object.values(ScheduleEntryType).map(type => (<SelectItem key={type} value={type}>{type.replace(/_/g, ' ')}</SelectItem>))}</SelectContent></Select></div>
                 <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="client" className="text-right">Client</Label><Select value={formData.clientId} onValueChange={(value) => setFormData({...formData, clientId: value})}><SelectTrigger className="col-span-3"><SelectValue placeholder="Select client" /></SelectTrigger><SelectContent>{clients.map(client => (<SelectItem key={client.id} value={client.id}>{client.name}</SelectItem>))}</SelectContent></Select></div>
                 <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="start-time" className="text-right">Start</Label><Input id="start-time" type="datetime-local" value={formData.startDateTime} onChange={e => setFormData({...formData, startDateTime: e.target.value})} className="col-span-3" /></div>
                 <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="end-time" className="text-right">End</Label><Input id="end-time" type="datetime-local" value={formData.endDateTime} onChange={e => setFormData({...formData, endDateTime: e.target.value})} className="col-span-3" /></div>

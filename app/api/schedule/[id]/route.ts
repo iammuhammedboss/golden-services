@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { canViewSchedule } from '@/lib/permissions'
+import { canViewSchedule, canManageAllSchedules } from '@/lib/permissions'
 import type { UserWithRoles } from '@/lib/permissions'
 
 // GET /api/schedule/[id] - Get a single schedule entry

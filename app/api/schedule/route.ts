@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
     const end = searchParams.get('end')
     let employeeId = searchParams.get('employeeId')
     const type = searchParams.get('type')
-    const status = search_params.get('status')
+    const status = searchParams.get('status')
     
     const where: any = {
       startDateTime: { gte: start ? new Date(start) : undefined },
