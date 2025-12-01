@@ -18,6 +18,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { formatDate, formatCurrency, enumToReadable, getStatusColor } from '@/lib/utils'
 import { ChevronLeft } from 'lucide-react'
+import { InlineLoader } from '@/components/loading-screen'
 
 export default function QuotationDetailPage() {
   const params = useParams()
@@ -85,11 +86,7 @@ export default function QuotationDetailPage() {
   }
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p className="text-muted-foreground">Loading quotation...</p>
-      </div>
-    )
+    return <InlineLoader message="Loading quotation details..." />
   }
 
   if (!quotation) {

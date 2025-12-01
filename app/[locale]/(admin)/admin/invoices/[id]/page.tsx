@@ -16,6 +16,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { formatDate, formatCurrency, enumToReadable } from '@/lib/utils'
+import { InlineLoader } from '@/components/loading-screen'
 
 export default function InvoiceDetailPage() {
   const params = useParams()
@@ -99,11 +100,7 @@ export default function InvoiceDetailPage() {
   }
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p className="text-muted-foreground">Loading invoice...</p>
-      </div>
-    )
+    return <InlineLoader message="Loading invoice details..." />
   }
 
   if (!invoice) {

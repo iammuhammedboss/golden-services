@@ -135,6 +135,19 @@
     animation: shimmer 3s infinite;
   }
 
+  @keyframes shimmer-slide {
+    0% {
+      transform: translateX(-100%);
+    }
+    100% {
+      transform: translateX(200%);
+    }
+  }
+
+  .animate-shimmer {
+    animation: shimmer-slide 2s infinite;
+  }
+
   /* Gradient Text */
   .text-gradient-gold {
     @apply bg-gradient-to-r from-gold-600 to-gold-400 bg-clip-text text-transparent;
