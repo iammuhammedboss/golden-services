@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useReactToPrint } from 'react-to-print'
+import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -190,15 +191,24 @@ export default function InvoiceDetailPage() {
         <Card>
           <CardHeader className="border-b">
             <div className="flex items-start justify-between">
-              <div>
-                <CardTitle className="text-3xl font-bold">INVOICE</CardTitle>
-                <p className="text-lg mt-2">{invoice.invoiceNumber}</p>
-                <Badge className={`mt-2 ${getStatusColor(invoice.status)}`}>
-                  {enumToReadable(invoice.status)}
-                </Badge>
+              <div className="flex items-center gap-4">
+                <Image
+                  src="/logo.png"
+                  alt="Golden Services Logo"
+                  width={60}
+                  height={60}
+                  className="h-15 w-auto"
+                />
+                <div>
+                  <CardTitle className="text-3xl font-bold">INVOICE</CardTitle>
+                  <p className="text-lg mt-2">{invoice.invoiceNumber}</p>
+                  <Badge className={`mt-2 ${getStatusColor(invoice.status)}`}>
+                    {enumToReadable(invoice.status)}
+                  </Badge>
+                </div>
               </div>
               <div className="text-right">
-                <h2 className="text-2xl font-bold text-primary">Golden Services</h2>
+                <h2 className="text-2xl font-bold text-gold-600">Golden Services</h2>
                 <p className="text-sm text-muted-foreground mt-1">
                   Professional Cleaning & Pest Control
                 </p>
@@ -274,9 +284,9 @@ export default function InvoiceDetailPage() {
                   <span className="text-muted-foreground">Tax:</span>
                   <span className="font-medium">{formatCurrency(Number(invoice.tax))}</span>
                 </div>
-                <div className="border-t pt-2 flex justify-between">
+                <div className="border-t border-gold-400 pt-2 flex justify-between">
                   <span className="font-semibold text-lg">Total ({invoice.currency}):</span>
-                  <span className="font-bold text-lg text-primary">
+                  <span className="font-bold text-lg text-gold-600">
                     {formatCurrency(Number(invoice.total))}
                   </span>
                 </div>

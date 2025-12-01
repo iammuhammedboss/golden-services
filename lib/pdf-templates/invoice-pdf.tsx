@@ -1,5 +1,5 @@
 import React from 'react'
-import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer'
+import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer'
 import { format } from 'date-fns'
 
 const styles = StyleSheet.create({
@@ -10,24 +10,51 @@ const styles = StyleSheet.create({
   },
   header: {
     marginBottom: 30,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  logoSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  logo: {
+    width: 60,
+    height: 60,
+  },
+  companyInfo: {
+    marginLeft: 10,
   },
   companyName: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: 'bold',
-    marginBottom: 5,
-    color: '#1a1a1a',
+    marginBottom: 3,
+    color: '#FFC92B',
   },
   companyDetails: {
-    fontSize: 10,
+    fontSize: 9,
     color: '#666',
     marginBottom: 2,
   },
   invoiceTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
-    marginTop: 20,
-    marginBottom: 10,
+    marginBottom: 5,
     color: '#1a1a1a',
+  },
+  invoiceNumber: {
+    fontSize: 12,
+    color: '#666',
+    marginBottom: 5,
+  },
+  statusBadge: {
+    padding: 5,
+    backgroundColor: '#FFF3CC',
+    color: '#8F6E00',
+    fontSize: 10,
+    borderRadius: 3,
+    alignSelf: 'flex-start',
   },
   section: {
     marginBottom: 20,
@@ -161,13 +188,25 @@ export const InvoicePDF = ({ invoice }: { invoice: InvoiceData }) => (
     <Page size="A4" style={styles.page}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.companyName}>Golden Services</Text>
-        <Text style={styles.companyDetails}>Professional Cleaning & Pest Control</Text>
-        <Text style={styles.companyDetails}>Phone: +971 XX XXX XXXX</Text>
-        <Text style={styles.companyDetails}>Email: info@goldenservices.ae</Text>
+        <View style={styles.logoSection}>
+          <Image
+            src="/logo.png"
+            style={styles.logo}
+          />
+          <View style={styles.companyInfo}>
+            <Text style={styles.companyName}>Golden Services</Text>
+            <Text style={styles.companyDetails}>Professional Cleaning & Pest Control</Text>
+            <Text style={styles.companyDetails}>Muscat, Sultanate of Oman</Text>
+            <Text style={styles.companyDetails}>Phone: +968 1234 5678</Text>
+            <Text style={styles.companyDetails}>Email: info@goldenservices.om</Text>
+          </View>
+        </View>
+        <View>
+          <Text style={styles.invoiceTitle}>INVOICE</Text>
+          <Text style={styles.invoiceNumber}>#{invoice.invoiceNumber}</Text>
+          <Text style={styles.statusBadge}>{invoice.status}</Text>
+        </View>
       </View>
-
-      <Text style={styles.invoiceTitle}>INVOICE</Text>
 
       {/* Invoice Details */}
       <View style={styles.section}>
