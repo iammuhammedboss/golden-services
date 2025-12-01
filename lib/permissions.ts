@@ -72,6 +72,10 @@ export function canManageQuotations(user: UserWithRoles | null | undefined): boo
   return hasAnyRole(user, ['OWNER', 'OPERATIONS_MANAGER', 'SALES'])
 }
 
+export function canViewQuotations(user: UserWithRoles | null | undefined): boolean {
+  return hasAnyRole(user, ['OWNER', 'OPERATIONS_MANAGER', 'SALES', 'ACCOUNTANT'])
+}
+
 export function canManageJobs(user: UserWithRoles | null | undefined): boolean {
   return hasAnyRole(user, ['OWNER', 'OPERATIONS_MANAGER', 'SUPERVISOR'])
 }
