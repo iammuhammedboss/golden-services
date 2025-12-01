@@ -56,100 +56,69 @@ export async function requireRole(
   return user
 }
 
-/**
- * Check if user can manage users (OWNER or OPERATIONS_MANAGER)
- */
+// ============================================
+// MODULE-SPECIFIC PERMISSIONS
+// ============================================
+
 export function canManageUsers(user: UserWithRoles | null | undefined): boolean {
   return hasAnyRole(user, ['OWNER', 'OPERATIONS_MANAGER'])
 }
 
-/**
- * Check if user can manage leads (OWNER, OPERATIONS_MANAGER, SALES)
- */
 export function canManageLeads(user: UserWithRoles | null | undefined): boolean {
-  return hasAnyRole(user, ['OWNER', 'OPERATIONS_MANAGER', 'SALES'])
+  return hasAnyRole(user, ['OWNER', 'OPERATIONS_MANAGER', 'SALES', 'RECEPTION'])
 }
 
-/**
- * Check if user can manage quotations (OWNER, OPERATIONS_MANAGER, SALES)
- */
 export function canManageQuotations(user: UserWithRoles | null | undefined): boolean {
   return hasAnyRole(user, ['OWNER', 'OPERATIONS_MANAGER', 'SALES'])
 }
 
-/**
- * Check if user can manage job orders (OWNER, OPERATIONS_MANAGER, SUPERVISOR)
- */
 export function canManageJobs(user: UserWithRoles | null | undefined): boolean {
   return hasAnyRole(user, ['OWNER', 'OPERATIONS_MANAGER', 'SUPERVISOR'])
 }
 
-/**
- * Check if user can view financial data (OWNER, ACCOUNTANT)
- */
-export function canViewFinancials(user: UserWithRoles | null | undefined): boolean {
-  return hasAnyRole(user, ['OWNER', 'ACCOUNTANT'])
-}
-
-/**
- * Check if user is owner
- */
-export function isOwner(user: UserWithRoles | null | undefined): boolean {
-  return hasRole(user, 'OWNER')
-}
-
-/**
- * Check if user can perform audits
- */
-export function canAudit(user: UserWithRoles | null | undefined): boolean {
-  return hasAnyRole(user, ['OWNER', 'AUDITOR', 'OPERATIONS_MANAGER'])
-}
-
-/**
- * Check if user can manage invoices (OWNER, ACCOUNTANT, SALES)
- */
 export function canManageInvoices(user: UserWithRoles | null | undefined): boolean {
   return hasAnyRole(user, ['OWNER', 'ACCOUNTANT', 'SALES'])
 }
 
-/**
- * Check if user can view invoices (OWNER, ACCOUNTANT, SALES, OPERATIONS_MANAGER)
- */
 export function canViewInvoices(user: UserWithRoles | null | undefined): boolean {
   return hasAnyRole(user, ['OWNER', 'ACCOUNTANT', 'SALES', 'OPERATIONS_MANAGER'])
 }
 
-/**
- * Check if user can manage master data (OWNER only)
- */
-export function canManageMasters(user: UserWithRoles | null | undefined): boolean {
-  return hasRole(user, 'OWNER')
-}
-
-/**
- * Check if user can view audit logs (OWNER, AUDITOR, OPERATIONS_MANAGER)
- */
-export function canViewAuditLogs(user: UserWithRoles | null | undefined): boolean {
-  return hasAnyRole(user, ['OWNER', 'AUDITOR', 'OPERATIONS_MANAGER'])
-}
-
-/**
- * Check if user can restore deleted records (OWNER only)
- */
-export function canRestoreRecords(user: UserWithRoles | null | undefined): boolean {
-  return hasRole(user, 'OWNER')
-}
-
-/**
- * Check if user can manage payments (OWNER, ACCOUNTANT)
- */
 export function canManagePayments(user: UserWithRoles | null | undefined): boolean {
   return hasAnyRole(user, ['OWNER', 'ACCOUNTANT'])
 }
 
+// --- Schedule Permissions ---
 /**
- * Check if user can view deleted records (OWNER, AUDITOR)
+ * Check if user can view the schedule module.
+ * Allows broad access, filtering is done at the API level.
  */
+export function canViewSchedule(user: UserWithRoles | null | undefined): boolean {
+  // Almost everyone can see the schedule page, but the API will filter what they see.
+  return hasAnyRole(user, ['OWNER', 'OPERATIONS_MANAGER', 'SALES', 'SUPERVISOR', 'TECHNICIAN', 'DRIVER', 'RECEPTION'])
+}
+
+/**
+ * Check if user has admin-level rights over all schedule entries.
+ */
+export function canManageAllSchedules(user: UserWithRoles | null | undefined): boolean {
+  return hasAnyRole(user, ['OWNER', 'OPERATIONS_MANAGER'])
+}
+
+
+// --- Master Data & Admin Permissions ---
+export function canManageMasters(user: UserWithRoles | null | undefined): boolean {
+  return hasRole(user, 'OWNER')
+}
+
+export function canViewAuditLogs(user: UserWithRoles | null | undefined): boolean {
+  return hasAnyRole(user, ['OWNER', 'AUDITOR', 'OPERATIONS_MANAGER'])
+}
+
+export function canRestoreRecords(user: UserWithRoles | null | undefined): boolean {
+  return hasRole(user, 'OWNER')
+}
+
 export function canViewDeletedRecords(user: UserWithRoles | null | undefined): boolean {
   return hasAnyRole(user, ['OWNER', 'AUDITOR'])
 }

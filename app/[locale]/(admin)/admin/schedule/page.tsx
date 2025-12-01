@@ -1,484 +1,245 @@
-import Link from 'next/link'
+'use client'
+
+import { useState, useEffect, useCallback, useMemo } from 'react'
+import { Calendar, momentLocalizer, Views, View } from 'react-big-calendar'
+import moment from 'moment'
+import 'react-big-calendar/lib/css/react-big-calendar.css'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
+import { Card, CardContent } from '@/components/ui/card'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { prisma } from '@/lib/prisma'
-import { formatDate, getStatusColor, enumToReadable } from '@/lib/utils'
-import { Calendar, MapPin, FileText, Briefcase, Clock } from 'lucide-react'
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog'
+import { Label } from '@/components/ui/label'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { ScheduleEntryType, ScheduleEntryStatus } from '@prisma/client'
+import { Badge } from '@/components/ui/badge'
 
-export default async function SchedulePage({
-  params,
-}: {
-  params: { locale: string }
-}) {
-  // Get today's date at midnight
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
+const localizer = momentLocalizer(moment)
 
-  // Get upcoming site visits
-  const upcomingSiteVisits = await prisma.siteVisit.findMany({
-    where: {
-      scheduledAt: {
-        gte: today,
-      },
-      deletedAt: null,
-    },
-    orderBy: {
-      scheduledAt: 'asc',
-    },
-    take: 20,
-    include: {
-      client: {
-        select: {
-          name: true,
-          phone: true,
-        },
-      },
-      site: {
-        select: {
-          name: true,
-          address: true,
-          city: true,
-        },
-      },
-      assignedTo: {
-        select: {
-          name: true,
-        },
-      },
-    },
-  })
+// --- Types ---
+interface ScheduleEvent { id: string; title: string; start: Date; end: Date; resource: any; }
+interface Client { id: string; name: string; }
+interface User { id: string; name: string; }
+type TView = 'calendar' | 'list';
 
-  // Get upcoming job orders
-  const upcomingJobs = await prisma.jobOrder.findMany({
-    where: {
-      scheduledDate: {
-        gte: today,
-      },
-      status: {
-        in: ['SCHEDULED', 'IN_PROGRESS'],
-      },
-      deletedAt: null,
-    },
-    orderBy: {
-      scheduledDate: 'asc',
-    },
-    take: 20,
-    include: {
-      client: {
-        select: {
-          name: true,
-          phone: true,
-        },
-      },
-      site: {
-        select: {
-          name: true,
-          address: true,
-          city: true,
-        },
-      },
-      quotation: {
-        select: {
-          id: true,
-          items: {
-            select: {
-              total: true,
-            },
-          },
-        },
-      },
-    },
-  })
 
-  // Get pending quotations
-  const pendingQuotations = await prisma.quotation.findMany({
-    where: {
-      status: {
-        in: ['DRAFT', 'SENT'],
-      },
-      deletedAt: null,
-    },
-    orderBy: {
-      createdAt: 'desc',
-    },
-    take: 20,
-    include: {
-      client: {
-        select: {
-          name: true,
-          phone: true,
-        },
-      },
-      site: {
-        select: {
-          name: true,
-          address: true,
-        },
-      },
-      items: {
-        select: {
-          total: true,
-        },
-      },
-    },
-  })
+// --- Dialog Components ---
+function ScheduleDetailView({ event, onClose }: { event: ScheduleEvent | null, onClose: () => void }) {
+    if (!event) return null;
+    return (
+        <Dialog open={!!event} onOpenChange={onClose}>
+            <DialogContent>
+                <DialogHeader><DialogTitle>{event.title}</DialogTitle>
+                    <DialogDescription>From: {moment(event.start).format('lll')} To: {moment(event.end).format('lll')}</DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4">
+                    <p><span className="font-semibold">Type:</span> {event.resource.type}</p>
+                    <p><span className="font-semibold">Status:</span> {event.resource.status}</p>
+                    <p><span className="font-semibold">Location:</span> {event.resource.locationText}</p>
+                    <h4 className="font-semibold">Assignees:</h4>
+                    <ul>{event.resource.assignees.map((assignee: any) => (<li key={assignee.employee.id}>{assignee.employee.name} ({assignee.roleInVisit})</li>))}</ul>
+                </div>
+                <DialogFooter><Button variant="outline" onClick={onClose}>Close</Button><Button>Edit</Button></DialogFooter>
+            </DialogContent>
+        </Dialog>
+    )
+}
 
-  // Get today's activities
-  const todaySiteVisits = upcomingSiteVisits.filter((visit) => {
-    const visitDate = new Date(visit.scheduledAt)
-    return visitDate.toDateString() === today.toDateString()
-  })
+function ScheduleForm({ slot, onClose, onSave }: { slot: { start: Date, end: Date } | null; onClose: () => void; onSave: () => void; }) {
+  if (!slot) return null;
+  const [formData, setFormData] = useState({ type: ScheduleEntryType.JOB_EXECUTION, startDateTime: moment(slot.start).format('YYYY-MM-DDTHH:mm'), endDateTime: moment(slot.end).format('YYYY-MM-DDTHH:mm'), clientId: '', locationText: '', notes: '', assigneeIds: [] as string[] });
+  const [clients, setClients] = useState<Client[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const todayJobs = upcomingJobs.filter((job) => {
-    const jobDate = new Date(job.scheduledDate)
-    return jobDate.toDateString() === today.toDateString()
-  })
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [clientsRes, usersRes] = await Promise.all([ fetch('/api/clients'), fetch('/api/users') ]);
+        if (clientsRes.ok) setClients(await clientsRes.json());
+        if (usersRes.ok) setUsers(await usersRes.json());
+      } catch (error) { console.error("Failed to fetch form data", error); }
+    };
+    fetchData();
+  }, []);
 
-  const stats = {
-    todaySiteVisits: todaySiteVisits.length,
-    todayJobs: todayJobs.length,
-    upcomingSiteVisits: upcomingSiteVisits.length,
-    upcomingJobs: upcomingJobs.length,
-    pendingQuotations: pendingQuotations.length,
-  }
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    try {
+        const response = await fetch('/api/schedule', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData) });
+        if (response.ok) { onSave(); onClose(); } 
+        else { const error = await response.json(); alert(`Error: ${error.error || 'Failed to save entry'}`); }
+    } catch (error) { console.error("Failed to submit form", error); alert('An unexpected error occurred.'); } 
+    finally { setIsSubmitting(false); }
+  };
+  
+  const handleMultiSelectChange = (employeeId: string) => setFormData(prev => ({ ...prev, assigneeIds: prev.assigneeIds.includes(employeeId) ? prev.assigneeIds.filter(id => id !== employeeId) : [...prev.assigneeIds, employeeId] }));
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <Dialog open={!!slot} onOpenChange={onClose}><DialogContent className="sm:max-w-[425px]">
+        <form onSubmit={handleSubmit}>
+            <DialogHeader><DialogTitle>Create Schedule Entry</DialogTitle></DialogHeader>
+            <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="type" className="text-right">Type</Label><Select value={formData.type} onValueChange={(value) => setFormData({...formData, type: value as ScheduleEntryType})}><SelectTrigger className="col-span-3"><SelectValue placeholder="Select type" /></SelectTrigger><SelectContent>{Object.values(ScheduleEntryType).map(type => (<SelectItem key={type} value={type}>{type.replace(/_/g, ' ')}</SelectItem>))}</SelectContent></Select></div>
+                <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="client" className="text-right">Client</Label><Select value={formData.clientId} onValueChange={(value) => setFormData({...formData, clientId: value})}><SelectTrigger className="col-span-3"><SelectValue placeholder="Select client" /></SelectTrigger><SelectContent>{clients.map(client => (<SelectItem key={client.id} value={client.id}>{client.name}</SelectItem>))}</SelectContent></Select></div>
+                <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="start-time" className="text-right">Start</Label><Input id="start-time" type="datetime-local" value={formData.startDateTime} onChange={e => setFormData({...formData, startDateTime: e.target.value})} className="col-span-3" /></div>
+                <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="end-time" className="text-right">End</Label><Input id="end-time" type="datetime-local" value={formData.endDateTime} onChange={e => setFormData({...formData, endDateTime: e.target.value})} className="col-span-3" /></div>
+                <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="assignees" className="text-right">Assignees</Label><div className="col-span-3 max-h-32 overflow-y-auto border rounded-md p-2">{users.map(user => (<div key={user.id} className="flex items-center space-x-2"><input type="checkbox" id={`user-${user.id}`} checked={formData.assigneeIds.includes(user.id)} onChange={() => handleMultiSelectChange(user.id)} /><label htmlFor={`user-${user.id}`}>{user.name}</label></div>))}</div></div>
+                <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="location" className="text-right">Location</Label><Input id="location" value={formData.locationText} onChange={e => setFormData({...formData, locationText: e.target.value})} className="col-span-3" /></div>
+                <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="notes" className="text-right">Notes</Label><Textarea id="notes" value={formData.notes} onChange={e => setFormData({...formData, notes: e.target.value})} className="col-span-3" /></div>
+            </div>
+            <DialogFooter><Button variant="outline" type="button" onClick={onClose}>Cancel</Button><Button type="submit" disabled={isSubmitting}>{isSubmitting ? 'Saving...' : 'Save'}</Button></DialogFooter>
+        </form>
+    </DialogContent></Dialog>
+  );
+}
+
+// --- List View Component ---
+function ScheduleList({ events, onSelectEvent }: { events: ScheduleEvent[], onSelectEvent: (event: ScheduleEvent) => void }) {
+    return (
+        <div className="space-y-4">
+            {events.map(event => (
+                <Card key={event.id} className="cursor-pointer hover:bg-muted/50" onClick={() => onSelectEvent(event)}>
+                    <CardContent className="p-4 flex flex-col md:flex-row justify-between items-start">
+                        <div className="flex-grow">
+                            <p className="font-bold text-lg">{event.title}</p>
+                            <p className="text-sm text-muted-foreground">{moment(event.start).format('lll')} - {moment(event.end).format('lll')}</p>
+                            <p className="text-sm mt-2">Location: {event.resource.locationText}</p>
+                            <div className="text-sm mt-1">Assignees: {event.resource.assignees.map((a:any) => a.employee.name).join(', ')}</div>
+                        </div>
+                        <div className="mt-4 md:mt-0 md:ml-4 flex-shrink-0">
+                             <Badge>{event.resource.status.replace('_', ' ')}</Badge>
+                        </div>
+                    </CardContent>
+                </Card>
+            ))}
+        </div>
+    )
+}
+
+// --- Main Page Component ---
+export default function SchedulePage() {
+  const [events, setEvents] = useState<ScheduleEvent[]>([])
+  const [calendarView, setCalendarView] = useState<View>(Views.MONTH)
+  const [activeView, setActiveView] = useState<TView>('calendar');
+  const [date, setDate] = useState(new Date())
+  const [selectedEvent, setSelectedEvent] = useState<ScheduleEvent | null>(null)
+  const [selectedSlot, setSelectedSlot] = useState<{ start: Date, end: Date } | null>(null)
+  const [users, setUsers] = useState<User[]>([]);
+  const [filters, setFilters] = useState({ employeeId: '', type: '', status: '' });
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+        try { const res = await fetch('/api/users'); if (res.ok) setUsers(await res.json()); } 
+        catch (error) { console.error("Failed to fetch users", error); }
+    };
+    fetchUsers();
+  }, []);
+
+  const fetchScheduleEntries = useCallback(async (start: Date, end: Date) => {
+    try {
+      const params = new URLSearchParams({ start: start.toISOString(), end: end.toISOString(), ...filters });
+      const response = await fetch(`/api/schedule?${params.toString()}`);
+      if (response.ok) {
+        const data = await response.json();
+        const formattedEvents = data.map((entry: any) => ({
+          id: entry.id,
+          title: `${entry.jobOrder?.jobNumber || entry.type} - ${entry.client?.name || ''}`,
+          start: new Date(entry.startDateTime),
+          end: new Date(entry.endDateTime),
+          resource: entry,
+        }));
+        setEvents(formattedEvents);
+      } else { console.error('Failed to fetch schedule entries'); }
+    } catch (error) { console.error('Error fetching schedule entries:', error); }
+  }, [filters]);
+
+  const onNavigate = useCallback((newDate: Date) => setDate(newDate), []);
+
+  const onRangeChange = useCallback((range: any) => {
+      let start, end;
+      if (Array.isArray(range)) {
+        start = range[0];
+        end = range[range.length - 1];
+        if (range.length === 1) end = start;
+      } else { start = range.start; end = range.end; }
+      end.setDate(end.getDate() + 1);
+      fetchScheduleEntries(start, end);
+    }, [fetchScheduleEntries]
+  );
+  
+  useEffect(() => { onRangeChange({start: date, end: date}); }, [filters, onRangeChange, date]);
+
+  const handleSelectEvent = useCallback((event: ScheduleEvent) => { setSelectedEvent(event); }, []);
+  const handleSelectSlot = useCallback(({ start, end }: { start: Date, end: Date }) => { setSelectedSlot({ start, end }); }, []);
+  const handleSave = () => { onRangeChange({ start: date, end: date }); };
+
+  const { defaultDate, scrollToTime } = useMemo(() => ({ defaultDate: new Date(), scrollToTime: new Date(1970, 1, 1, 6) }), []);
+
+  return (
+    <div className="space-y-6 h-full flex flex-col">
+        <ScheduleDetailView event={selectedEvent} onClose={() => setSelectedEvent(null)} />
+        <ScheduleForm slot={selectedSlot} onClose={() => setSelectedSlot(null)} onSave={handleSave} />
+        
+      <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Schedule & Activities</h1>
-          <p className="text-muted-foreground">
-            View all upcoming site visits, jobs, and pending quotations
-          </p>
+          <h1 className="text-3xl font-bold">Schedule Calendar</h1>
+          <p className="text-muted-foreground">Manage all jobs, visits, and tasks in one place.</p>
         </div>
-        <div className="flex gap-2">
-          <Link href={`/${params.locale}/admin/jobs/calendar`}>
-            <Button variant="outline">
-              <Calendar className="h-4 w-4 mr-2" />
-              Calendar View
-            </Button>
-          </Link>
+        <div className="flex items-center gap-2">
+            <Button variant={activeView === 'calendar' ? 'default' : 'outline'} onClick={() => setActiveView('calendar')}>Calendar</Button>
+            <Button variant={activeView === 'list' ? 'default' : 'outline'} onClick={() => setActiveView('list')}>List</Button>
+            <Button onClick={() => setSelectedSlot({start: new Date(), end: moment().add(1, 'hour').toDate()})}>+ New</Button>
         </div>
       </div>
-
-      {/* Stats */}
-      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              <Calendar className="h-4 w-4" />
-              Today's Site Visits
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{stats.todaySiteVisits}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              <Briefcase className="h-4 w-4" />
-              Today's Jobs
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">{stats.todayJobs}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              <Clock className="h-4 w-4" />
-              Upcoming Site Visits
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-purple-600">{stats.upcomingSiteVisits}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              <Clock className="h-4 w-4" />
-              Upcoming Jobs
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-orange-600">{stats.upcomingJobs}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              <FileText className="h-4 w-4" />
-              Pending Quotations
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">{stats.pendingQuotations}</div>
-          </CardContent>
-        </Card>
+      
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Select value={filters.employeeId} onValueChange={value => setFilters({...filters, employeeId: value})}><SelectTrigger><SelectValue placeholder="Filter by Employee..." /></SelectTrigger><SelectContent><SelectItem value="">All Employees</SelectItem>{users.map(user => <SelectItem key={user.id} value={user.id}>{user.name}</SelectItem>)}</SelectContent></Select>
+        <Select value={filters.type} onValueChange={value => setFilters({...filters, type: value})}><SelectTrigger><SelectValue placeholder="Filter by Type..." /></SelectTrigger><SelectContent><SelectItem value="">All Types</SelectItem>{Object.values(ScheduleEntryType).map(type => <SelectItem key={type} value={type}>{type.replace(/_/g, ' ')}</SelectItem>)}</SelectContent></Select>
+        <Select value={filters.status} onValueChange={value => setFilters({...filters, status: value})}><SelectTrigger><SelectValue placeholder="Filter by Status..." /></SelectTrigger><SelectContent><SelectItem value="">All Statuses</SelectItem>{Object.values(ScheduleEntryStatus).map(status => <SelectItem key={status} value={status}>{status.replace(/_/g, ' ')}</SelectItem>)}</SelectContent></Select>
       </div>
 
-      {/* Tabbed Content */}
-      <Tabs defaultValue="site-visits" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="site-visits">
-            Site Visits ({upcomingSiteVisits.length})
-          </TabsTrigger>
-          <TabsTrigger value="jobs">
-            Jobs ({upcomingJobs.length})
-          </TabsTrigger>
-          <TabsTrigger value="quotations">
-            Quotations ({pendingQuotations.length})
-          </TabsTrigger>
-        </TabsList>
-
-        {/* Site Visits Tab */}
-        <TabsContent value="site-visits">
-          <Card>
-            <CardHeader>
-              <CardTitle>Upcoming Site Visits</CardTitle>
-              <CardDescription>Scheduled site visits and assessments</CardDescription>
-            </CardHeader>
-            <CardContent className="p-0">
-              <div className="overflow-x-auto">
-                <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Date & Time</TableHead>
-                    <TableHead>Client</TableHead>
-                    <TableHead>Site</TableHead>
-                    <TableHead>Assigned To</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {upcomingSiteVisits.length > 0 ? (
-                    upcomingSiteVisits.map((visit) => (
-                      <TableRow key={visit.id}>
-                        <TableCell>
-                          <div className="text-sm font-medium">
-                            {formatDate(visit.scheduledAt, 'PPP')}
-                          </div>
-                          <div className="text-xs text-muted-foreground">
-                            {formatDate(visit.scheduledAt, 'p')}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="text-sm font-medium">{visit.client?.name || '-'}</div>
-                          <div className="text-xs text-muted-foreground">{visit.client?.phone || '-'}</div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="text-sm">{visit.site?.name || '-'}</div>
-                          <div className="text-xs text-muted-foreground flex items-center gap-1">
-                            <MapPin className="h-3 w-3" />
-                            {visit.site?.city || '-'}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="text-sm">{visit.assignedTo?.name || 'Unassigned'}</div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge className={getStatusColor(visit.status)}>
-                            {enumToReadable(visit.status)}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Link href={`/${params.locale}/admin/site-visits/${visit.id}`}>
-                            <Button variant="ghost" size="sm">
-                              View
-                            </Button>
-                          </Link>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={6} className="text-center text-muted-foreground">
-                        No upcoming site visits
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Jobs Tab */}
-        <TabsContent value="jobs">
-          <Card>
-            <CardHeader>
-              <CardTitle>Upcoming Jobs</CardTitle>
-              <CardDescription>Scheduled job orders</CardDescription>
-            </CardHeader>
-            <CardContent className="p-0">
-              <div className="overflow-x-auto">
-                <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Job Number</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Client</TableHead>
-                    <TableHead>Site</TableHead>
-                    <TableHead>Amount</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {upcomingJobs.length > 0 ? (
-                    upcomingJobs.map((job) => (
-                      <TableRow key={job.id}>
-                        <TableCell className="font-medium">{job.jobNumber}</TableCell>
-                        <TableCell>
-                          <div className="text-sm">{formatDate(job.scheduledDate, 'PPP')}</div>
-                          {job.isMultiDay && job.endDate && (
-                            <div className="text-xs text-muted-foreground">
-                              to {formatDate(job.endDate, 'PPP')}
-                            </div>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <div className="text-sm font-medium">{job.client?.name || '-'}</div>
-                          <div className="text-xs text-muted-foreground">{job.client?.phone || '-'}</div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="text-sm">{job.site?.name || '-'}</div>
-                          <div className="text-xs text-muted-foreground flex items-center gap-1">
-                            <MapPin className="h-3 w-3" />
-                            {job.site?.city || '-'}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          {job.quotation && (
-                            <div className="text-sm font-medium">
-                              {job.quotation.items.reduce((sum, item) => sum + Number(item.total), 0).toFixed(3)} OMR
-                            </div>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <Badge className={getStatusColor(job.status)}>
-                            {enumToReadable(job.status)}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Link href={`/${params.locale}/admin/jobs/${job.id}`}>
-                            <Button variant="ghost" size="sm">
-                              View
-                            </Button>
-                          </Link>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={7} className="text-center text-muted-foreground">
-                        No upcoming jobs
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Quotations Tab */}
-        <TabsContent value="quotations">
-          <Card>
-            <CardHeader>
-              <CardTitle>Pending Quotations</CardTitle>
-              <CardDescription>Quotations awaiting customer response</CardDescription>
-            </CardHeader>
-            <CardContent className="p-0">
-              <div className="overflow-x-auto">
-                <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Quotation #</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Client</TableHead>
-                    <TableHead>Site</TableHead>
-                    <TableHead>Total Amount</TableHead>
-                    <TableHead>Valid Until</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {pendingQuotations.length > 0 ? (
-                    pendingQuotations.map((quotation) => (
-                      <TableRow key={quotation.id}>
-                        <TableCell className="font-medium">
-                          QT-{quotation.id.slice(-8).toUpperCase()}
-                        </TableCell>
-                        <TableCell>
-                          <div className="text-sm">{formatDate(quotation.createdAt, 'PP')}</div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="text-sm font-medium">{quotation.client?.name || '-'}</div>
-                          <div className="text-xs text-muted-foreground">
-                            {quotation.client?.phone || '-'}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="text-sm">{quotation.site?.name || '-'}</div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="text-sm font-medium">
-                            {quotation.items.reduce((sum, item) => sum + Number(item.total), 0).toFixed(3)} OMR
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          {quotation.validUntil && (
-                            <div className="text-sm">
-                              {formatDate(quotation.validUntil, 'PP')}
-                            </div>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <Badge className={getStatusColor(quotation.status)}>
-                            {enumToReadable(quotation.status)}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Link href={`/${params.locale}/admin/quotations/${quotation.id}`}>
-                            <Button variant="ghost" size="sm">
-                              View
-                            </Button>
-                          </Link>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={8} className="text-center text-muted-foreground">
-                        No pending quotations
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+      <Card className="flex-grow">
+        <CardContent className="p-2 h-full">
+            {activeView === 'calendar' ? (
+                <div className="h-[65vh]">
+                    <Calendar
+                        localizer={localizer}
+                        events={events}
+                        startAccessor="start"
+                        endAccessor="end"
+                        style={{ flex: 1 }}
+                        view={calendarView}
+                        onView={setCalendarView}
+                        date={date}
+                        onNavigate={onNavigate}
+                        onRangeChange={onRangeChange}
+                        defaultDate={defaultDate}
+                        scrollToTime={scrollToTime}
+                        onSelectEvent={handleSelectEvent}
+                        onSelectSlot={handleSelectSlot}
+                        selectable
+                    />
+                </div>
+            ) : (
+                <ScheduleList events={events} onSelectEvent={handleSelectEvent} />
+            )}
+        </CardContent>
+      </Card>
     </div>
   )
 }

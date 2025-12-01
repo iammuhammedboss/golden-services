@@ -144,6 +144,67 @@ model PaymentMethodMaster {
 }
 
 // ============================================
+// SCHEDULING MODELS
+// ============================================
+
+model ScheduleEntry {
+  id            String              @id @default(cuid())
+  jobOrderId    String?
+  siteVisitId   String?
+  leadId        String?
+  clientId      String?
+  type          ScheduleEntryType
+  status        ScheduleEntryStatus @default(PLANNED)
+  startDateTime DateTime
+  endDateTime   DateTime
+  locationText  String?
+  createdById   String
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+  deletedAt     DateTime?
+  deletedById   String?
+
+  jobOrder    JobOrder?  @relation(fields: [jobOrderId], references: [id])
+  siteVisit   SiteVisit? @relation(fields: [siteVisitId], references: [id])
+  lead        Lead?      @relation(fields: [leadId], references: [id])
+  client      Client?    @relation(fields: [clientId], references: [id])
+  createdBy   User       @relation(fields: [createdById], references: [id])
+  assignees   ScheduleEntryAssignee[]
+  reminders   ScheduleReminder[]
+
+  @@index([jobOrderId])
+  @@index([siteVisitId])
+  @@index([startDateTime, endDateTime])
+  @@map("schedule_entries")
+}
+
+model ScheduleEntryAssignee {
+  id              String        @id @default(cuid())
+  scheduleEntryId String
+  employeeId      String
+  roleInVisit     String        // e.g., "TECHNICIAN", "DRIVER", "SALES"
+  scheduleEntry   ScheduleEntry @relation(fields: [scheduleEntryId], references: [id], onDelete: Cascade)
+  employee        User          @relation(fields: [employeeId], references: [id])
+
+  @@unique([scheduleEntryId, employeeId])
+  @@map("schedule_entry_assignees")
+}
+
+model ScheduleReminder {
+  id              String        @id @default(cuid())
+  scheduleEntryId String
+  userId          String        // The user who wants the reminder
+  offsetMinutes   Int           // e.g., -30 for 30 mins before
+  channel         String        // e.g., "APP", "EMAIL", "SMS"
+  isActive        Boolean       @default(true)
+  scheduleEntry   ScheduleEntry @relation(fields: [scheduleEntryId], references: [id], onDelete: Cascade)
+  user            User          @relation(fields: [userId], references: [id])
+
+  @@map("schedule_reminders")
+}
+
+
+// ============================================
 // ENHANCED CORE MODELS WITH SOFT DELETE
 // ============================================
 
@@ -169,6 +230,7 @@ model Client {
   invoices       Invoice[]
   payments       Payment[]
   customerNotes  CustomerNote[]
+  scheduleEntries ScheduleEntry[]
 
   @@index([phone])
   @@index([deletedAt])
@@ -197,6 +259,7 @@ model Lead {
   convertedToClient     Client?     @relation(fields: [convertedToClientId], references: [id])
   quotations            Quotation[]
   siteVisits            SiteVisit[]
+  scheduleEntries       ScheduleEntry[]
 
   @@index([phone])
   @@index([status])
@@ -298,6 +361,7 @@ model SiteVisit {
   client           Client?           @relation(fields: [clientId], references: [id])
   lead             Lead?             @relation(fields: [leadId], references: [id])
   site             Site?             @relation(fields: [siteId], references: [id])
+  scheduleEntries  ScheduleEntry[]
 
   @@index([assignedToId])
   @@index([clientId])
@@ -434,6 +498,7 @@ model JobOrder {
   checklistItems     ChecklistItem[]
   equipment         JobEquipment[]
   materials         JobMaterial[]
+  scheduleEntries    ScheduleEntry[]
 
   @@index([status])
   @@index([scheduledDate])
@@ -713,33 +778,36 @@ model UserRole {
 }
 
 model User {
-  id              String            @id @default(cuid())
-  name            String
-  email           String            @unique
-  phone           String?
-  whatsapp        String?
-  hashedPassword  String
-  isActive        Boolean           @default(true)
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
-  deletedAt       DateTime?
-  deletedById     String?
-  jobAssignments  JobAssignment[]
-  statusUpdates   JobStatusUpdate[]
-  leads           Lead[]
-  photos          Photo[]
-  quotations      Quotation[]
-  siteVisits      SiteVisit[]
-  roles           UserRole[]
-  invoices        Invoice[]
-  payments        Payment[]
-  customerNotes   CustomerNote[]
-  checklistItems  ChecklistItem[]
-  auditLogs       AuditLog[]
-  deletedRecords  DeletedRecord[]   @relation("DeletedBy")
-  restoredRecords DeletedRecord[]   @relation("RestoredBy")
+  id                   String                  @id @default(cuid())
+  name                 String
+  email                String                  @unique
+  phone                String?
+  whatsapp             String?
+  hashedPassword       String
+  isActive             Boolean                 @default(true)
+  createdAt            DateTime                @default(now())
+  updatedAt            DateTime                @updatedAt
+  deletedAt            DateTime?
+  deletedById          String?
+  jobAssignments       JobAssignment[]
+  statusUpdates        JobStatusUpdate[]
+  leads                Lead[]
+  photos               Photo[]
+  quotations           Quotation[]
+  siteVisits           SiteVisit[]
+  roles                UserRole[]
+  invoices             Invoice[]
+  payments             Payment[]
+  customerNotes        CustomerNote[]
+  checklistItems       ChecklistItem[]
+  auditLogs            AuditLog[]
+  deletedRecords       DeletedRecord[]         @relation("DeletedBy")
+  restoredRecords      DeletedRecord[]         @relation("RestoredBy")
   notificationSettings NotificationSetting?
-  notifications   NotificationQueue[]
+  notifications        NotificationQueue[]
+  createdScheduleEntries ScheduleEntry[]
+  assignedScheduleEntries ScheduleEntryAssignee[]
+  scheduleReminders    ScheduleReminder[]
 
   @@index([email])
   @@index([deletedAt])
@@ -883,4 +951,20 @@ enum InvoiceStatus {
   PARTIALLY_PAID
   OVERDUE
   CANCELLED
+}
+
+enum ScheduleEntryType {
+  JOB_EXECUTION
+  MEASUREMENT_VISIT
+  FOLLOW_UP
+  PAYMENT_COLLECTION
+  INTERNAL_TASK
+}
+
+enum ScheduleEntryStatus {
+  PLANNED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  NO_SHOW
 }
