@@ -10,19 +10,15 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const users = await prisma.user.findMany({
+    const itemMasters = await prisma.itemMaster.findMany({
       where: { isActive: true },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-      }
+      orderBy: { sortOrder: 'asc' },
     })
-    return NextResponse.json(users)
+    return NextResponse.json(itemMasters)
   } catch (error) {
-    console.error('Error fetching users:', error)
+    console.error('Error fetching item masters:', error)
     return NextResponse.json(
-      { error: 'Failed to fetch users' },
+      { error: 'Failed to fetch item masters' },
       { status: 500 }
     )
   }

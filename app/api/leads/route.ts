@@ -6,12 +6,12 @@ import { authOptions } from '@/lib/auth'
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { name, phone, email, message, source = 'WEBSITE', serviceInterest } = body
+    const { name, phone, email, notes, source = 'WEBSITE', serviceInterest } = body
 
     // Validation
-    if (!name || !phone || !message) {
+    if (!name || !phone) {
       return NextResponse.json(
-        { error: 'Missing required fields' },
+        { error: 'Missing required fields: name and phone' },
         { status: 400 }
       )
     }
@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
         email: email || null,
         source,
         serviceInterest: serviceInterest || null,
-        notes: message,
+        notes: notes || null,
         status: 'NEW',
         createdById,
       },

@@ -1,176 +1,89 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { prisma } from '@/lib/prisma'
+import { RoomData } from '@/components/room-manager' // Assuming this path is correct
 
-// GET /api/site-visits - List all site visits
-export async function GET(request: NextRequest) {
-  try {
-    const session = await getServerSession(authOptions)
-
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    const siteVisits = await prisma.siteVisit.findMany({
-      where: {
-        deletedAt: null,
-      },
-      orderBy: {
-        scheduledAt: 'desc',
-      },
-      include: {
-        lead: {
-          select: {
-            name: true,
-            phone: true,
-          },
-        },
-        client: {
-          select: {
-            name: true,
-            phone: true,
-          },
-        },
-        site: {
-          select: {
-            name: true,
-          },
-        },
-        assignedTo: {
-          select: {
-            name: true,
-            email: true,
-          },
-        },
-      },
-    })
-
-    return NextResponse.json({ siteVisits })
-  } catch (error) {
-    console.error('Error fetching site visits:', error)
-    return NextResponse.json(
-      { error: 'Failed to fetch site visits' },
-      { status: 500 }
-    )
-  }
-}
-
-// POST /api/site-visits - Create new site visit
 export async function POST(request: NextRequest) {
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   try {
-    const session = await getServerSession(authOptions)
-
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    const userId = (session.user as any).id
-
     const body = await request.json()
-    const { clientId, siteId, scheduledAt, visitType, assignedToId, notes } = body
+    const { clientId, leadId, scheduledAt, rooms } = body as {
+      clientId: string
+      leadId?: string
+      scheduledAt: string
+      rooms: RoomData[]
+    }
 
-    // Validation
-    if (!clientId || !siteId || !scheduledAt || !assignedToId) {
+    if (!clientId || !scheduledAt || !rooms) {
       return NextResponse.json(
-        { error: 'Missing required fields: clientId, siteId, scheduledAt, assignedToId' },
+        { error: 'Missing required fields' },
         { status: 400 }
       )
     }
 
-    // Verify client exists
-    const client = await prisma.client.findUnique({
-      where: { id: clientId },
-    })
-
-    if (!client) {
-      return NextResponse.json(
-        { error: 'Client not found' },
-        { status: 404 }
-      )
-    }
-
-    // Verify site exists and belongs to client
-    const site = await prisma.site.findUnique({
-      where: { id: siteId },
-    })
-
-    if (!site) {
-      return NextResponse.json(
-        { error: 'Site not found' },
-        { status: 404 }
-      )
-    }
-
-    if (site.clientId !== clientId) {
-      return NextResponse.json(
-        { error: 'Site does not belong to the selected client' },
-        { status: 400 }
-      )
-    }
-
-    // Verify assigned user exists
-    const assignedUser = await prisma.user.findUnique({
-      where: { id: assignedToId },
-    })
-
-    if (!assignedUser) {
-      return NextResponse.json(
-        { error: 'Assigned user not found' },
-        { status: 404 }
-      )
-    }
-
-    // Create site visit
-    const siteVisit = await prisma.siteVisit.create({
-      data: {
-        clientId,
-        siteId,
-        scheduledAt: new Date(scheduledAt),
-        visitType: visitType || 'FULL_HOUSE',
-        assignedToId,
-        notes: notes || null,
-        status: 'SCHEDULED',
-      },
-      include: {
-        client: {
-          select: {
-            name: true,
-            phone: true,
-          },
+    const newSiteVisit = await prisma.$transaction(async (tx) => {
+      const siteVisit = await tx.siteVisit.create({
+        data: {
+          clientId,
+          leadId,
+          scheduledAt: new Date(scheduledAt),
+          status: 'SCHEDULED',
+          assignedToId: session.user.id, // Assign to current user
         },
-        site: {
-          select: {
-            name: true,
-          },
-        },
-        assignedTo: {
-          select: {
-            name: true,
-            email: true,
-          },
-        },
-      },
-    })
+      })
 
-    // Create audit log
-    await prisma.auditLog.create({
-      data: {
-        action: 'CREATE',
-        entityType: 'SiteVisit',
-        entityId: siteVisit.id,
-        userId,
-        newValues: JSON.stringify(siteVisit),
-      },
-    })
+    const createRooms = async (rooms: RoomData[], parentId?: string) => {
+      for (const roomData of rooms) {
+        const room = await tx.room.create({
+          data: {
+            siteVisitId: siteVisit.id,
+            roomType: roomData.name,
+            customName: roomData.name,
+            parentId,
+          },
+        })
 
-    return NextResponse.json(
-      {
-        message: 'Site visit created successfully',
-        siteVisit,
-      },
-      { status: 201 }
-    )
+        for (const itemData of roomData.items) {
+          await tx.roomItem.create({
+            data: {
+              roomId: room.id,
+              itemMasterId: itemData.itemMasterId,
+              quantity: itemData.quantity,
+              size: itemData.size,
+              dirtLevel: itemData.dirtLevel,
+              notes: itemData.notes,
+            },
+          })
+
+          if (itemData.photos && itemData.photos.length > 0) {
+            await tx.photo.createMany({
+              data: itemData.photos.map(url => ({
+                url,
+                roomId: room.id,
+                uploadedById: session.user.id,
+                phase: 'BEFORE',
+              }))
+            })
+          }
+        }
+        
+        if (roomData.subRooms && roomData.subRooms.length > 0) {
+          await createRooms(roomData.subRooms, room.id)
+        }
+      }
+    }
+    
+    await createRooms(rooms)
+
+    return siteVisit
+})
+
+    return NextResponse.json(newSiteVisit, { status: 201 })
   } catch (error) {
     console.error('Error creating site visit:', error)
     return NextResponse.json(

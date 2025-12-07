@@ -205,13 +205,7 @@ export default async function LeadsPage() {
                       <div className="text-sm">{lead.createdBy.name}</div>
                     </TableCell>
                     <TableCell className="text-right">
-                      <LeadActions lead={{
-                        id: lead.id,
-                        name: lead.name,
-                        phone: lead.phone,
-                        status: lead.status,
-                        convertedToClientId: lead.convertedToClientId,
-                      }} />
+                      <LeadActions lead={lead} />
                     </TableCell>
                   </TableRow>
                 ))

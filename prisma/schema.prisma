@@ -307,6 +307,11 @@ model Room {
   updatedAt   DateTime   @updatedAt
   deletedAt   DateTime?
   deletedById String?
+  
+  parentId    String?
+  parent      Room?      @relation("RoomHierarchy", fields: [parentId], references: [id])
+  subRooms    Room[]     @relation("RoomHierarchy")
+
   siteVisit   SiteVisit  @relation(fields: [siteVisitId], references: [id], onDelete: Cascade)
   site        Site?      @relation(fields: [siteId], references: [id])
   items       RoomItem[]
@@ -314,6 +319,7 @@ model Room {
 
   @@index([siteVisitId])
   @@index([siteId])
+  @@index([parentId])
   @@index([deletedAt])
   @@map("rooms")
 }

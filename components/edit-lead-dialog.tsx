@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   Dialog,
@@ -21,21 +21,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { Lead } from '@prisma/client'
 
-export function AddLeadDialog() {
+interface EditLeadDialogProps {
+  lead: Omit<Lead, 'createdAt' | 'updatedAt' | 'deletedAt'>
+  children: React.ReactNode
+}
+
+export function EditLeadDialog({ lead, children }: EditLeadDialogProps) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [formData, setFormData] = useState({
-    name: '',
-    phone: '',
-    whatsapp: '',
-    email: '',
-    source: 'PHONE_CALL',
-    serviceInterest: '',
-    notes: '',
-    status: 'NEW',
-  })
+  const [formData, setFormData] = useState(lead)
+
+  useEffect(() => {
+    setFormData(lead)
+  }, [lead])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -48,35 +49,22 @@ export function AddLeadDialog() {
     setLoading(true)
 
     try {
-      const response = await fetch('/api/leads', {
-        method: 'POST',
+      const response = await fetch(`/api/leads/${lead.id}`, {
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...formData,
-          whatsapp: formData.whatsapp || formData.phone,
-        }),
+        body: JSON.stringify(formData),
       })
 
       if (response.ok) {
         setOpen(false)
-        setFormData({
-          name: '',
-          phone: '',
-          whatsapp: '',
-          email: '',
-          source: 'PHONE_CALL',
-          serviceInterest: '',
-          notes: '',
-          status: 'NEW',
-        })
         router.refresh()
       } else {
         const error = await response.json()
-        alert(error.error || 'Failed to create lead')
+        alert(error.error || 'Failed to update lead')
       }
     } catch (error) {
-      console.error('Error creating lead:', error)
-      alert('Failed to create lead')
+      console.error('Error updating lead:', error)
+      alert('Failed to update lead')
     } finally {
       setLoading(false)
     }
@@ -84,29 +72,12 @@ export function AddLeadDialog() {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button>
-          <svg
-            className="mr-2 h-4 w-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M12 4v16m8-8H4"
-            />
-          </svg>
-          Add Lead
-        </Button>
-      </DialogTrigger>
+      <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Add New Lead</DialogTitle>
+          <DialogTitle>Edit Lead</DialogTitle>
           <DialogDescription>
-            Create a new lead entry for potential customer inquiries
+            Update the details for the lead: {lead.name}
           </DialogDescription>
         </DialogHeader>
 
@@ -142,7 +113,7 @@ export function AddLeadDialog() {
               <Input
                 id="whatsapp"
                 type="tel"
-                value={formData.whatsapp}
+                value={formData.whatsapp || ''}
                 onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
                 placeholder="+968 1234 5678"
               />
@@ -153,7 +124,7 @@ export function AddLeadDialog() {
               <Input
                 id="email"
                 type="email"
-                value={formData.email}
+                value={formData.email || ''}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 placeholder="email@example.com"
               />
@@ -165,7 +136,7 @@ export function AddLeadDialog() {
               <Label htmlFor="source">Lead Source *</Label>
               <Select
                 value={formData.source}
-                onValueChange={(value) => setFormData({ ...formData, source: value })}
+                onValueChange={(value) => setFormData({ ...formData, source: value as Lead['source'] })}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -185,7 +156,7 @@ export function AddLeadDialog() {
               <Label htmlFor="status">Status</Label>
               <Select
                 value={formData.status}
-                onValueChange={(value) => setFormData({ ...formData, status: value })}
+                onValueChange={(value) => setFormData({ ...formData, status: value as Lead['status'] })}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -197,6 +168,7 @@ export function AddLeadDialog() {
                   <SelectItem value="QUOTED">Quoted</SelectItem>
                   <SelectItem value="WON">Won</SelectItem>
                   <SelectItem value="LOST">Lost</SelectItem>
+                  <SelectItem value="CONVERTED">Converted</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -206,7 +178,7 @@ export function AddLeadDialog() {
             <Label htmlFor="serviceInterest">Service Interest (Optional)</Label>
             <Input
               id="serviceInterest"
-              value={formData.serviceInterest}
+              value={formData.serviceInterest || ''}
               onChange={(e) =>
                 setFormData({ ...formData, serviceInterest: e.target.value })
               }
@@ -218,7 +190,7 @@ export function AddLeadDialog() {
             <Label htmlFor="notes">Notes (Optional)</Label>
             <Textarea
               id="notes"
-              value={formData.notes}
+              value={formData.notes || ''}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
               placeholder="Add any additional information..."
               rows={3}
@@ -235,7 +207,7 @@ export function AddLeadDialog() {
               Cancel
             </Button>
             <Button type="submit" disabled={loading}>
-              {loading ? 'Creating...' : 'Create Lead'}
+              {loading ? 'Saving...' : 'Save Changes'}
             </Button>
           </div>
         </form>
