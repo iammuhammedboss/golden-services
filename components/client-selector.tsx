@@ -84,10 +84,6 @@ export function ClientSelector({
     )
   }
 
-import { AddClientDialog } from './add-client-dialog'
-
-// ... (rest of the component)
-
   return (
     <div className="space-y-2">
       <Command shouldFilter={false}>

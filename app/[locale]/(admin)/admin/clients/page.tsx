@@ -1,3 +1,5 @@
+'use client'
+
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -9,29 +11,51 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { prisma } from '@/lib/prisma'
 import { formatDate, enumToReadable } from '@/lib/utils'
 import { AddClientDialog } from '@/components/add-client-dialog'
 import Link from 'next/link'
+import { useEffect, useState } from 'react'
+import { Client } from '@prisma/client'
 
-export default async function ClientsPage() {
-  const clients = await prisma.client.findMany({
-    orderBy: {
-      createdAt: 'desc',
-    },
-    include: {
-      sites: {
-        select: {
-          id: true,
-        },
-      },
-    },
-  })
+type ClientWithSites = Client & {
+  sites: { id: string }[]
+}
+
+export default function ClientsPage() {
+  const [clients, setClients] = useState<ClientWithSites[]>([])
+  const [loading, setLoading] = useState(true)
 
   const stats = {
     total: clients.length,
     individual: clients.filter((c) => c.type === 'INDIVIDUAL').length,
     company: clients.filter((c) => c.type === 'COMPANY').length,
+  }
+
+  const fetchClients = async () => {
+    try {
+      const response = await fetch('/api/clients')
+      if (response.ok) {
+        const data = await response.json()
+        setClients(data)
+      }
+    } catch (error) {
+      console.error('Failed to fetch clients:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchClients()
+  }, [])
+
+  const handleClientCreated = () => {
+    // Refresh the clients list
+    fetchClients()
+  }
+
+  if (loading) {
+    return <div className="flex items-center justify-center h-64">Loading...</div>
   }
 
   return (
@@ -41,7 +65,9 @@ export default async function ClientsPage() {
           <h1 className="text-3xl font-bold">Clients</h1>
           <p className="text-muted-foreground">Manage your client database</p>
         </div>
-        <AddClientDialog />
+        <AddClientDialog onClientCreated={handleClientCreated}>
+          <Button>+ Add Client</Button>
+        </AddClientDialog>
       </div>
 
       {/* Stats */}
