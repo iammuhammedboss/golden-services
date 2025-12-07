@@ -83,6 +83,7 @@ model ItemMaster {
   deletedById       String?
   unit              UnitMaster @relation(fields: [unitId], references: [id])
   roomItems         RoomItem[]
+  measurementItems  MeasurementItem[]
 
   @@map("item_masters")
 }
@@ -125,6 +126,7 @@ model RoomTypeMaster {
   updatedAt   DateTime  @updatedAt
   deletedAt   DateTime?
   deletedById String?
+  measurementItems MeasurementItem[]
 
   @@map("room_type_masters")
 }
@@ -378,21 +380,25 @@ model SiteVisit {
 }
 
 model MeasurementItem {
-  id          String    @id @default(cuid())
-  siteVisitId String
-  type        String
-  sizeLabel   String?
-  description String?
-  quantity    Int       @default(1)
-  dirtLevel   DirtLevel @default(MEDIUM)
-  notes       String?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  deletedAt   DateTime?
-  deletedById String?
-  siteVisit   SiteVisit @relation(fields: [siteVisitId], references: [id], onDelete: Cascade)
+  id                String    @id @default(cuid())
+  siteVisitId       String
+  itemTypeId        String    // Links to ItemTypeMaster
+  roomTypeId        String?   // Links to RoomTypeMaster
+  quantity          Decimal   @db.Decimal(10, 2)
+  size              String?   // e.g., "3ft x 4ft"
+  customDescription String?
+  notes             String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  deletedAt         DateTime?
+  deletedById       String?
+
+  siteVisit  SiteVisit      @relation(fields: [siteVisitId], references: [id], onDelete: Cascade)
+  itemType   ItemMaster @relation(fields: [itemTypeId], references: [id])
+  roomType   RoomTypeMaster? @relation(fields: [roomTypeId], references: [id])
 
   @@index([siteVisitId])
+  @@index([itemTypeId])
   @@index([deletedAt])
   @@map("measurement_items")
 }
