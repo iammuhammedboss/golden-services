@@ -210,10 +210,13 @@ export async function POST(request: NextRequest) {
         objects.map((obj: any) => {
           // Validate dirtLevel if provided
           let dirtLevel = null;
-          if (obj.dirtLevel && validDirtLevels.includes(obj.dirtLevel.toUpperCase())) {
-            dirtLevel = obj.dirtLevel.toUpperCase();
-          } else if (obj.dirtLevel) {
-            console.warn(`Invalid dirtLevel value: ${obj.dirtLevel}`);
+          if (obj.dirtLevel) {
+            const upperDirtLevel = obj.dirtLevel.toUpperCase();
+            if (validDirtLevels.includes(upperDirtLevel)) {
+              dirtLevel = upperDirtLevel;
+            } else {
+              console.warn(`Invalid dirtLevel value: ${obj.dirtLevel}`);
+            }
           }
 
           return prisma.measurementObject.create({
