@@ -65,7 +65,9 @@ export async function GET(request: NextRequest) {
         jobOrder: { select: { jobNumber: true } },
         siteVisit: {
           select: {
-            requiredService: true,
+            id: true,
+            scheduledAt: true,
+            status: true,
           },
         },
         assignees: {

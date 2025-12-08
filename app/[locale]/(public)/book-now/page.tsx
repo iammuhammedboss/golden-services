@@ -13,7 +13,6 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Form, FormField, FormControl, FormMessage } from '@/components/ui/form'
 
 interface Service {
   id: string
@@ -175,29 +174,28 @@ export default function BookNowPage() {
                 </Button>
               </div>
             ) : (
-              <Form onSubmit={handleSubmit}>
+              <form onSubmit={handleSubmit}>
                 <div className="space-y-6">
                   <div className="space-y-4">
                     <h3 className="text-lg font-semibold">Personal Information</h3>
 
-                    <FormField>
+                    <div className="space-y-2">
                       <Label htmlFor="name">Full Name *</Label>
-                      <FormControl>
-                        <Input
+                      <Input
                           id="name"
                           name="name"
                           value={formData.name}
                           onChange={handleChange}
                           placeholder="Your full name"
                         />
-                      </FormControl>
-                      {errors.name && <FormMessage>{errors.name}</FormMessage>}
-                    </FormField>
+                      
+                      {errors.name && <p className="text-sm font-medium text-destructive">{errors.name}</p>}
+                    </div>
 
                     <div className="grid gap-4 md:grid-cols-2">
-                      <FormField>
+                      <div className="space-y-2">
                         <Label htmlFor="phone">Phone Number *</Label>
-                        <FormControl>
+                        
                           <Input
                             id="phone"
                             name="phone"
@@ -206,13 +204,13 @@ export default function BookNowPage() {
                             onChange={handleChange}
                             placeholder="+968 1234 5678"
                           />
-                        </FormControl>
-                        {errors.phone && <FormMessage>{errors.phone}</FormMessage>}
-                      </FormField>
+                        
+                        {errors.phone && <p className="text-sm font-medium text-destructive">{errors.phone}</p>}
+                      </div>
 
-                      <FormField>
+                      <div className="space-y-2">
                         <Label htmlFor="whatsapp">WhatsApp Number</Label>
-                        <FormControl>
+                        
                           <Input
                             id="whatsapp"
                             name="whatsapp"
@@ -221,13 +219,13 @@ export default function BookNowPage() {
                             onChange={handleChange}
                             placeholder="+968 1234 5678"
                           />
-                        </FormControl>
-                      </FormField>
+                        
+                      </div>
                     </div>
 
-                    <FormField>
+                    <div className="space-y-2">
                       <Label htmlFor="email">Email</Label>
-                      <FormControl>
+                      
                         <Input
                           id="email"
                           name="email"
@@ -236,17 +234,17 @@ export default function BookNowPage() {
                           onChange={handleChange}
                           placeholder="your.email@example.com"
                         />
-                      </FormControl>
-                      {errors.email && <FormMessage>{errors.email}</FormMessage>}
-                    </FormField>
+                      
+                      {errors.email && <p className="text-sm font-medium text-destructive">{errors.email}</p>}
+                    </div>
                   </div>
 
                   <div className="space-y-4">
                     <h3 className="text-lg font-semibold">Service Details</h3>
 
-                    <FormField>
+                    <div className="space-y-2">
                       <Label htmlFor="serviceInterest">Service Type *</Label>
-                      <FormControl>
+                      
                         <Select
                           value={formData.serviceInterest}
                           onValueChange={(value) =>
@@ -264,13 +262,13 @@ export default function BookNowPage() {
                             ))}
                           </SelectContent>
                         </Select>
-                      </FormControl>
-                      {errors.serviceInterest && <FormMessage>{errors.serviceInterest}</FormMessage>}
-                    </FormField>
+                      
+                      {errors.serviceInterest && <p className="text-sm font-medium text-destructive">{errors.serviceInterest}</p>}
+                    </div>
 
-                    <FormField>
+                    <div className="space-y-2">
                       <Label htmlFor="address">Service Address *</Label>
-                      <FormControl>
+                      
                         <Textarea
                           id="address"
                           name="address"
@@ -279,13 +277,13 @@ export default function BookNowPage() {
                           placeholder="Building name, street, area..."
                           rows={3}
                         />
-                      </FormControl>
-                      {errors.address && <FormMessage>{errors.address}</FormMessage>}
-                    </FormField>
+                      
+                      {errors.address && <p className="text-sm font-medium text-destructive">{errors.address}</p>}
+                    </div>
 
-                    <FormField>
+                    <div className="space-y-2">
                       <Label htmlFor="city">City</Label>
-                      <FormControl>
+                      
                         <Input
                           id="city"
                           name="city"
@@ -293,16 +291,16 @@ export default function BookNowPage() {
                           onChange={handleChange}
                           placeholder="e.g., Muscat"
                         />
-                      </FormControl>
-                    </FormField>
+                      
+                    </div>
                   </div>
 
                   <div className="space-y-4">
                     <h3 className="text-lg font-semibold">Site Visit</h3>
 
-                    <FormField>
+                    <div className="space-y-2">
                       <Label htmlFor="needsSiteVisit">Do you need a site visit?</Label>
-                      <FormControl>
+                      
                         <Select
                           value={formData.needsSiteVisit}
                           onValueChange={(value) =>
@@ -317,14 +315,14 @@ export default function BookNowPage() {
                             <SelectItem value="false">No, just send a quotation</SelectItem>
                           </SelectContent>
                         </Select>
-                      </FormControl>
-                    </FormField>
+                      
+                    </div>
 
                     {formData.needsSiteVisit === 'true' && (
                       <div className="grid gap-4 md:grid-cols-2">
-                        <FormField>
+                        <div className="space-y-2">
                           <Label htmlFor="preferredDate">Preferred Date *</Label>
-                          <FormControl>
+                          
                             <Input
                               id="preferredDate"
                               name="preferredDate"
@@ -333,13 +331,13 @@ export default function BookNowPage() {
                               onChange={handleChange}
                               min={new Date().toISOString().split('T')[0]}
                             />
-                          </FormControl>
-                          {errors.preferredDate && <FormMessage>{errors.preferredDate}</FormMessage>}
-                        </FormField>
+                          
+                          {errors.preferredDate && <p className="text-sm font-medium text-destructive">{errors.preferredDate}</p>}
+                        </div>
 
-                        <FormField>
+                        <div className="space-y-2">
                           <Label htmlFor="preferredTime">Preferred Time *</Label>
-                          <FormControl>
+                          
                             <Input
                               id="preferredTime"
                               name="preferredTime"
@@ -347,16 +345,16 @@ export default function BookNowPage() {
                               value={formData.preferredTime}
                               onChange={handleChange}
                             />
-                          </FormControl>
-                          {errors.preferredTime && <FormMessage>{errors.preferredTime}</FormMessage>}
-                        </FormField>
+                          
+                          {errors.preferredTime && <p className="text-sm font-medium text-destructive">{errors.preferredTime}</p>}
+                        </div>
                       </div>
                     )}
                   </div>
 
-                  <FormField>
+                  <div className="space-y-2">
                     <Label htmlFor="notes">Additional Notes</Label>
-                    <FormControl>
+                    
                       <Textarea
                         id="notes"
                         name="notes"
@@ -365,8 +363,8 @@ export default function BookNowPage() {
                         placeholder="Any special requirements or additional information..."
                         rows={4}
                       />
-                    </FormControl>
-                  </FormField>
+                    
+                  </div>
 
                   {errors.submit && (
                     <div className="rounded-lg bg-red-50 p-4 text-sm text-red-800">
@@ -378,7 +376,7 @@ export default function BookNowPage() {
                     {isSubmitting ? 'Submitting...' : 'Submit Booking Request'}
                   </Button>
                 </div>
-              </Form>
+              </form>
             )}
           </CardContent>
         </Card>

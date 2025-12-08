@@ -74,7 +74,7 @@ export function MeasurementSection({ siteVisit }: MeasurementSectionProps) {
           <div>
             <h3 className="text-xl font-semibold mb-4">Add New Measurements</h3>
             <MeasurementForm
-              siteVisitId={siteVisit.id}
+              initialSiteVisitId={siteVisit.id}
               onSubmitSuccess={handleFormSuccess}
             />
           </div>

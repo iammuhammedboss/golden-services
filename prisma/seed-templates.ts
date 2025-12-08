@@ -73,7 +73,7 @@ async function seedTemplates() {
       where: { 
         name: { contains: update.name.split(' ')[0], mode: 'insensitive' }
       },
-      data: { itemType: update.itemType }
+      data: { itemType: update.itemType as any }
     })
   }
 

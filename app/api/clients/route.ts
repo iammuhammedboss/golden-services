@@ -85,10 +85,10 @@ export async function GET(request: NextRequest) {
       name: client.name,
       phone: client.phone,
       whatsapp: client.whatsapp,
+      alternatePhone: client.alternatePhone,
       email: client.email,
       type: client.type,
-      source: client.source,
-      status: client.status,
+      isTemporary: client.isTemporary,
       notes: client.notes,
       createdAt: client.createdAt,
       updatedAt: client.updatedAt,
@@ -127,15 +127,13 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json()
-    const { 
-      name, 
-      phone, 
-      email, 
-      whatsapp, 
+    const {
+      name,
+      phone,
+      email,
+      whatsapp,
       alternatePhone,
       type = 'INDIVIDUAL',
-      source = 'PHONE_CALL',
-      status = 'NEW',
       notes,
       address,
       city,
@@ -176,8 +174,6 @@ export async function POST(request: NextRequest) {
         whatsapp: whatsapp || phone,
         alternatePhone: alternatePhone || null,
         type,
-        source,
-        status,
         notes: notes || null,
       },
     })
@@ -200,7 +196,6 @@ export async function POST(request: NextRequest) {
           name: siteName || 'Primary Site',
           address: address,
           city: city || null,
-          type: 'RESIDENTIAL',
           notes: `Created with client`,
         },
       })
@@ -214,30 +209,28 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // Create notifications for relevant roles
-    try {
-      await prisma.notification.createMany({
-        data: [
-          {
-            recipientRole: 'SALES',
-            title: 'New Client Created',
-            message: `New client ${name} (${phone}) was created by ${user.name || user.email}`,
-            entityType: 'Client',
-            entityId: newClient.id,
-          },
-          {
-            recipientRole: 'RECEPTION',
-            title: 'New Client Created',
-            message: `New client ${name} (${phone}) was created by ${user.name || user.email}`,
-            entityType: 'Client',
-            entityId: newClient.id,
-          },
-        ],
-      })
-    } catch (error) {
-      console.error('Failed to create notifications:', error)
-      // Don't fail client creation if notifications fail
-    }
+    // TODO: Create notifications for relevant roles when notification system is implemented
+    // try {
+    //   await prisma.notificationQueue.createMany({
+    //     data: [
+    //       {
+    //         userId: 'SALES_USER_ID',
+    //         type: 'NEW_CLIENT',
+    //         channel: 'PUSH',
+    //         sendAt: new Date(),
+    //         payload: {
+    //           title: 'New Client Created',
+    //           message: `New client ${name} (${phone}) was created by ${user.name || user.email}`,
+    //           entityType: 'Client',
+    //           entityId: newClient.id,
+    //         },
+    //       },
+    //     ],
+    //   })
+    // } catch (error) {
+    //   console.error('Failed to create notifications:', error)
+    //   // Don't fail client creation if notifications fail
+    // }
 
     return NextResponse.json({ 
       client: newClient,

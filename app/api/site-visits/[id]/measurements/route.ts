@@ -40,70 +40,30 @@ export async function POST(
       }
     }
 
-    // First, check if a measurement already exists for this site visit
-    let measurement = await prisma.measurement.findFirst({
-      where: {
-        siteVisitId,
-        deletedAt: null,
-      },
+    // Verify site visit exists
+    const siteVisit = await prisma.siteVisit.findUnique({
+      where: { id: siteVisitId, deletedAt: null },
     });
 
-    // If no measurement exists, create one
-    if (!measurement) {
-      // Get site visit details to create measurement title
-      const siteVisit = await prisma.siteVisit.findUnique({
-        where: { id: siteVisitId },
-        include: {
-          client: true,
-          site: true,
-        },
-      });
-
-      if (!siteVisit?.clientId) {
-        return NextResponse.json(
-          { error: 'Site visit must be linked to a client to create measurements' },
-          { status: 400 }
-        );
-      }
-
-      measurement = await prisma.measurement.create({
-        data: {
-          clientId: siteVisit.clientId,
-          siteId: siteVisit?.siteId || null,
-          siteVisitId,
-          title: `Measurement for ${siteVisit?.client?.name || 'Client'} - ${new Date().toLocaleDateString()}`,
-          status: 'DRAFT',
-        },
-      });
+    if (!siteVisit) {
+      return NextResponse.json(
+        { error: 'Site visit not found' },
+        { status: 404 }
+      );
     }
 
-    // Create measurement objects
-    const validDirtLevels = ['LIGHT', 'MEDIUM', 'HEAVY', 'SEVERE'];
-    
-    const createdObjects = await prisma.$transaction(
+    // Create measurement items
+    const createdMeasurements = await prisma.$transaction(
       measurements.map((m) => {
-        // Validate dirtLevel if provided
-        let dirtLevel = null;
-        if (m.dirtLevel) {
-          const upperDirtLevel = m.dirtLevel.toUpperCase();
-          if (validDirtLevels.includes(upperDirtLevel)) {
-            dirtLevel = upperDirtLevel;
-          } else {
-            console.warn(`Invalid dirtLevel value: ${m.dirtLevel}`);
-          }
-        }
-
-        return prisma.measurementObject.create({
+        return prisma.measurementItem.create({
           data: {
-            measurementId: measurement.id,
-            type: 'ITEM',
-            name: m.customDescription || `Item from measurement`,
-            itemMasterId: m.itemTypeId,
-            size: m.size || null,
-            dirtLevel: dirtLevel,
+            siteVisitId,
+            itemTypeId: m.itemTypeId,
+            roomTypeId: m.roomTypeId || null,
             quantity: m.quantity,
+            size: m.size || null,
+            customDescription: m.customDescription || null,
             notes: m.notes || null,
-            sortOrder: 0,
           },
         });
       })
@@ -111,9 +71,8 @@ export async function POST(
 
     return NextResponse.json({
       success: true,
-      measurement,
-      objects: createdObjects,
-      count: createdObjects.length,
+      measurements: createdMeasurements,
+      count: createdMeasurements.length,
     });
   } catch (error) {
     console.error('Error creating measurements:', error)
@@ -136,43 +95,22 @@ export async function GET(
 
     const { id: siteVisitId } = params
 
-    // Get measurement for this site visit
-    const measurement = await prisma.measurement.findFirst({
-      where: { 
+    // Get measurement items for this site visit
+    const measurementItems = await prisma.measurementItem.findMany({
+      where: {
         siteVisitId,
-        deletedAt: null 
+        deletedAt: null
       },
       include: {
-        objects: {
-          where: { deletedAt: null },
-          include: {
-            itemMaster: true,
-          },
-          orderBy: {
-            createdAt: 'asc',
-          },
-        },
+        itemType: true,
+        roomType: true,
+      },
+      orderBy: {
+        createdAt: 'asc',
       },
     });
 
-    if (!measurement) {
-      return NextResponse.json([]);
-    }
-
-    // Format response to match expected structure
-    const formattedMeasurements = measurement.objects.map(obj => ({
-      id: obj.id,
-      itemTypeId: obj.itemMasterId,
-      itemType: obj.itemMaster,
-      quantity: obj.quantity,
-      size: obj.size,
-      customDescription: obj.name,
-      notes: obj.notes,
-      createdAt: obj.createdAt,
-      updatedAt: obj.updatedAt,
-    }));
-
-    return NextResponse.json(formattedMeasurements);
+    return NextResponse.json(measurementItems);
   } catch (error) {
     console.error('Error fetching measurements:', error)
     return NextResponse.json(

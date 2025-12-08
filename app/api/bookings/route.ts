@@ -99,8 +99,6 @@ export async function POST(request: NextRequest) {
           phone,
           whatsapp: whatsapp || null,
           email: email || null,
-          source: 'WEBSITE',
-          status: 'NEW',
           notes: `Address: ${address}${city ? `, ${city}` : ''}\nService interest: ${serviceInterest}\n${notes || ''}`,
         },
       })
@@ -115,7 +113,6 @@ export async function POST(request: NextRequest) {
           name: 'Primary Site',
           address: address,
           city: city || null,
-          type: 'RESIDENTIAL',
           notes: `Created from website booking`,
         },
       })
@@ -144,30 +141,28 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Create notification for relevant roles
-    try {
-      await prisma.notification.createMany({
-        data: [
-          {
-            recipientRole: 'SALES',
-            title: 'New Client from Website',
-            message: `New client ${name} (${phone}) registered from website`,
-            entityType: 'Client',
-            entityId: client.id,
-          },
-          {
-            recipientRole: 'RECEPTION',
-            title: 'New Client from Website',
-            message: `New client ${name} (${phone}) registered from website`,
-            entityType: 'Client',
-            entityId: client.id,
-          },
-        ],
-      })
-    } catch (error) {
-      console.error('Failed to create notifications:', error)
-      // Don't fail the booking if notifications fail
-    }
+    // TODO: Create notification for relevant roles when notification system is implemented
+    // try {
+    //   await prisma.notificationQueue.createMany({
+    //     data: [
+    //       {
+    //         userId: 'SALES_USER_ID',
+    //         type: 'NEW_CLIENT',
+    //         channel: 'PUSH',
+    //         sendAt: new Date(),
+    //         payload: {
+    //           title: 'New Client from Website',
+    //           message: `New client ${name} (${phone}) registered from website`,
+    //           entityType: 'Client',
+    //           entityId: client.id,
+    //         },
+    //       },
+    //     ],
+    //   })
+    // } catch (error) {
+    //   console.error('Failed to create notifications:', error)
+    //   // Don't fail the booking if notifications fail
+    // }
 
     return NextResponse.json({ client, site }, { status: 201 })
   } catch (error) {

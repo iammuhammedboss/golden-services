@@ -110,7 +110,10 @@ export function ClientSelector({
           )}
         </CommandList>
       </Command>
-      <AddClientDialog onClientCreated={handleSelectClient}>
+      <AddClientDialog onClientCreated={() => {
+        // Refetch clients after creating a new one
+        fetchClients(query)
+      }}>
         <Button variant="outline" size="sm" className="w-full">
           + Create New Client
         </Button>

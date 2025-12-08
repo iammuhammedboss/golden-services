@@ -119,10 +119,10 @@ export default function ContactPage() {
                     </Button>
                   </div>
                 ) : (
-                  <Form onSubmit={handleSubmit}>
-                    <FormField>
+                  <form onSubmit={handleSubmit}>
+                    <div className="space-y-2">
                       <Label htmlFor="name">Name *</Label>
-                      <FormControl>
+                      
                         <Input
                           id="name"
                           name="name"
@@ -130,13 +130,13 @@ export default function ContactPage() {
                           onChange={handleChange}
                           placeholder="Your full name"
                         />
-                      </FormControl>
-                      {errors.name && <FormMessage>{errors.name}</FormMessage>}
-                    </FormField>
+                      
+                      {errors.name && <p className="text-sm font-medium text-destructive">{errors.name}</p>}
+                    </div>
 
-                    <FormField>
+                    <div className="space-y-2">
                       <Label htmlFor="phone">Phone Number *</Label>
-                      <FormControl>
+                      
                         <Input
                           id="phone"
                           name="phone"
@@ -145,13 +145,13 @@ export default function ContactPage() {
                           onChange={handleChange}
                           placeholder="+968 1234 5678"
                         />
-                      </FormControl>
-                      {errors.phone && <FormMessage>{errors.phone}</FormMessage>}
-                    </FormField>
+                      
+                      {errors.phone && <p className="text-sm font-medium text-destructive">{errors.phone}</p>}
+                    </div>
 
-                    <FormField>
+                    <div className="space-y-2">
                       <Label htmlFor="email">Email</Label>
-                      <FormControl>
+                      
                         <Input
                           id="email"
                           name="email"
@@ -160,13 +160,13 @@ export default function ContactPage() {
                           onChange={handleChange}
                           placeholder="your.email@example.com"
                         />
-                      </FormControl>
-                      {errors.email && <FormMessage>{errors.email}</FormMessage>}
-                    </FormField>
+                      
+                      {errors.email && <p className="text-sm font-medium text-destructive">{errors.email}</p>}
+                    </div>
 
-                    <FormField>
+                    <div className="space-y-2">
                       <Label htmlFor="message">Message *</Label>
-                      <FormControl>
+                      
                         <Textarea
                           id="message"
                           name="message"
@@ -175,9 +175,9 @@ export default function ContactPage() {
                           placeholder="Tell us how we can help you..."
                           rows={5}
                         />
-                      </FormControl>
-                      {errors.message && <FormMessage>{errors.message}</FormMessage>}
-                    </FormField>
+                      
+                      {errors.message && <p className="text-sm font-medium text-destructive">{errors.message}</p>}
+                    </div>
 
                     {errors.submit && (
                       <div className="rounded-lg bg-red-50 p-4 text-sm text-red-800">
@@ -188,7 +188,7 @@ export default function ContactPage() {
                     <Button type="submit" className="w-full" disabled={isSubmitting}>
                       {isSubmitting ? 'Sending...' : 'Send Message'}
                     </Button>
-                  </Form>
+                  </form>
                 )}
               </CardContent>
             </Card>

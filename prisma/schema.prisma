@@ -85,6 +85,7 @@ model ItemMaster {
   unit              UnitMaster @relation(fields: [unitId], references: [id])
   roomItems         RoomItem[]
   measurementItems  MeasurementItem[]
+  measurementObjects MeasurementObject[]
 
   @@map("item_masters")
 }
@@ -170,6 +171,8 @@ model ScheduleEntry {
   siteVisit   SiteVisit? @relation(fields: [siteVisitId], references: [id])
   client      Client     @relation(fields: [clientId], references: [id])
   createdBy   User       @relation(fields: [createdById], references: [id])
+  lead        Lead?      @relation(fields: [leadId], references: [id])
+  leadId      String?
   assignees   ScheduleEntryAssignee[]
   reminders   ScheduleReminder[]
 
@@ -454,6 +457,7 @@ model RoomItem {
   room           Room            @relation(fields: [roomId], references: [id], onDelete: Cascade)
   itemMaster     ItemMaster      @relation(fields: [itemMasterId], references: [id])
   checklistItems ChecklistItem[]
+  photos         Photo[]
 
   @@index([roomId])
   @@index([deletedAt])
@@ -476,12 +480,15 @@ model SiteVisit {
   deletedAt        DateTime?
   deletedById      String?
   measurementItems MeasurementItem[]
+  measurements     Measurement[]
   rooms            Room[]
   photos           Photo[]
   assignedTo       User              @relation(fields: [assignedToId], references: [id])
   client           Client            @relation(fields: [clientId], references: [id])
   site             Site?             @relation(fields: [siteId], references: [id])
   scheduleEntries  ScheduleEntry[]
+  lead             Lead?             @relation(fields: [leadId], references: [id])
+  leadId           String?
 
   @@index([assignedToId])
   @@index([clientId])
@@ -583,6 +590,8 @@ model Quotation {
   measurement   Measurement?    @relation(fields: [measurementId], references: [id])
   termsTemplate TermsTemplate?  @relation(fields: [termsTemplateId], references: [id])
   bankDetailsTemplate BankDetailsTemplate? @relation(fields: [bankDetailsTemplateId], references: [id])
+  lead          Lead?           @relation(fields: [leadId], references: [id])
+  leadId        String?
 
   @@index([clientId])
   @@index([status])
@@ -715,8 +724,8 @@ model ChecklistItem {
   deletedById   String?
   jobOrder      JobOrder  @relation(fields: [jobOrderId], references: [id], onDelete: Cascade)
   roomItem      RoomItem? @relation(fields: [roomItemId], references: [id])
-  completedBy   User?     @relation(fields: [completedById], references: [id])
-  verifiedBy    User?     @relation(fields: [verifiedById], references: [id])
+  completedBy   User?     @relation("ChecklistItemCompletedBy", fields: [completedById], references: [id])
+  verifiedBy    User?     @relation("ChecklistItemVerifiedBy", fields: [verifiedById], references: [id])
 
   @@index([jobOrderId])
   @@index([isCompleted])
@@ -965,12 +974,14 @@ model User {
   invoices             Invoice[]
   payments             Payment[]
   customerNotes        CustomerNote[]
-  checklistItems       ChecklistItem[]
+  completedChecklistItems ChecklistItem[] @relation("ChecklistItemCompletedBy")
+  verifiedChecklistItems ChecklistItem[] @relation("ChecklistItemVerifiedBy")
   auditLogs            AuditLog[]
   deletedRecords       DeletedRecord[]         @relation("DeletedBy")
   restoredRecords      DeletedRecord[]         @relation("RestoredBy")
   notificationSettings NotificationSetting?
-  notifications        NotificationQueue[]
+  notificationQueueItems NotificationQueue[]
+  notifications        Notification[]
   createdScheduleEntries ScheduleEntry[]
   assignedScheduleEntries ScheduleEntryAssignee[]
   scheduleReminders    ScheduleReminder[]
@@ -1037,30 +1048,32 @@ model NotificationQueue {
 // ============================================
 
 model TermsTemplate {
-  id          String    @id @default(cuid())
-  name        String    @unique
+  id          String      @id @default(cuid())
+  name        String      @unique
   content     String
-  isActive    Boolean   @default(true)
-  sortOrder   Int       @default(0)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  isActive    Boolean     @default(true)
+  sortOrder   Int         @default(0)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
   deletedAt   DateTime?
   deletedById String?
+  quotations  Quotation[]
 
   @@index([deletedAt])
   @@map("terms_templates")
 }
 
 model BankDetailsTemplate {
-  id          String    @id @default(cuid())
-  name        String    @unique
+  id          String      @id @default(cuid())
+  name        String      @unique
   content     String
-  isActive    Boolean   @default(true)
-  sortOrder   Int       @default(0)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  isActive    Boolean     @default(true)
+  sortOrder   Int         @default(0)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
   deletedAt   DateTime?
   deletedById String?
+  quotations  Quotation[]
 
   @@index([deletedAt])
   @@map("bank_details_templates")

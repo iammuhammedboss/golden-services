@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient, ClientType } from '@prisma/client'
 import bcrypt from 'bcryptjs'
 
 const prisma = new PrismaClient()
@@ -67,14 +67,19 @@ async function main() {
 
   // Create sample clients for testing
   console.log('Creating sample clients...')
-  const sampleClients = [
+  const sampleClients: Array<{
+    name: string;
+    phone: string;
+    whatsapp: string;
+    email: string;
+    type: ClientType;
+    notes: string;
+  }> = [
     {
       name: 'Ahmed Al-Maskari',
       phone: '+96898765432',
       whatsapp: '+96898765432',
       email: 'ahmed@example.com',
-      source: 'WEBSITE',
-      status: 'ACTIVE',
       type: 'INDIVIDUAL',
       notes: 'Regular customer for cleaning services',
     },
@@ -83,9 +88,7 @@ async function main() {
       phone: '+96891234567',
       whatsapp: '+96891234567',
       email: 'contact@omantrading.com',
-      source: 'PHONE_CALL',
-      status: 'ACTIVE',
-      type: 'COMPANY',
+      type: 'CORPORATE',
       notes: 'Corporate client for office cleaning',
     },
     {
@@ -93,8 +96,6 @@ async function main() {
       phone: '+96892345678',
       whatsapp: '+96892345678',
       email: 'fatma@example.com',
-      source: 'WHATSAPP',
-      status: 'NEW',
       type: 'INDIVIDUAL',
       notes: 'Interested in pest control services',
     },
@@ -103,19 +104,21 @@ async function main() {
       phone: '+96893456789',
       whatsapp: '+96893456789',
       email: 'info@muscatgrandhotel.com',
-      source: 'REFERRAL',
-      status: 'ACTIVE',
-      type: 'COMPANY',
+      type: 'CORPORATE',
       notes: 'Hotel requiring regular deep cleaning',
     },
   ];
 
   for (const clientData of sampleClients) {
-    await prisma.client.upsert({
-      where: { phone: clientData.phone },
-      update: {},
-      create: clientData,
+    // Check if client with this phone already exists
+    const existing = await prisma.client.findFirst({
+      where: { phone: clientData.phone }
     });
+    if (!existing) {
+      await prisma.client.create({
+        data: clientData,
+      });
+    }
   }
   console.log('✓ Sample clients created');
 

@@ -32,8 +32,7 @@ export function AddClientDialog({ children, onClientCreated }: AddClientDialogPr
     name: '',
     phone: '',
     email: '',
-    type: 'INDIVIDUAL' as const,
-    source: 'PHONE' as const,
+    type: 'INDIVIDUAL' as 'INDIVIDUAL' | 'CORPORATE',
   })
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -53,7 +52,6 @@ export function AddClientDialog({ children, onClientCreated }: AddClientDialogPr
           phone: '',
           email: '',
           type: 'INDIVIDUAL',
-          source: 'PHONE',
         })
       }
     } catch (error) {
@@ -107,7 +105,7 @@ export function AddClientDialog({ children, onClientCreated }: AddClientDialogPr
             <Label htmlFor="type">Type</Label>
             <Select
               value={formData.type}
-              onValueChange={(value: 'INDIVIDUAL' | 'CORPORATE') => 
+              onValueChange={(value: 'INDIVIDUAL' | 'CORPORATE') =>
                 setFormData({ ...formData, type: value })
               }
             >
@@ -117,28 +115,6 @@ export function AddClientDialog({ children, onClientCreated }: AddClientDialogPr
               <SelectContent>
                 <SelectItem value="INDIVIDUAL">Individual</SelectItem>
                 <SelectItem value="CORPORATE">Corporate</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="source">Source</Label>
-            <Select
-              value={formData.source}
-              onValueChange={(value: 'PHONE' | 'WHATSAPP' | 'SOCIAL_MEDIA' | 'SITE_VISIT_MARKETING' | 'WEBSITE_FORM' | 'REFERRAL' | 'OTHER') => 
-                setFormData({ ...formData, source: value })
-              }
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select source" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="PHONE">Phone</SelectItem>
-                <SelectItem value="WHATSAPP">WhatsApp</SelectItem>
-                <SelectItem value="SOCIAL_MEDIA">Social Media</SelectItem>
-                <SelectItem value="SITE_VISIT_MARKETING">Site Visit Marketing</SelectItem>
-                <SelectItem value="WEBSITE_FORM">Website Form</SelectItem>
-                <SelectItem value="REFERRAL">Referral</SelectItem>
-                <SelectItem value="OTHER">Other</SelectItem>
               </SelectContent>
             </Select>
           </div>

@@ -95,10 +95,10 @@ export default function LoginPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Form onSubmit={handleSubmit}>
-              <FormField>
+            <form onSubmit={handleSubmit}>
+              <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
-                <FormControl>
+                
                   <Input
                     id="email"
                     name="email"
@@ -108,13 +108,13 @@ export default function LoginPage() {
                     placeholder="your.email@example.com"
                     autoComplete="email"
                   />
-                </FormControl>
-                {errors.email && <FormMessage>{errors.email}</FormMessage>}
-              </FormField>
+                
+                {errors.email && <p className="text-sm font-medium text-destructive">{errors.email}</p>}
+              </div>
 
-              <FormField>
+              <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
-                <FormControl>
+                
                   <Input
                     id="password"
                     name="password"
@@ -124,9 +124,9 @@ export default function LoginPage() {
                     placeholder="Enter your password"
                     autoComplete="current-password"
                   />
-                </FormControl>
-                {errors.password && <FormMessage>{errors.password}</FormMessage>}
-              </FormField>
+                
+                {errors.password && <p className="text-sm font-medium text-destructive">{errors.password}</p>}
+              </div>
 
               {errors.submit && (
                 <div className="rounded-lg bg-red-50 p-4 text-sm text-red-800">
@@ -137,7 +137,7 @@ export default function LoginPage() {
               <Button type="submit" className="w-full" disabled={isSubmitting}>
                 {isSubmitting ? 'Logging in...' : 'Login'}
               </Button>
-            </Form>
+            </form>
 
             <div className="mt-6 text-center text-sm text-muted-foreground">
               <Link href={`/${locale}`} className="hover:text-primary">

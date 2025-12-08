@@ -13,15 +13,11 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const notification = await prisma.notification.update({
-      where: { id: params.id },
-      data: {
-        isRead: true,
-        readAt: new Date(),
-      },
-    })
-
-    return NextResponse.json(notification)
+    // TODO: Implement notification system
+    // For now, return success without doing anything
+    return NextResponse.json({
+      message: 'Notification system not yet implemented'
+    }, { status: 501 })
   } catch (error) {
     console.error('Error marking notification as read:', error)
     return NextResponse.json(

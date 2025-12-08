@@ -68,7 +68,6 @@ export default async function SitesPage() {
               <TableRow>
                 <TableHead>Site Name</TableHead>
                 <TableHead>Client</TableHead>
-                <TableHead>Type</TableHead>
                 <TableHead>City</TableHead>
                 <TableHead>Address</TableHead>
                 <TableHead>Location</TableHead>
@@ -86,11 +85,6 @@ export default async function SitesPage() {
                         <div>{site.client.name}</div>
                         <div className="text-muted-foreground">{site.client.phone}</div>
                       </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className="text-xs">
-                        {enumToReadable(site.type)}
-                      </Badge>
                     </TableCell>
                     <TableCell>
                       {site.city ? (
