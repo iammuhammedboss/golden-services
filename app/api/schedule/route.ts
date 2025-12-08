@@ -26,10 +26,15 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get('status')
     
     const where: any = {
-      startDateTime: { gte: start ? new Date(start) : undefined },
-      endDateTime: { lte: end ? new Date(end) : undefined },
       deletedAt: null,
     };
+
+    if (start && end) {
+      where.startDateTime = {
+        gte: new Date(start),
+        lte: new Date(end),
+      }
+    }
 
     const isManager = canManageAllSchedules(user);
     if (!isManager) {
@@ -58,6 +63,11 @@ export async function GET(request: NextRequest) {
       include: {
         client: { select: { name: true } },
         jobOrder: { select: { jobNumber: true } },
+        siteVisit: {
+          select: {
+            requiredService: true,
+          },
+        },
         assignees: {
           include: {
             employee: { select: { id: true, name: true } },
@@ -97,15 +107,14 @@ export async function POST(request: NextRequest) {
       endDateTime,
       jobOrderId,
       siteVisitId,
-      leadId,
       clientId,
       locationText,
       assigneeIds, // Expect an array of employee IDs
     } = body
 
-    if (!type || !startDateTime || !endDateTime) {
+    if (!type || !startDateTime || !endDateTime || !clientId) {
       return NextResponse.json(
-        { error: 'Type, startDateTime, and endDateTime are required' },
+        { error: 'Type, startDateTime, endDateTime, and clientId are required' },
         { status: 400 }
       )
     }
@@ -137,7 +146,6 @@ export async function POST(request: NextRequest) {
           endDateTime: new Date(endDateTime),
           jobOrderId,
           siteVisitId,
-          leadId,
           clientId,
           locationText,
           createdById: user.id,
@@ -158,136 +166,5 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('POST /api/schedule error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
-  }
-}
-import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
-
-export async function GET(request: NextRequest) {
-  try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    const { searchParams } = new URL(request.url)
-    const start = searchParams.get('start')
-    const end = searchParams.get('end')
-    const employeeId = searchParams.get('employeeId')
-    const type = searchParams.get('type')
-    const status = searchParams.get('status')
-
-    const where: any = {}
-    
-    if (start && end) {
-      where.startDateTime = {
-        gte: new Date(start),
-        lte: new Date(end),
-      }
-    }
-    
-    if (employeeId) {
-      where.assignees = {
-        some: {
-          employeeId,
-        },
-      }
-    }
-    
-    if (type) {
-      where.type = type
-    }
-    
-    if (status) {
-      where.status = status
-    }
-
-    const scheduleEntries = await prisma.scheduleEntry.findMany({
-      where,
-      include: {
-        client: {
-          select: {
-            name: true,
-          },
-        },
-        jobOrder: {
-          select: {
-            jobNumber: true,
-          },
-        },
-        siteVisit: {
-          select: {
-            requiredService: true,
-          },
-        },
-        assignees: {
-          include: {
-            employee: {
-              select: {
-                name: true,
-              },
-            },
-          },
-        },
-      },
-      orderBy: {
-        startDateTime: 'asc',
-      },
-    })
-
-    return NextResponse.json(scheduleEntries)
-  } catch (error) {
-    console.error('Failed to fetch schedule entries:', error)
-    return NextResponse.json(
-      { error: 'Failed to fetch schedule entries' },
-      { status: 500 }
-    )
-  }
-}
-
-export async function POST(request: NextRequest) {
-  try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    const body = await request.json()
-    const { type, startDateTime, endDateTime, clientId, locationText, assigneeIds } = body
-
-    const scheduleEntry = await prisma.scheduleEntry.create({
-      data: {
-        type,
-        startDateTime: new Date(startDateTime),
-        endDateTime: new Date(endDateTime),
-        clientId,
-        locationText,
-        createdById: session.user.id,
-        assignees: {
-          create: assigneeIds?.map((employeeId: string) => ({
-            employeeId,
-            roleInVisit: 'TECHNICIAN',
-          })) || [],
-        },
-      },
-      include: {
-        client: true,
-        assignees: {
-          include: {
-            employee: true,
-          },
-        },
-      },
-    })
-
-    return NextResponse.json(scheduleEntry)
-  } catch (error) {
-    console.error('Failed to create schedule entry:', error)
-    return NextResponse.json(
-      { error: 'Failed to create schedule entry' },
-      { status: 500 }
-    )
   }
 }
