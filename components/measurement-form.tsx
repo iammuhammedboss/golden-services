@@ -181,11 +181,17 @@ export function MeasurementForm({
                   <SelectValue placeholder="Choose a client..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {clients.map((client) => (
-                    <SelectItem key={client.id} value={client.id}>
-                      {client.name} - {client.phone}
+                  {clients.length === 0 ? (
+                    <SelectItem value="none" disabled>
+                      No clients found. Please create a client first.
                     </SelectItem>
-                  ))}
+                  ) : (
+                    clients.map((client) => (
+                      <SelectItem key={client.id} value={client.id}>
+                        {client.name} - {client.phone}
+                      </SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
             </div>
