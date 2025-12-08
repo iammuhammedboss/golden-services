@@ -114,7 +114,7 @@ export function MeasurementForm({
                     {fields.map((field, index) => (
             <div key={field.id} className="rounded-lg border p-4 space-y-4 relative">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Controller
+                <FormField
                   control={form.control}
                   name={`measurements.${index}.itemTypeId`}
                   render={({ field }) => (
@@ -141,7 +141,7 @@ export function MeasurementForm({
                     </FormItem>
                   )}
                 />
-                <Controller
+                <FormField
                   control={form.control}
                   name={`measurements.${index}.roomTypeId`}
                   render={({ field }) => (
@@ -168,20 +168,25 @@ export function MeasurementForm({
                     </FormItem>
                   )}
                 />
-                <Controller
+                <FormField
                   control={form.control}
                   name={`measurements.${index}.quantity`}
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Quantity</FormLabel>
                       <FormControl>
-                        <Input type="number" placeholder="1" {...field} />
+                        <Input 
+                          type="number" 
+                          placeholder="1" 
+                          {...field}
+                          onChange={(e) => field.onChange(e.target.valueAsNumber || 1)}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                <Controller
+                <FormField
                   control={form.control}
                   name={`measurements.${index}.size`}
                   render={({ field }) => (
@@ -195,7 +200,7 @@ export function MeasurementForm({
                   )}
                 />
               </div>
-              <Controller
+              <FormField
                 control={form.control}
                 name={`measurements.${index}.customDescription`}
                 render={({ field }) => (
@@ -208,7 +213,7 @@ export function MeasurementForm({
                   </FormItem>
                 )}
               />
-              <Controller
+              <FormField
                 control={form.control}
                 name={`measurements.${index}.notes`}
                 render={({ field }) => (

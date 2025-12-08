@@ -17,15 +17,22 @@ export default function MeasurementsPage() {
   const [selectedSiteVisit, setSelectedSiteVisit] = useState<SiteVisit | null>(
     null
   )
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     async function fetchSiteVisits() {
       try {
+        setLoading(true)
         const response = await fetch('/api/site-visits')
+        if (!response.ok) {
+          throw new Error('Failed to fetch site visits')
+        }
         const data = await response.json()
         setSiteVisits(data)
       } catch (error) {
         console.error('Failed to fetch site visits:', error)
+      } finally {
+        setLoading(false)
       }
     }
     fetchSiteVisits()
@@ -43,22 +50,35 @@ export default function MeasurementsPage() {
       <div className="max-w-2xl mx-auto">
         <div className="mb-6">
           <Label htmlFor="site-visit-selector">Select a Site Visit</Label>
-          <Select onValueChange={handleSiteVisitChange}>
-            <SelectTrigger id="site-visit-selector">
-              <SelectValue placeholder="Choose a completed site visit..." />
-            </SelectTrigger>
-            <SelectContent>
-              {siteVisits
-                .filter((sv) => sv.status === 'COMPLETED')
-                .map((sv) => (
-                  <SelectItem key={sv.id} value={sv.id}>
-                    {`Visit for ${sv.clientId || sv.leadId} on ${new Date(
-                      sv.scheduledAt
-                    ).toLocaleDateString()}`}
+          {loading ? (
+            <div className="text-sm text-muted-foreground">Loading site visits...</div>
+          ) : (
+            <Select onValueChange={handleSiteVisitChange}>
+              <SelectTrigger id="site-visit-selector">
+                <SelectValue placeholder="Choose a completed site visit..." />
+              </SelectTrigger>
+              <SelectContent>
+                {siteVisits
+                  .filter((sv) => sv.status === 'COMPLETED')
+                  .map((sv) => (
+                    <SelectItem key={sv.id} value={sv.id}>
+                      {`Visit ID: ${sv.id.substring(0, 8)} - Scheduled: ${new Date(
+                        sv.scheduledAt
+                      ).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                      })}`}
+                    </SelectItem>
+                  ))}
+                {siteVisits.filter((sv) => sv.status === 'COMPLETED').length === 0 && (
+                  <SelectItem value="none" disabled>
+                    No completed site visits found
                   </SelectItem>
-                ))}
-            </SelectContent>
-          </Select>
+                )}
+              </SelectContent>
+            </Select>
+          )}
         </div>
 
         {selectedSiteVisit && (

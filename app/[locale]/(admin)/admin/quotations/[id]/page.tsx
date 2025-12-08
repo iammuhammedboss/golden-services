@@ -16,7 +16,8 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { formatDate, formatCurrency, enumToReadable, getStatusColor } from '@/lib/utils'
+import { formatDate, formatCurrency, enumToReadable } from '@/lib/utils'
+import { getStatusColor } from '@/lib/utils'
 import { ChevronLeft } from 'lucide-react'
 import { InlineLoader } from '@/components/loading-screen'
 

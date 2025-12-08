@@ -23,7 +23,17 @@ export async function POST(request: NextRequest) {
     // Validation
     if (!name || !phone || !serviceInterest || !address) {
       return NextResponse.json(
-        { error: 'Missing required fields' },
+        { error: 'Missing required fields: name, phone, service interest, and address are required' },
+        { status: 400 }
+      )
+    }
+
+    // Basic phone validation
+    const phoneRegex = /^[\d\s\-\+\(\)]{8,}$/;
+    const cleanedPhone = phone.replace(/\D/g, '');
+    if (cleanedPhone.length < 8) {
+      return NextResponse.json(
+        { error: 'Phone number must be at least 8 digits' },
         { status: 400 }
       )
     }

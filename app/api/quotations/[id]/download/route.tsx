@@ -88,12 +88,29 @@ export async function GET(
     }
 
     // Generate PDF stream
-    const stream = await renderToStream(<QuotationPDF quotation={quotationData} />)
+    let stream
+    try {
+      stream = await renderToStream(<QuotationPDF quotation={quotationData} />)
+    } catch (error) {
+      console.error('Error rendering PDF stream:', error)
+      return NextResponse.json(
+        { error: 'Failed to generate PDF document' },
+        { status: 500 }
+      )
+    }
 
     // Convert stream to buffer
     const chunks: Buffer[] = []
-    for await (const chunk of stream) {
-      chunks.push(Buffer.from(chunk))
+    try {
+      for await (const chunk of stream) {
+        chunks.push(Buffer.from(chunk))
+      }
+    } catch (error) {
+      console.error('Error converting stream to buffer:', error)
+      return NextResponse.json(
+        { error: 'Failed to process PDF document' },
+        { status: 500 }
+      )
     }
     const buffer = Buffer.concat(chunks)
 

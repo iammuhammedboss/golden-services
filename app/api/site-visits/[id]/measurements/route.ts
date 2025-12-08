@@ -24,17 +24,33 @@ export async function POST(
       )
     }
 
+    // Validate each measurement
+    for (const m of measurements) {
+      if (!m.itemTypeId) {
+        return NextResponse.json(
+          { error: 'Item type is required for all measurements' },
+          { status: 400 }
+        )
+      }
+      if (!m.quantity || m.quantity <= 0) {
+        return NextResponse.json(
+          { error: 'Quantity must be positive for all measurements' },
+          { status: 400 }
+        )
+      }
+    }
+
     const createdMeasurements = await prisma.$transaction(
       measurements.map((m) =>
         prisma.measurementItem.create({
           data: {
             siteVisitId,
             itemTypeId: m.itemTypeId,
-            roomTypeId: m.roomTypeId,
+            roomTypeId: m.roomTypeId || null,
             quantity: m.quantity,
-            size: m.size,
-            customDescription: m.customDescription,
-            notes: m.notes,
+            size: m.size || null,
+            customDescription: m.customDescription || null,
+            notes: m.notes || null,
           },
         })
       )

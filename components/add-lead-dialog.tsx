@@ -70,6 +70,8 @@ export function AddLeadDialog() {
           status: 'NEW',
         })
         router.refresh()
+        // Show success message
+        alert('Lead created successfully!')
       } else {
         const error = await response.json()
         alert(error.error || 'Failed to create lead')
