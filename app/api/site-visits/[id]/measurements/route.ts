@@ -59,9 +59,16 @@ export async function POST(
         },
       });
 
+      if (!siteVisit?.clientId) {
+        return NextResponse.json(
+          { error: 'Site visit must be linked to a client to create measurements' },
+          { status: 400 }
+        );
+      }
+
       measurement = await prisma.measurement.create({
         data: {
-          clientId: siteVisit?.clientId || '',
+          clientId: siteVisit.clientId,
           siteId: siteVisit?.siteId || null,
           siteVisitId,
           title: `Measurement for ${siteVisit?.client?.name || 'Client'} - ${new Date().toLocaleDateString()}`,
@@ -71,22 +78,32 @@ export async function POST(
     }
 
     // Create measurement objects
+    const validDirtLevels = ['LIGHT', 'MEDIUM', 'HEAVY', 'SEVERE'];
+    
     const createdObjects = await prisma.$transaction(
-      measurements.map((m) =>
-        prisma.measurementObject.create({
+      measurements.map((m) => {
+        // Validate dirtLevel if provided
+        let dirtLevel = null;
+        if (m.dirtLevel && validDirtLevels.includes(m.dirtLevel.toUpperCase())) {
+          dirtLevel = m.dirtLevel.toUpperCase();
+        } else if (m.dirtLevel) {
+          console.warn(`Invalid dirtLevel value: ${m.dirtLevel}`);
+        }
+
+        return prisma.measurementObject.create({
           data: {
             measurementId: measurement.id,
             type: 'ITEM',
             name: m.customDescription || `Item from measurement`,
             itemMasterId: m.itemTypeId,
             size: m.size || null,
-            dirtLevel: m.dirtLevel || null,
+            dirtLevel: dirtLevel,
             quantity: m.quantity,
             notes: m.notes || null,
             sortOrder: 0,
           },
-        })
-      )
+        });
+      })
     );
 
     return NextResponse.json({

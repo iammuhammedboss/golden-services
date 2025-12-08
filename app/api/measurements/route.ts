@@ -203,10 +203,20 @@ export async function POST(request: NextRequest) {
 
     // Create objects if provided
     if (objects.length > 0) {
-      // This is a simplified implementation - in production, you'd need to handle nested objects properly
+      // Validate dirtLevel values
+      const validDirtLevels = ['LIGHT', 'MEDIUM', 'HEAVY', 'SEVERE'];
+      
       const createdObjects = await Promise.all(
-        objects.map((obj: any) =>
-          prisma.measurementObject.create({
+        objects.map((obj: any) => {
+          // Validate dirtLevel if provided
+          let dirtLevel = null;
+          if (obj.dirtLevel && validDirtLevels.includes(obj.dirtLevel.toUpperCase())) {
+            dirtLevel = obj.dirtLevel.toUpperCase();
+          } else if (obj.dirtLevel) {
+            console.warn(`Invalid dirtLevel value: ${obj.dirtLevel}`);
+          }
+
+          return prisma.measurementObject.create({
             data: {
               measurementId: measurement.id,
               parentObjectId: obj.parentObjectId || null,
@@ -214,14 +224,14 @@ export async function POST(request: NextRequest) {
               name: obj.name,
               itemMasterId: obj.itemMasterId || null,
               size: obj.size || null,
-              dirtLevel: obj.dirtLevel || null,
+              dirtLevel: dirtLevel,
               quantity: obj.quantity || 1,
               notes: obj.notes || null,
               sortOrder: obj.sortOrder || 0,
             },
-          })
-        )
-      )
+          });
+        })
+      );
 
       // Create audit logs for objects
       await Promise.all(
@@ -234,7 +244,7 @@ export async function POST(request: NextRequest) {
             newValues: obj,
           })
         )
-      )
+      );
     }
 
     // Create notification for relevant roles

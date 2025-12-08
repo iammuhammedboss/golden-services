@@ -360,9 +360,16 @@ export function MeasurementForm({
           </Button>
         </div>
 
-        <Button type="submit" disabled={isLoading}>
-          {isLoading ? 'Saving...' : 'Save Measurements'}
-        </Button>
+        <div className="space-y-2">
+          <Button type="submit" disabled={isLoading || !selectedClientId}>
+            {isLoading ? 'Saving...' : 'Save Measurements'}
+          </Button>
+          {!selectedClientId && (
+            <p className="text-sm text-muted-foreground">
+              Please select a client to save measurements.
+            </p>
+          )}
+        </div>
       </form>
     </Form>
   )

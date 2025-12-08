@@ -146,7 +146,6 @@ export function getStatusColor(status: string): string {
     LOST: 'bg-red-100 text-red-800',
 
     // Client statuses
-    NEW: 'bg-blue-100 text-blue-800',
     ACTIVE: 'bg-green-100 text-green-800',
     INACTIVE: 'bg-gray-100 text-gray-800',
     BLACKLISTED: 'bg-red-100 text-red-800',
