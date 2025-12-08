@@ -278,3 +278,71 @@ export async function POST(request: NextRequest) {
     )
   }
 }
+import { NextRequest, NextResponse } from 'next/server'
+import { prisma } from '@/lib/prisma'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
+
+export async function GET(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const measurements = await prisma.measurement.findMany({
+      include: {
+        client: {
+          select: {
+            name: true,
+          },
+        },
+        site: {
+          select: {
+            name: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    })
+
+    return NextResponse.json(measurements)
+  } catch (error) {
+    console.error('Failed to fetch measurements:', error)
+    return NextResponse.json(
+      { error: 'Failed to fetch measurements' },
+      { status: 500 }
+    )
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const body = await request.json()
+    const { title, notes, clientId, siteId } = body
+
+    const measurement = await prisma.measurement.create({
+      data: {
+        title,
+        notes,
+        clientId,
+        siteId,
+      },
+    })
+
+    return NextResponse.json(measurement)
+  } catch (error) {
+    console.error('Failed to create measurement:', error)
+    return NextResponse.json(
+      { error: 'Failed to create measurement' },
+      { status: 500 }
+    )
+  }
+}

@@ -108,3 +108,33 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
+import { NextRequest, NextResponse } from 'next/server'
+import { prisma } from '@/lib/prisma'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
+
+export async function GET(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const roomTypes = await prisma.roomTypeMaster.findMany({
+      where: {
+        isActive: true,
+      },
+      orderBy: {
+        sortOrder: 'asc',
+      },
+    })
+
+    return NextResponse.json(roomTypes)
+  } catch (error) {
+    console.error('Failed to fetch room types:', error)
+    return NextResponse.json(
+      { error: 'Failed to fetch room types' },
+      { status: 500 }
+    )
+  }
+}

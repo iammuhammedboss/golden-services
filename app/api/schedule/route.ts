@@ -160,3 +160,134 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
+import { NextRequest, NextResponse } from 'next/server'
+import { prisma } from '@/lib/prisma'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
+
+export async function GET(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const { searchParams } = new URL(request.url)
+    const start = searchParams.get('start')
+    const end = searchParams.get('end')
+    const employeeId = searchParams.get('employeeId')
+    const type = searchParams.get('type')
+    const status = searchParams.get('status')
+
+    const where: any = {}
+    
+    if (start && end) {
+      where.startDateTime = {
+        gte: new Date(start),
+        lte: new Date(end),
+      }
+    }
+    
+    if (employeeId) {
+      where.assignees = {
+        some: {
+          employeeId,
+        },
+      }
+    }
+    
+    if (type) {
+      where.type = type
+    }
+    
+    if (status) {
+      where.status = status
+    }
+
+    const scheduleEntries = await prisma.scheduleEntry.findMany({
+      where,
+      include: {
+        client: {
+          select: {
+            name: true,
+          },
+        },
+        jobOrder: {
+          select: {
+            jobNumber: true,
+          },
+        },
+        siteVisit: {
+          select: {
+            requiredService: true,
+          },
+        },
+        assignees: {
+          include: {
+            employee: {
+              select: {
+                name: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: {
+        startDateTime: 'asc',
+      },
+    })
+
+    return NextResponse.json(scheduleEntries)
+  } catch (error) {
+    console.error('Failed to fetch schedule entries:', error)
+    return NextResponse.json(
+      { error: 'Failed to fetch schedule entries' },
+      { status: 500 }
+    )
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const body = await request.json()
+    const { type, startDateTime, endDateTime, clientId, locationText, assigneeIds } = body
+
+    const scheduleEntry = await prisma.scheduleEntry.create({
+      data: {
+        type,
+        startDateTime: new Date(startDateTime),
+        endDateTime: new Date(endDateTime),
+        clientId,
+        locationText,
+        createdById: session.user.id,
+        assignees: {
+          create: assigneeIds?.map((employeeId: string) => ({
+            employeeId,
+            roleInVisit: 'TECHNICIAN',
+          })) || [],
+        },
+      },
+      include: {
+        client: true,
+        assignees: {
+          include: {
+            employee: true,
+          },
+        },
+      },
+    })
+
+    return NextResponse.json(scheduleEntry)
+  } catch (error) {
+    console.error('Failed to create schedule entry:', error)
+    return NextResponse.json(
+      { error: 'Failed to create schedule entry' },
+      { status: 500 }
+    )
+  }
+}
