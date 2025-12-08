@@ -238,15 +238,20 @@ export async function POST(request: NextRequest) {
     }
 
     // Create notification for relevant roles
-    await prisma.notification.create({
-      data: {
-        recipientRole: 'OPERATIONS_MANAGER',
-        title: 'New Measurement Created',
-        message: `New measurement "${title}" was created for client ${client.name}`,
-        entityType: 'Measurement',
-        entityId: measurement.id,
-      },
-    })
+    try {
+      await prisma.notification.create({
+        data: {
+          recipientRole: 'OPERATIONS_MANAGER',
+          title: 'New Measurement Created',
+          message: `New measurement "${title}" was created for client ${client.name}`,
+          entityType: 'Measurement',
+          entityId: measurement.id,
+        },
+      })
+    } catch (error) {
+      console.error('Failed to create notification:', error)
+      // Don't fail measurement creation if notifications fail
+    }
 
     return NextResponse.json({ 
       measurement,

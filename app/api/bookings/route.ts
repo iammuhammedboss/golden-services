@@ -145,24 +145,29 @@ export async function POST(request: NextRequest) {
     }
 
     // Create notification for relevant roles
-    await prisma.notification.createMany({
-      data: [
-        {
-          recipientRole: 'SALES',
-          title: 'New Client from Website',
-          message: `New client ${name} (${phone}) registered from website`,
-          entityType: 'Client',
-          entityId: client.id,
-        },
-        {
-          recipientRole: 'RECEPTION',
-          title: 'New Client from Website',
-          message: `New client ${name} (${phone}) registered from website`,
-          entityType: 'Client',
-          entityId: client.id,
-        },
-      ],
-    })
+    try {
+      await prisma.notification.createMany({
+        data: [
+          {
+            recipientRole: 'SALES',
+            title: 'New Client from Website',
+            message: `New client ${name} (${phone}) registered from website`,
+            entityType: 'Client',
+            entityId: client.id,
+          },
+          {
+            recipientRole: 'RECEPTION',
+            title: 'New Client from Website',
+            message: `New client ${name} (${phone}) registered from website`,
+            entityType: 'Client',
+            entityId: client.id,
+          },
+        ],
+      })
+    } catch (error) {
+      console.error('Failed to create notifications:', error)
+      // Don't fail the booking if notifications fail
+    }
 
     return NextResponse.json({ client, site }, { status: 201 })
   } catch (error) {

@@ -1045,6 +1045,7 @@ enum DirtLevel {
   LIGHT
   MEDIUM
   HEAVY
+  SEVERE
 }
 
 enum JobOrderStatus {

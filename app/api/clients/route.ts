@@ -215,24 +215,29 @@ export async function POST(request: NextRequest) {
     }
 
     // Create notifications for relevant roles
-    await prisma.notification.createMany({
-      data: [
-        {
-          recipientRole: 'SALES',
-          title: 'New Client Created',
-          message: `New client ${name} (${phone}) was created by ${user.name || user.email}`,
-          entityType: 'Client',
-          entityId: newClient.id,
-        },
-        {
-          recipientRole: 'RECEPTION',
-          title: 'New Client Created',
-          message: `New client ${name} (${phone}) was created by ${user.name || user.email}`,
-          entityType: 'Client',
-          entityId: newClient.id,
-        },
-      ],
-    })
+    try {
+      await prisma.notification.createMany({
+        data: [
+          {
+            recipientRole: 'SALES',
+            title: 'New Client Created',
+            message: `New client ${name} (${phone}) was created by ${user.name || user.email}`,
+            entityType: 'Client',
+            entityId: newClient.id,
+          },
+          {
+            recipientRole: 'RECEPTION',
+            title: 'New Client Created',
+            message: `New client ${name} (${phone}) was created by ${user.name || user.email}`,
+            entityType: 'Client',
+            entityId: newClient.id,
+          },
+        ],
+      })
+    } catch (error) {
+      console.error('Failed to create notifications:', error)
+      // Don't fail client creation if notifications fail
+    }
 
     return NextResponse.json({ 
       client: newClient,

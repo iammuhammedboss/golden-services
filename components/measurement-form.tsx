@@ -326,19 +326,6 @@ export function MeasurementForm({
               </div>
               <FormField
                 control={form.control}
-                name={`measurements.${index}.customDescription`}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Custom Description</FormLabel>
-                    <FormControl>
-                      <Input placeholder="e.g. Sofa (3-seater)" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
                 name={`measurements.${index}.notes`}
                 render={({ field }) => (
                   <FormItem>
