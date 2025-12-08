@@ -111,6 +111,10 @@ export function canManageAllSchedules(user: UserWithRoles | null | undefined): b
 
 
 // --- Master Data & Admin Permissions ---
+export function canManageMeasurements(user: UserWithRoles | null | undefined): boolean {
+  return hasAnyRole(user, ['OWNER', 'OPERATIONS_MANAGER', 'SALES', 'SUPERVISOR'])
+}
+
 export function canManageMasters(user: UserWithRoles | null | undefined): boolean {
   return hasRole(user, 'OWNER')
 }

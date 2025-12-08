@@ -1,95 +1,91 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { SiteVisit } from '@prisma/client'
+import { useState } from 'react'
 import { MeasurementForm } from '@/components/measurement-form'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import { Label } from '@/components/ui/label'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { PlusCircle, List } from 'lucide-react'
 
 export default function MeasurementsPage() {
-  const [siteVisits, setSiteVisits] = useState<SiteVisit[]>([])
-  const [selectedSiteVisit, setSelectedSiteVisit] = useState<SiteVisit | null>(
-    null
-  )
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    async function fetchSiteVisits() {
-      try {
-        setLoading(true)
-        const response = await fetch('/api/site-visits')
-        if (!response.ok) {
-          throw new Error('Failed to fetch site visits')
-        }
-        const data = await response.json()
-        setSiteVisits(data)
-      } catch (error) {
-        console.error('Failed to fetch site visits:', error)
-      } finally {
-        setLoading(false)
-      }
-    }
-    fetchSiteVisits()
-  }, [])
-
-  const handleSiteVisitChange = (id: string) => {
-    const visit = siteVisits.find((sv) => sv.id === id) || null
-    setSelectedSiteVisit(visit)
-  }
+  const [activeTab, setActiveTab] = useState('new')
 
   return (
     <div className="p-6">
-      <h1 className="text-3xl font-bold mb-6">Record Measurements</h1>
-      
-      <div className="max-w-2xl mx-auto">
-        <div className="mb-6">
-          <Label htmlFor="site-visit-selector">Select a Site Visit</Label>
-          {loading ? (
-            <div className="text-sm text-muted-foreground">Loading site visits...</div>
-          ) : (
-            <Select onValueChange={handleSiteVisitChange}>
-              <SelectTrigger id="site-visit-selector">
-                <SelectValue placeholder="Choose a completed site visit..." />
-              </SelectTrigger>
-              <SelectContent>
-                {siteVisits
-                  .filter((sv) => sv.status === 'COMPLETED')
-                  .map((sv) => (
-                    <SelectItem key={sv.id} value={sv.id}>
-                      {`Visit ID: ${sv.id.substring(0, 8)} - Scheduled: ${new Date(
-                        sv.scheduledAt
-                      ).toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric',
-                      })}`}
-                    </SelectItem>
-                  ))}
-                {siteVisits.filter((sv) => sv.status === 'COMPLETED').length === 0 && (
-                  <SelectItem value="none" disabled>
-                    No completed site visits found
-                  </SelectItem>
-                )}
-              </SelectContent>
-            </Select>
-          )}
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h1 className="text-3xl font-bold">Measurements</h1>
+          <p className="text-muted-foreground">
+            Create and manage detailed site measurements for quoting and job planning
+          </p>
         </div>
-
-        {selectedSiteVisit && (
-          <div className="mt-8 p-6 border rounded-lg">
-            <h2 className="text-2xl font-semibold mb-4">
-              Adding Measurements for Visit on {new Date(selectedSiteVisit.scheduledAt).toLocaleDateString()}
-            </h2>
-            <MeasurementForm siteVisitId={selectedSiteVisit.id} />
-          </div>
-        )}
+        <Button>
+          <PlusCircle className="mr-2 h-4 w-4" />
+          New Measurement
+        </Button>
       </div>
+      
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="new">Create New</TabsTrigger>
+          <TabsTrigger value="list">All Measurements</TabsTrigger>
+          <TabsTrigger value="templates">Templates</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="new" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Create New Measurement</CardTitle>
+              <CardDescription>
+                Record detailed measurements for a client's site. This will be used for quotations and job planning.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <MeasurementForm 
+                onSubmitSuccess={() => {
+                  setActiveTab('list')
+                  // Refresh measurements list
+                }}
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="list">
+          <Card>
+            <CardHeader>
+              <CardTitle>All Measurements</CardTitle>
+              <CardDescription>
+                View and manage all measurements in the system.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center py-8 text-muted-foreground">
+                <List className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p>Measurements list will appear here</p>
+                <p className="text-sm mt-2">Use the "Create New" tab to add your first measurement</p>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="templates">
+          <Card>
+            <CardHeader>
+              <CardTitle>Measurement Templates</CardTitle>
+              <CardDescription>
+                Pre-defined measurement templates for common scenarios.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center py-8 text-muted-foreground">
+                <p>Templates feature coming soon</p>
+                <p className="text-sm mt-2">Save time by reusing measurement structures</p>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }
