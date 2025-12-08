@@ -41,6 +41,12 @@ export default async function JobsPage({ params }: { params: { locale: string } 
           roleInJob: true,
         },
       },
+      statusUpdates: {
+        orderBy: {
+          createdAt: 'desc',
+        },
+        take: 1,
+      },
       _count: {
         select: {
           invoices: true,

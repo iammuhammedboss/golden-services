@@ -32,12 +32,6 @@ export default async function QuotationsPage() {
           name: true,
         },
       },
-      lead: {
-        select: {
-          name: true,
-          phone: true,
-        },
-      },
       createdBy: {
         select: {
           name: true,
@@ -144,67 +138,58 @@ export default async function QuotationsPage() {
             </TableHeader>
             <TableBody>
               {quotationsWithTotals.length > 0 ? (
-                quotationsWithTotals.map((quotation) => {
-                  const isLead = !quotation.client && quotation.lead
-
-                  return (
-                    <TableRow key={quotation.id}>
-                      <TableCell>
-                        <div className="text-sm">
-                          <div className="font-medium">
-                            {quotation.client?.name || quotation.lead?.name || 'Unknown'}
-                            {isLead && (
-                              <Badge variant="outline" className="ml-2 text-xs">
-                                Lead
-                              </Badge>
-                            )}
-                          </div>
-                          <div className="text-muted-foreground">
-                            {quotation.client?.phone || quotation.lead?.phone || '-'}
-                          </div>
+                quotationsWithTotals.map((quotation) => (
+                  <TableRow key={quotation.id}>
+                    <TableCell>
+                      <div className="text-sm">
+                        <div className="font-medium">
+                          {quotation.client?.name || 'Unknown'}
                         </div>
-                      </TableCell>
-                      <TableCell>
-                        {quotation.site ? (
-                          <span className="text-sm">{quotation.site.name}</span>
-                        ) : (
-                          <span className="text-sm text-muted-foreground">-</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <Badge className={getStatusColor(quotation.status)}>
-                          {enumToReadable(quotation.status)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="text-sm font-medium">
-                          {formatCurrency(quotation.total.toNumber())}
+                        <div className="text-muted-foreground">
+                          {quotation.client?.phone || '-'}
                         </div>
-                      </TableCell>
-                      <TableCell>
-                        {quotation.validUntil ? (
-                          <div className="text-sm">{formatDate(quotation.validUntil, 'PP')}</div>
-                        ) : (
-                          <span className="text-sm text-muted-foreground">-</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <div className="text-sm">{formatDate(quotation.createdAt, 'PP')}</div>
-                        <div className="text-xs text-muted-foreground">
-                          {formatDate(quotation.createdAt, 'p')}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="text-sm">{quotation.createdBy.name}</div>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button variant="ghost" size="sm" asChild>
-                          <Link href={`/admin/quotations/${quotation.id}`}>View</Link>
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  )
-                })
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      {quotation.site ? (
+                        <span className="text-sm">{quotation.site.name}</span>
+                      ) : (
+                        <span className="text-sm text-muted-foreground">-</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <Badge className={getStatusColor(quotation.status)}>
+                        {enumToReadable(quotation.status)}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="text-sm font-medium">
+                        {formatCurrency(quotation.total.toNumber())}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      {quotation.validUntil ? (
+                        <div className="text-sm">{formatDate(quotation.validUntil, 'PP')}</div>
+                      ) : (
+                        <span className="text-sm text-muted-foreground">-</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <div className="text-sm">{formatDate(quotation.createdAt, 'PP')}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {formatDate(quotation.createdAt, 'p')}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="text-sm">{quotation.createdBy.name}</div>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button variant="ghost" size="sm" asChild>
+                        <Link href={`/admin/quotations/${quotation.id}`}>View</Link>
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))
               ) : (
                 <TableRow>
                   <TableCell colSpan={8} className="text-center text-muted-foreground">

@@ -1,14 +1,57 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { MeasurementForm } from '@/components/measurement-form'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { PlusCircle, List } from 'lucide-react'
+import { PlusCircle, List, Eye } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
+import { formatDate, enumToReadable } from '@/lib/utils'
+import Link from 'next/link'
+
+interface Measurement {
+  id: string
+  title: string
+  status: string
+  client: {
+    name: string
+  }
+  site: {
+    name: string
+  } | null
+  createdAt: string
+}
 
 export default function MeasurementsPage() {
   const [activeTab, setActiveTab] = useState('new')
+  const [measurements, setMeasurements] = useState<Measurement[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (activeTab === 'list') {
+      fetchMeasurements()
+    }
+  }, [activeTab])
+
+  const fetchMeasurements = async () => {
+    try {
+      const response = await fetch('/api/measurements')
+      if (response.ok) {
+        const data = await response.json()
+        setMeasurements(data)
+      }
+    } catch (error) {
+      console.error('Failed to fetch measurements:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleSubmitSuccess = () => {
+    setActiveTab('list')
+    fetchMeasurements()
+  }
 
   return (
     <div className="p-6">
@@ -42,10 +85,7 @@ export default function MeasurementsPage() {
             </CardHeader>
             <CardContent>
               <MeasurementForm 
-                onSubmitSuccess={() => {
-                  setActiveTab('list')
-                  // Refresh measurements list
-                }}
+                onSubmitSuccess={handleSubmitSuccess}
               />
             </CardContent>
           </Card>
@@ -60,11 +100,45 @@ export default function MeasurementsPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-center py-8 text-muted-foreground">
-                <List className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>Measurements list will appear here</p>
-                <p className="text-sm mt-2">Use the "Create New" tab to add your first measurement</p>
-              </div>
+              {loading ? (
+                <div className="text-center py-8">Loading...</div>
+              ) : measurements.length > 0 ? (
+                <div className="space-y-4">
+                  {measurements.map((measurement) => (
+                    <Card key={measurement.id}>
+                      <CardContent className="p-4 flex justify-between items-center">
+                        <div>
+                          <h3 className="font-semibold">{measurement.title}</h3>
+                          <div className="text-sm text-muted-foreground mt-1">
+                            Client: {measurement.client.name} | 
+                            Site: {measurement.site?.name || 'Not specified'} | 
+                            Created: {formatDate(measurement.createdAt, 'PP')}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge variant={
+                            measurement.status === 'COMPLETED' ? 'default' :
+                            measurement.status === 'DRAFT' ? 'outline' : 'secondary'
+                          }>
+                            {enumToReadable(measurement.status)}
+                          </Badge>
+                          <Button variant="ghost" size="sm" asChild>
+                            <Link href={`/admin/measurements/${measurement.id}`}>
+                              <Eye className="h-4 w-4" />
+                            </Link>
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <List className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>No measurements found</p>
+                  <p className="text-sm mt-2">Use the "Create New" tab to add your first measurement</p>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
