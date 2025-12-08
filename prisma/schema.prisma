@@ -283,7 +283,7 @@ model Site {
   address     String?
   city        String?
   locationUrl String?
-  type        SiteType    @default(RESIDENTIAL)
+  type        SiteType    @default(HOUSE)
   personInCharge String?
   personPhone   String?
   notes       String?
