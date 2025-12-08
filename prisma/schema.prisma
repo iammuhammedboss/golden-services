@@ -154,8 +154,7 @@ model ScheduleEntry {
   id            String              @id @default(cuid())
   jobOrderId    String?
   siteVisitId   String?
-  leadId        String?
-  clientId      String?
+  clientId      String
   type          ScheduleEntryType
   status        ScheduleEntryStatus @default(PLANNED)
   startDateTime DateTime
@@ -169,14 +168,14 @@ model ScheduleEntry {
 
   jobOrder    JobOrder?  @relation(fields: [jobOrderId], references: [id])
   siteVisit   SiteVisit? @relation(fields: [siteVisitId], references: [id])
-  lead        Lead?      @relation(fields: [leadId], references: [id])
-  client      Client?    @relation(fields: [clientId], references: [id])
+  client      Client     @relation(fields: [clientId], references: [id])
   createdBy   User       @relation(fields: [createdById], references: [id])
   assignees   ScheduleEntryAssignee[]
   reminders   ScheduleReminder[]
 
   @@index([jobOrderId])
   @@index([siteVisitId])
+  @@index([clientId])
   @@index([startDateTime, endDateTime])
   @@map("schedule_entries")
 }

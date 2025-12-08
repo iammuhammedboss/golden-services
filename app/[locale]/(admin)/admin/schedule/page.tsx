@@ -175,7 +175,7 @@ export default function SchedulePage() {
           } else if (entry.siteVisit) {
             title = `VISIT: ${entry.siteVisit.requiredService || 'Site Visit'} - ${entry.client?.name || ''}`;
           } else {
-            title = `${entry.type.replace(/_/g, ' ')} - ${entry.client?.name || ''}`;
+            title = `${entry.type.replace(/_/g, ' ')} - ${entry.client?.name || 'No client'}`;
           }
           return {
             id: entry.id,
@@ -186,8 +186,14 @@ export default function SchedulePage() {
           };
         });
         setEvents(formattedEvents);
-      } else { console.error('Failed to fetch schedule entries'); }
-    } catch (error) { console.error('Error fetching schedule entries:', error); }
+      } else { 
+        console.error('Failed to fetch schedule entries'); 
+        setEvents([]);
+      }
+    } catch (error) { 
+      console.error('Error fetching schedule entries:', error); 
+      setEvents([]);
+    }
   }, [filters]);
 
   const onNavigate = useCallback((newDate: Date) => setDate(newDate), []);
