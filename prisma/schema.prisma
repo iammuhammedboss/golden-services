@@ -218,6 +218,8 @@ model Client {
   whatsapp       String?
   email          String?
   type           ClientType     @default(INDIVIDUAL)
+  source         LeadSource     @default(PHONE_CALL)
+  status         ClientStatus   @default(NEW)
   isTemporary    Boolean        @default(false) // For "Cash Customer" etc.
   notes          String?
   createdAt      DateTime       @default(now())
@@ -233,8 +235,11 @@ model Client {
   payments       Payment[]
   customerNotes  CustomerNote[]
   scheduleEntries ScheduleEntry[]
+  measurements   Measurement[]
 
   @@index([phone])
+  @@index([status])
+  @@index([source])
   @@index([deletedAt])
   @@map("clients")
 }
@@ -278,6 +283,9 @@ model Site {
   address     String?
   city        String?
   locationUrl String?
+  type        SiteType    @default(RESIDENTIAL)
+  personInCharge String?
+  personPhone   String?
   notes       String?
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
@@ -287,16 +295,116 @@ model Site {
   quotations  Quotation[]
   siteVisits  SiteVisit[]
   rooms       Room[]
+  measurements Measurement[]
   client      Client      @relation(fields: [clientId], references: [id], onDelete: Cascade)
 
   @@index([clientId])
+  @@index([type])
   @@index([deletedAt])
   @@map("sites")
+}
+
+enum SiteType {
+  RESIDENTIAL
+  COMMERCIAL
+  INDUSTRIAL
+  OTHER
 }
 
 // ============================================
 // NEW MODELS FOR STRUCTURED MEASUREMENT
 // ============================================
+
+model Measurement {
+  id           String               @id @default(cuid())
+  clientId     String
+  siteId       String?
+  siteVisitId  String?
+  title        String
+  notes        String?
+  status       MeasurementStatus    @default(DRAFT)
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+  deletedAt    DateTime?
+  deletedById  String?
+  
+  client       Client               @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  site         Site?                @relation(fields: [siteId], references: [id])
+  siteVisit    SiteVisit?           @relation(fields: [siteVisitId], references: [id])
+  objects      MeasurementObject[]
+  quotations   Quotation[]
+  jobOrders    JobOrder[]
+  photos       Photo[]
+
+  @@index([clientId])
+  @@index([siteId])
+  @@index([siteVisitId])
+  @@index([deletedAt])
+  @@map("measurements")
+}
+
+model MeasurementObject {
+  id              String               @id @default(cuid())
+  measurementId   String
+  parentObjectId  String?
+  type            MeasurementObjectType
+  name            String
+  itemMasterId    String?
+  size            ObjectSize?
+  dirtLevel       DirtLevel?
+  quantity        Int                  @default(1)
+  notes           String?
+  sortOrder       Int                  @default(0)
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+  deletedAt       DateTime?
+  deletedById     String?
+
+  measurement     Measurement          @relation(fields: [measurementId], references: [id], onDelete: Cascade)
+  parent          MeasurementObject?   @relation("ObjectHierarchy", fields: [parentObjectId], references: [id])
+  children        MeasurementObject[]  @relation("ObjectHierarchy")
+  itemMaster      ItemMaster?          @relation(fields: [itemMasterId], references: [id])
+  photos          Photo[]
+
+  @@index([measurementId])
+  @@index([parentObjectId])
+  @@index([type])
+  @@index([deletedAt])
+  @@map("measurement_objects")
+}
+
+enum MeasurementStatus {
+  DRAFT
+  COMPLETED
+  ARCHIVED
+}
+
+enum MeasurementObjectType {
+  HOUSE
+  VILLA
+  FLAT
+  OFFICE
+  WAREHOUSE
+  ROOM
+  KITCHEN
+  TOILET
+  HALL
+  PASSAGE
+  BALCONY
+  STAIRCASE
+  ITEM
+  CUSTOM
+}
+
+enum ObjectSize {
+  XS
+  S
+  M
+  L
+  XL
+  XXL
+  XXXL
+}
 
 model Room {
   id          String     @id @default(cuid())
@@ -404,25 +512,31 @@ model MeasurementItem {
 }
 
 model Photo {
-  id           String     @id @default(cuid())
-  siteVisitId  String?
-  jobOrderId   String?
-  roomId       String?
-  phase        PhotoPhase
-  url          String
-  description  String?
-  uploadedById String
-  createdAt    DateTime   @default(now())
-  deletedAt    DateTime?
-  deletedById  String?
-  jobOrder     JobOrder?  @relation(fields: [jobOrderId], references: [id])
-  room         Room?      @relation(fields: [roomId], references: [id])
-  siteVisit    SiteVisit? @relation(fields: [siteVisitId], references: [id])
-  uploadedBy   User       @relation(fields: [uploadedById], references: [id])
+  id                 String            @id @default(cuid())
+  siteVisitId        String?
+  jobOrderId         String?
+  roomId             String?
+  measurementId      String?
+  measurementObjectId String?
+  phase              PhotoPhase
+  url                String
+  description        String?
+  uploadedById       String
+  createdAt          DateTime          @default(now())
+  deletedAt          DateTime?
+  deletedById        String?
+  jobOrder           JobOrder?         @relation(fields: [jobOrderId], references: [id])
+  room               Room?             @relation(fields: [roomId], references: [id])
+  siteVisit          SiteVisit?        @relation(fields: [siteVisitId], references: [id])
+  measurement        Measurement?      @relation(fields: [measurementId], references: [id])
+  measurementObject  MeasurementObject? @relation(fields: [measurementObjectId], references: [id])
+  uploadedBy         User              @relation(fields: [uploadedById], references: [id])
 
   @@index([siteVisitId])
   @@index([jobOrderId])
   @@index([roomId])
+  @@index([measurementId])
+  @@index([measurementObjectId])
   @@index([deletedAt])
   @@map("photos")
 }
@@ -432,31 +546,43 @@ model Photo {
 // ============================================
 
 model Quotation {
-  id          String          @id @default(cuid())
-  clientId    String
-  siteId      String?
-  leadId      String?
-  version     Int             @default(1) // Multiple versions per client
-  createdById String
-  status      QuotationStatus @default(DRAFT)
-  validUntil  DateTime?
-  notes       String?
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
-  deletedAt   DateTime?
-  deletedById String?
-  jobOrders   JobOrder[]
-  items       QuotationItem[]
-  invoices    Invoice[]
-  client      Client          @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  createdBy   User            @relation(fields: [createdById], references: [id])
-  lead        Lead?           @relation(fields: [leadId], references: [id])
-  site        Site?           @relation(fields: [siteId], references: [id])
+  id            String          @id @default(cuid())
+  clientId      String
+  siteId        String?
+  measurementId String?
+  version       Int             @default(1) // Multiple versions per client
+  createdById   String
+  status        QuotationStatus @default(DRAFT)
+  validUntil    DateTime?
+  notes         String?
+  vatEnabled    Boolean         @default(false)
+  vatPercentage Decimal         @default(5) @db.Decimal(5, 2)
+  discountType  DiscountType?
+  discountValue Decimal?        @db.Decimal(10, 3)
+  termsTemplate String?
+  bankDetails   String?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  deletedAt     DateTime?
+  deletedById   String?
+  jobOrders     JobOrder[]
+  items         QuotationItem[]
+  invoices      Invoice[]
+  client        Client          @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  createdBy     User            @relation(fields: [createdById], references: [id])
+  site          Site?           @relation(fields: [siteId], references: [id])
+  measurement   Measurement?    @relation(fields: [measurementId], references: [id])
 
   @@index([clientId])
   @@index([status])
+  @@index([measurementId])
   @@index([deletedAt])
   @@map("quotations")
+}
+
+enum DiscountType {
+  PERCENTAGE
+  FIXED_AMOUNT
 }
 
 model QuotationItem {
@@ -486,10 +612,12 @@ model QuotationItem {
 model JobOrder {
   id                 String            @id @default(cuid())
   quotationId        String?
+  measurementId      String?
   clientId           String
   siteId             String
   jobNumber          String            @unique
   status             JobOrderStatus    @default(SCHEDULED)
+  paymentStatus      PaymentStatus     @default(UNPAID)
   scheduledDate      DateTime          @db.Date
   scheduledStartTime DateTime?
   scheduledEndTime   DateTime?
@@ -503,6 +631,7 @@ model JobOrder {
   assignments        JobAssignment[]
   client             Client            @relation(fields: [clientId], references: [id], onDelete: Cascade)
   quotation          Quotation?        @relation(fields: [quotationId], references: [id])
+  measurement        Measurement?      @relation(fields: [measurementId], references: [id])
   site               Site              @relation(fields: [siteId], references: [id], onDelete: Cascade)
   statusUpdates      JobStatusUpdate[]
   photos             Photo[]
@@ -513,10 +642,19 @@ model JobOrder {
   scheduleEntries    ScheduleEntry[]
 
   @@index([status])
+  @@index([paymentStatus])
   @@index([scheduledDate])
   @@index([clientId])
+  @@index([measurementId])
   @@index([deletedAt])
   @@map("job_orders")
+}
+
+enum PaymentStatus {
+  UNPAID
+  PARTIALLY_PAID
+  PAID
+  OVERDUE
 }
 
 model JobEquipment {
@@ -827,8 +965,28 @@ model User {
 }
 
 // ============================================
-// NOTIFICATION MODELS (FOR FUTURE USE)
+// NOTIFICATION MODELS
 // ============================================
+
+model Notification {
+  id           String      @id @default(cuid())
+  recipientUserId String?
+  recipientRole   String?
+  title        String
+  message      String
+  entityType   String?
+  entityId     String?
+  isRead       Boolean     @default(false)
+  createdAt    DateTime    @default(now())
+  readAt       DateTime?
+  recipient    User?       @relation(fields: [recipientUserId], references: [id])
+
+  @@index([recipientUserId])
+  @@index([recipientRole])
+  @@index([isRead])
+  @@index([createdAt])
+  @@map("notifications")
+}
 
 model NotificationSetting {
   id        String   @id @default(cuid())
@@ -874,6 +1032,13 @@ enum AuditAction {
 enum ClientType {
   INDIVIDUAL
   COMPANY
+}
+
+enum ClientStatus {
+  NEW
+  ACTIVE
+  INACTIVE
+  BLACKLISTED
 }
 
 enum DirtLevel {

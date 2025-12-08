@@ -145,6 +145,12 @@ export function getStatusColor(status: string): string {
     WON: 'bg-green-100 text-green-800',
     LOST: 'bg-red-100 text-red-800',
 
+    // Client statuses
+    NEW: 'bg-blue-100 text-blue-800',
+    ACTIVE: 'bg-green-100 text-green-800',
+    INACTIVE: 'bg-gray-100 text-gray-800',
+    BLACKLISTED: 'bg-red-100 text-red-800',
+
     // Job statuses
     SCHEDULED: 'bg-blue-100 text-blue-800',
     IN_PROGRESS: 'bg-yellow-100 text-yellow-800',
@@ -160,7 +166,65 @@ export function getStatusColor(status: string): string {
     // Site visit statuses
     ON_HOLD: 'bg-orange-100 text-orange-800',
     NOT_STARTED: 'bg-gray-100 text-gray-800',
+
+    // Payment statuses
+    UNPAID: 'bg-red-100 text-red-800',
+    PARTIALLY_PAID: 'bg-yellow-100 text-yellow-800',
+    PAID: 'bg-green-100 text-green-800',
+    OVERDUE: 'bg-red-100 text-red-800',
   }
 
   return statusColors[status] || 'bg-gray-100 text-gray-800'
+}
+
+/**
+ * Get readable label for object size
+ */
+export function getSizeLabel(size: string): string {
+  const sizeLabels: Record<string, string> = {
+    XS: 'Very Small',
+    S: 'Small',
+    M: 'Medium',
+    L: 'Large',
+    XL: 'Very Large',
+    XXL: 'Extra Large',
+    XXXL: 'Huge',
+  }
+  return sizeLabels[size] || size
+}
+
+/**
+ * Get readable label for dirt level
+ */
+export function getDirtLevelLabel(level: string): string {
+  const levelLabels: Record<string, string> = {
+    LIGHT: 'Light soil',
+    MEDIUM: 'Moderate soil',
+    HEAVY: 'Heavy soil',
+    SEVERE: 'Severely soiled',
+  }
+  return levelLabels[level] || level
+}
+
+/**
+ * Get readable label for measurement object type
+ */
+export function getMeasurementObjectTypeLabel(type: string): string {
+  const typeLabels: Record<string, string> = {
+    HOUSE: 'House',
+    VILLA: 'Villa',
+    FLAT: 'Flat',
+    OFFICE: 'Office',
+    WAREHOUSE: 'Warehouse',
+    ROOM: 'Room',
+    KITCHEN: 'Kitchen',
+    TOILET: 'Toilet',
+    HALL: 'Hall',
+    PASSAGE: 'Passage',
+    BALCONY: 'Balcony',
+    STAIRCASE: 'Staircase',
+    ITEM: 'Item',
+    CUSTOM: 'Custom',
+  }
+  return typeLabels[type] || type
 }

@@ -69,27 +69,63 @@ export async function POST(request: NextRequest) {
       createdById = systemUser.id
     }
 
-    // Create lead
-    const lead = await prisma.lead.create({
-      data: {
-        name,
-        phone,
-        whatsapp: whatsapp || null,
-        email: email || null,
-        source: 'WEBSITE',
-        serviceInterest,
-        notes: `Address: ${address}${city ? `, ${city}` : ''}\n\n${notes || ''}`,
-        status: 'NEW',
-        createdById,
+    // Check if client with same phone already exists
+    let existingClient = await prisma.client.findFirst({
+      where: {
+        phone: phone,
+        deletedAt: null,
       },
     })
+
+    let client
+    if (existingClient) {
+      client = existingClient
+      // Update client information if needed
+      await prisma.client.update({
+        where: { id: client.id },
+        data: {
+          name: name,
+          email: email || client.email,
+          whatsapp: whatsapp || client.whatsapp,
+          notes: client.notes ? `${client.notes}\n\nNew booking: ${new Date().toISOString()}\nService: ${serviceInterest}\nAddress: ${address}${city ? `, ${city}` : ''}\n${notes || ''}` 
+                 : `New booking: ${new Date().toISOString()}\nService: ${serviceInterest}\nAddress: ${address}${city ? `, ${city}` : ''}\n${notes || ''}`,
+        },
+      })
+    } else {
+      // Create new client
+      client = await prisma.client.create({
+        data: {
+          name,
+          phone,
+          whatsapp: whatsapp || null,
+          email: email || null,
+          source: 'WEBSITE',
+          status: 'NEW',
+          notes: `Address: ${address}${city ? `, ${city}` : ''}\nService interest: ${serviceInterest}\n${notes || ''}`,
+        },
+      })
+    }
+
+    // Create site if address is provided
+    let site = null
+    if (address) {
+      site = await prisma.site.create({
+        data: {
+          clientId: client.id,
+          name: 'Primary Site',
+          address: address,
+          city: city || null,
+          type: 'RESIDENTIAL',
+          notes: `Created from website booking`,
+        },
+      })
+    }
 
     // Create site visit if requested
     if (needsSiteVisit === 'true' && preferredDate && preferredTime) {
       const scheduledAt = new Date(`${preferredDate}T${preferredTime}`)
 
       // Find a default user to assign the site visit
-      // In production, this should be assigned based on availability
       const defaultAssignee = await prisma.user.findFirst({
         where: { isActive: true },
       })
@@ -97,17 +133,38 @@ export async function POST(request: NextRequest) {
       if (defaultAssignee) {
         await prisma.siteVisit.create({
           data: {
-            leadId: lead.id,
+            clientId: client.id,
+            siteId: site?.id || null,
             scheduledAt,
             status: 'SCHEDULED',
             assignedToId: defaultAssignee.id,
-            notes: `Site visit requested for: ${address}${city ? `, ${city}` : ''}`,
+            notes: `Site visit requested for: ${address}${city ? `, ${city}` : ''}\nService interest: ${serviceInterest}`,
           },
         })
       }
     }
 
-    return NextResponse.json(lead, { status: 201 })
+    // Create notification for relevant roles
+    await prisma.notification.createMany({
+      data: [
+        {
+          recipientRole: 'SALES',
+          title: 'New Client from Website',
+          message: `New client ${name} (${phone}) registered from website`,
+          entityType: 'Client',
+          entityId: client.id,
+        },
+        {
+          recipientRole: 'RECEPTION',
+          title: 'New Client from Website',
+          message: `New client ${name} (${phone}) registered from website`,
+          entityType: 'Client',
+          entityId: client.id,
+        },
+      ],
+    })
+
+    return NextResponse.json({ client, site }, { status: 201 })
   } catch (error) {
     console.error('Error creating booking:', error)
     return NextResponse.json(

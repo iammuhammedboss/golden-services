@@ -65,6 +65,24 @@ async function main() {
   })
   console.log('✓ Owner user created:', ownerUser.email)
 
+  // Create a sample client for testing
+  console.log('Creating sample client...')
+  await prisma.client.upsert({
+    where: { phone: '+96898765432' },
+    update: {},
+    create: {
+      name: 'Sample Client',
+      phone: '+96898765432',
+      whatsapp: '+96898765432',
+      email: 'sample@example.com',
+      source: 'WEBSITE',
+      status: 'ACTIVE',
+      type: 'INDIVIDUAL',
+      notes: 'Sample client for testing',
+    },
+  })
+  console.log('✓ Sample client created')
+
   // 3. Create Service Categories
   console.log('Creating service categories...')
   const categories = [

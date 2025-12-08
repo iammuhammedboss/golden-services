@@ -48,12 +48,13 @@ export function AddLeadDialog() {
     setLoading(true)
 
     try {
-      const response = await fetch('/api/leads', {
+      const response = await fetch('/api/clients', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...formData,
           whatsapp: formData.whatsapp || formData.phone,
+          status: 'NEW',
         }),
       })
 
@@ -71,14 +72,14 @@ export function AddLeadDialog() {
         })
         router.refresh()
         // Show success message
-        alert('Lead created successfully!')
+        alert('Client created successfully!')
       } else {
         const error = await response.json()
-        alert(error.error || 'Failed to create lead')
+        alert(error.error || 'Failed to create client')
       }
     } catch (error) {
-      console.error('Error creating lead:', error)
-      alert('Failed to create lead')
+      console.error('Error creating client:', error)
+      alert('Failed to create client')
     } finally {
       setLoading(false)
     }
@@ -101,14 +102,14 @@ export function AddLeadDialog() {
               d="M12 4v16m8-8H4"
             />
           </svg>
-          Add Lead
+          Add Client
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Add New Lead</DialogTitle>
+          <DialogTitle>Add New Client</DialogTitle>
           <DialogDescription>
-            Create a new lead entry for potential customer inquiries
+            Create a new client entry for customer management
           </DialogDescription>
         </DialogHeader>
 
@@ -237,7 +238,7 @@ export function AddLeadDialog() {
               Cancel
             </Button>
             <Button type="submit" disabled={loading}>
-              {loading ? 'Creating...' : 'Create Lead'}
+              {loading ? 'Creating...' : 'Create Client'}
             </Button>
           </div>
         </form>

@@ -20,7 +20,7 @@ const navigation = [
     ),
   },
   {
-    name: 'Leads',
+    name: 'Leads (Legacy)',
     href: 'admin/leads',
     icon: (
       <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

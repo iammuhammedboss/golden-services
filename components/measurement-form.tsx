@@ -1,6 +1,6 @@
 'use client'
 
-import { useForm, useFieldArray, Controller } from 'react-hook-form'
+import { useForm, useFieldArray } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { Button } from '@/components/ui/button'
@@ -21,6 +21,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
+import { Label } from '@/components/ui/label'
 import { PlusCircle, Trash2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { ItemMaster, RoomTypeMaster } from '@prisma/client'
@@ -118,32 +119,6 @@ export function MeasurementForm({
     control: form.control,
     name: 'measurements',
   })
-
-  async function onSubmit(data: MeasurementFormValues) {
-    setIsLoading(true)
-    try {
-      const response = await fetch(
-        `/api/site-visits/${siteVisitId}/measurements`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data),
-        }
-      )
-
-      if (!response.ok) {
-        throw new Error('Failed to save measurements')
-      }
-
-      form.reset()
-      onSubmitSuccess?.()
-    } catch (error) {
-      console.error(error)
-      // TODO: Show an error toast to the user
-    } finally {
-      setIsLoading(false)
-    }
-  }
 
   async function onSubmit(data: MeasurementFormValues) {
     setIsLoading(true)
