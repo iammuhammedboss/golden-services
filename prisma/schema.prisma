@@ -69,6 +69,7 @@ model ItemMaster {
   id                String    @id @default(cuid())
   name              String    @unique
   category          String    // e.g., "Furniture", "Appliance", "Fixture"
+  itemType          ItemType  @default(OTHER)
   unitId            String
   defaultPrice      Decimal?  @db.Decimal(10, 3)
   requiresPhotos    Boolean   @default(false)
@@ -218,7 +219,7 @@ model Client {
   whatsapp       String?
   email          String?
   type           ClientType     @default(INDIVIDUAL)
-  source         LeadSource     @default(PHONE_CALL)
+  source         ClientSource   @default(PHONE)
   status         ClientStatus   @default(NEW)
   isTemporary    Boolean        @default(false) // For "Cash Customer" etc.
   notes          String?
@@ -250,7 +251,7 @@ model Lead {
   phone                 String
   whatsapp              String?
   email                 String?
-  source                LeadSource
+  source                ClientSource
   serviceInterest       String?
   notes                 String?
   status                LeadStatus  @default(NEW)
@@ -305,9 +306,14 @@ model Site {
 }
 
 enum SiteType {
-  RESIDENTIAL
-  COMMERCIAL
-  INDUSTRIAL
+  HOUSE
+  FLAT
+  VILLA
+  OFFICE
+  WAREHOUSE
+  SHOP
+  OTHER_RESIDENTIAL
+  OTHER_COMMERCIAL
   OTHER
 }
 
@@ -457,14 +463,14 @@ model RoomItem {
 
 model SiteVisit {
   id               String            @id @default(cuid())
-  leadId           String?
-  clientId         String?
+  clientId         String
   siteId           String?
   scheduledAt      DateTime
   completedAt      DateTime?
   status           SiteVisitStatus   @default(SCHEDULED)
   visitType        VisitType         @default(FULL_HOUSE)
   assignedToId     String
+  requiredService  String?
   notes            String?
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
@@ -474,14 +480,12 @@ model SiteVisit {
   rooms            Room[]
   photos           Photo[]
   assignedTo       User              @relation(fields: [assignedToId], references: [id])
-  client           Client?           @relation(fields: [clientId], references: [id])
-  lead             Lead?             @relation(fields: [leadId], references: [id])
+  client           Client            @relation(fields: [clientId], references: [id])
   site             Site?             @relation(fields: [siteId], references: [id])
   scheduleEntries  ScheduleEntry[]
 
   @@index([assignedToId])
   @@index([clientId])
-  @@index([leadId])
   @@index([siteId])
   @@index([deletedAt])
   @@map("site_visits")
@@ -518,8 +522,10 @@ model Photo {
   roomId             String?
   measurementId      String?
   measurementObjectId String?
+  roomItemId         String?
   phase              PhotoPhase
   url                String
+  caption            String?
   description        String?
   uploadedById       String
   createdAt          DateTime          @default(now())
@@ -530,6 +536,7 @@ model Photo {
   siteVisit          SiteVisit?        @relation(fields: [siteVisitId], references: [id])
   measurement        Measurement?      @relation(fields: [measurementId], references: [id])
   measurementObject  MeasurementObject? @relation(fields: [measurementObjectId], references: [id])
+  roomItem           RoomItem?         @relation(fields: [roomItemId], references: [id])
   uploadedBy         User              @relation(fields: [uploadedById], references: [id])
 
   @@index([siteVisitId])
@@ -537,6 +544,7 @@ model Photo {
   @@index([roomId])
   @@index([measurementId])
   @@index([measurementObjectId])
+  @@index([roomItemId])
   @@index([deletedAt])
   @@map("photos")
 }
@@ -559,8 +567,10 @@ model Quotation {
   vatPercentage Decimal         @default(5) @db.Decimal(5, 2)
   discountType  DiscountType?
   discountValue Decimal?        @db.Decimal(10, 3)
-  termsTemplate String?
-  bankDetails   String?
+  termsTemplateId String?
+  termsSnapshot String?
+  bankDetailsTemplateId String?
+  bankDetailsSnapshot String?
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
   deletedAt     DateTime?
@@ -572,6 +582,8 @@ model Quotation {
   createdBy     User            @relation(fields: [createdById], references: [id])
   site          Site?           @relation(fields: [siteId], references: [id])
   measurement   Measurement?    @relation(fields: [measurementId], references: [id])
+  termsTemplate TermsTemplate?  @relation(fields: [termsTemplateId], references: [id])
+  bankDetailsTemplate BankDetailsTemplate? @relation(fields: [bankDetailsTemplateId], references: [id])
 
   @@index([clientId])
   @@index([status])
@@ -691,6 +703,9 @@ model ChecklistItem {
   isCompleted   Boolean   @default(false)
   completedAt   DateTime?
   completedById String?
+  isVerified    Boolean   @default(false)
+  verifiedAt    DateTime?
+  verifiedById  String?
   photoRequired Boolean   @default(true)
   photoUrl      String?
   notes         String?
@@ -702,9 +717,11 @@ model ChecklistItem {
   jobOrder      JobOrder  @relation(fields: [jobOrderId], references: [id], onDelete: Cascade)
   roomItem      RoomItem? @relation(fields: [roomItemId], references: [id])
   completedBy   User?     @relation(fields: [completedById], references: [id])
+  verifiedBy    User?     @relation(fields: [verifiedById], references: [id])
 
   @@index([jobOrderId])
   @@index([isCompleted])
+  @@index([isVerified])
   @@index([deletedAt])
   @@map("checklist_items")
 }
@@ -1017,6 +1034,56 @@ model NotificationQueue {
 }
 
 // ============================================
+// TEMPLATE MODELS
+// ============================================
+
+model TermsTemplate {
+  id          String    @id @default(cuid())
+  name        String    @unique
+  content     String
+  isActive    Boolean   @default(true)
+  sortOrder   Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+  deletedById String?
+
+  @@index([deletedAt])
+  @@map("terms_templates")
+}
+
+model BankDetailsTemplate {
+  id          String    @id @default(cuid())
+  name        String    @unique
+  content     String
+  isActive    Boolean   @default(true)
+  sortOrder   Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+  deletedById String?
+
+  @@index([deletedAt])
+  @@map("bank_details_templates")
+}
+
+enum ItemType {
+  SOFA
+  CARPET
+  CURTAINS
+  TANK
+  TV
+  TABLE
+  CHAIR
+  MAT
+  DOOR
+  HANDLE
+  WINDOW
+  INTERLOCK
+  OTHER
+}
+
+// ============================================
 // ENUMS
 // ============================================
 
@@ -1031,7 +1098,7 @@ enum AuditAction {
 
 enum ClientType {
   INDIVIDUAL
-  COMPANY
+  CORPORATE
 }
 
 enum ClientStatus {
@@ -1056,10 +1123,16 @@ enum JobOrderStatus {
 }
 
 enum JobProgressStatus {
-  NOT_STARTED
+  AT_STORE
+  MATERIALS_TAKEN
+  DEPARTED_TO_SITE
+  ARRIVED_AT_SITE
   IN_PROGRESS
-  ON_HOLD
-  COMPLETED
+  COMPLETION_REQUESTED
+  VERIFIED
+  DEPARTED_SITE
+  ARRIVED_OFFICE
+  CANCELLED
 }
 
 enum JobRole {
@@ -1070,12 +1143,12 @@ enum JobRole {
   OTHER
 }
 
-enum LeadSource {
-  WEBSITE
+enum ClientSource {
+  PHONE
   WHATSAPP
-  INSTAGRAM
-  PHONE_CALL
-  WALK_IN
+  SOCIAL_MEDIA
+  SITE_VISIT_MARKETING
+  WEBSITE_FORM
   REFERRAL
   OTHER
 }

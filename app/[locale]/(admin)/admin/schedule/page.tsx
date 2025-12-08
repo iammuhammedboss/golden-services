@@ -160,17 +160,31 @@ export default function SchedulePage() {
 
   const fetchScheduleEntries = useCallback(async (start: Date, end: Date) => {
     try {
-      const params = new URLSearchParams({ start: start.toISOString(), end: end.toISOString(), ...filters });
+      const params = new URLSearchParams({ 
+        start: start.toISOString(), 
+        end: end.toISOString(), 
+        ...filters 
+      });
       const response = await fetch(`/api/schedule?${params.toString()}`);
       if (response.ok) {
         const data = await response.json();
-        const formattedEvents = data.map((entry: any) => ({
-          id: entry.id,
-          title: `${entry.jobOrder?.jobNumber || entry.type} - ${entry.client?.name || ''}`,
-          start: new Date(entry.startDateTime),
-          end: new Date(entry.endDateTime),
-          resource: entry,
-        }));
+        const formattedEvents = data.map((entry: any) => {
+          let title = '';
+          if (entry.jobOrder) {
+            title = `JOB: ${entry.jobOrder.jobNumber} - ${entry.client?.name || ''}`;
+          } else if (entry.siteVisit) {
+            title = `VISIT: ${entry.siteVisit.requiredService || 'Site Visit'} - ${entry.client?.name || ''}`;
+          } else {
+            title = `${entry.type.replace(/_/g, ' ')} - ${entry.client?.name || ''}`;
+          }
+          return {
+            id: entry.id,
+            title,
+            start: new Date(entry.startDateTime),
+            end: new Date(entry.endDateTime),
+            resource: entry,
+          };
+        });
         setEvents(formattedEvents);
       } else { console.error('Failed to fetch schedule entries'); }
     } catch (error) { console.error('Error fetching schedule entries:', error); }

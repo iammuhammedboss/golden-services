@@ -55,6 +55,14 @@ export default async function JobsPage({ params }: { params: { locale: string } 
     inProgress: jobs.filter((j) => j.status === 'IN_PROGRESS').length,
     completed: jobs.filter((j) => j.status === 'COMPLETED').length,
     cancelled: jobs.filter((j) => j.status === 'CANCELLED').length,
+    atStore: jobs.filter((j) => {
+      const latestStatus = j.statusUpdates?.[0]?.status;
+      return latestStatus === 'AT_STORE';
+    }).length,
+    atSite: jobs.filter((j) => {
+      const latestStatus = j.statusUpdates?.[0]?.status;
+      return latestStatus === 'ARRIVED_AT_SITE' || latestStatus === 'IN_PROGRESS';
+    }).length,
   }
 
   return (
@@ -105,7 +113,7 @@ export default async function JobsPage({ params }: { params: { locale: string } 
       </div>
 
       {/* Stats */}
-      <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-5">
+      <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-7">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Total</CardTitle>
@@ -120,6 +128,22 @@ export default async function JobsPage({ params }: { params: { locale: string } 
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-blue-600">{stats.scheduled}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">At Store</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-purple-600">{stats.atStore}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">At Site</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-orange-600">{stats.atSite}</div>
           </CardContent>
         </Card>
         <Card>

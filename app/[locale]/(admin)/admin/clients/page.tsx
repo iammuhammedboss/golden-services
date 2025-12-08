@@ -28,7 +28,9 @@ export default function ClientsPage() {
   const stats = {
     total: clients.length,
     individual: clients.filter((c) => c.type === 'INDIVIDUAL').length,
-    company: clients.filter((c) => c.type === 'COMPANY').length,
+    corporate: clients.filter((c) => c.type === 'CORPORATE').length,
+    new: clients.filter((c) => c.status === 'NEW').length,
+    active: clients.filter((c) => c.status === 'ACTIVE').length,
   }
 
   const fetchClients = async () => {
@@ -71,7 +73,7 @@ export default function ClientsPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
+      <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Total Clients</CardTitle>
@@ -90,10 +92,18 @@ export default function ClientsPage() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Company</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Corporate</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-purple-600">{stats.company}</div>
+            <div className="text-2xl font-bold text-purple-600">{stats.corporate}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Active</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">{stats.active}</div>
           </CardContent>
         </Card>
       </div>
@@ -113,6 +123,8 @@ export default function ClientsPage() {
                 <TableHead>Phone</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>Type</TableHead>
+                <TableHead>Source</TableHead>
+                <TableHead>Status</TableHead>
                 <TableHead>Sites</TableHead>
                 <TableHead>Created</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
@@ -140,6 +152,21 @@ export default function ClientsPage() {
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline">{enumToReadable(client.type)}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="secondary" className="text-xs">
+                        {enumToReadable(client.source)}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge className={
+                        client.status === 'ACTIVE' ? 'bg-green-100 text-green-800' :
+                        client.status === 'NEW' ? 'bg-blue-100 text-blue-800' :
+                        client.status === 'INACTIVE' ? 'bg-gray-100 text-gray-800' :
+                        'bg-red-100 text-red-800'
+                      }>
+                        {enumToReadable(client.status)}
+                      </Badge>
                     </TableCell>
                     <TableCell>
                       {client.sites.length > 0 ? (
