@@ -65,23 +65,59 @@ async function main() {
   })
   console.log('✓ Owner user created:', ownerUser.email)
 
-  // Create a sample client for testing
-  console.log('Creating sample client...')
-  await prisma.client.upsert({
-    where: { phone: '+96898765432' },
-    update: {},
-    create: {
-      name: 'Sample Client',
+  // Create sample clients for testing
+  console.log('Creating sample clients...')
+  const sampleClients = [
+    {
+      name: 'Ahmed Al-Maskari',
       phone: '+96898765432',
       whatsapp: '+96898765432',
-      email: 'sample@example.com',
+      email: 'ahmed@example.com',
       source: 'WEBSITE',
       status: 'ACTIVE',
       type: 'INDIVIDUAL',
-      notes: 'Sample client for testing',
+      notes: 'Regular customer for cleaning services',
     },
-  })
-  console.log('✓ Sample client created')
+    {
+      name: 'Oman Trading Company',
+      phone: '+96891234567',
+      whatsapp: '+96891234567',
+      email: 'contact@omantrading.com',
+      source: 'PHONE_CALL',
+      status: 'ACTIVE',
+      type: 'COMPANY',
+      notes: 'Corporate client for office cleaning',
+    },
+    {
+      name: 'Fatma Al-Siyabi',
+      phone: '+96892345678',
+      whatsapp: '+96892345678',
+      email: 'fatma@example.com',
+      source: 'WHATSAPP',
+      status: 'NEW',
+      type: 'INDIVIDUAL',
+      notes: 'Interested in pest control services',
+    },
+    {
+      name: 'Muscat Grand Hotel',
+      phone: '+96893456789',
+      whatsapp: '+96893456789',
+      email: 'info@muscatgrandhotel.com',
+      source: 'REFERRAL',
+      status: 'ACTIVE',
+      type: 'COMPANY',
+      notes: 'Hotel requiring regular deep cleaning',
+    },
+  ];
+
+  for (const clientData of sampleClients) {
+    await prisma.client.upsert({
+      where: { phone: clientData.phone },
+      update: {},
+      create: clientData,
+    });
+  }
+  console.log('✓ Sample clients created');
 
   // 3. Create Service Categories
   console.log('Creating service categories...')

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { canManageLeads } from '@/lib/permissions'
+import { canManageMeasurements } from '@/lib/permissions'
 import type { UserWithRoles } from '@/lib/permissions'
 import { createAuditLog } from '@/lib/audit'
 
@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
     const user = session.user as UserWithRoles
     
     // Check permissions
-    if (!canManageLeads(user)) {
+    if (!canManageMeasurements(user)) {
       return NextResponse.json(
         { error: 'Forbidden: Insufficient permissions to view measurements' },
         { status: 403 }
@@ -114,7 +114,7 @@ export async function POST(request: NextRequest) {
   const user = session.user as UserWithRoles
 
   // Check permissions
-  if (!canManageLeads(user)) {
+  if (!canManageMeasurements(user)) {
     return NextResponse.json(
       { error: 'Forbidden: Insufficient permissions to create measurements' },
       { status: 403 }

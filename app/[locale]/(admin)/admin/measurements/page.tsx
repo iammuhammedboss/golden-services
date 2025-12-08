@@ -19,7 +19,7 @@ export default function MeasurementsPage() {
             Create and manage detailed site measurements for quoting and job planning
           </p>
         </div>
-        <Button>
+        <Button onClick={() => setActiveTab('new')}>
           <PlusCircle className="mr-2 h-4 w-4" />
           New Measurement
         </Button>

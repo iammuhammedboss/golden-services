@@ -195,11 +195,9 @@ export function AddLeadDialog() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="NEW">New</SelectItem>
-                  <SelectItem value="CONTACTED">Contacted</SelectItem>
-                  <SelectItem value="SITE_VISIT_SCHEDULED">Site Visit Scheduled</SelectItem>
-                  <SelectItem value="QUOTED">Quoted</SelectItem>
-                  <SelectItem value="WON">Won</SelectItem>
-                  <SelectItem value="LOST">Lost</SelectItem>
+                  <SelectItem value="ACTIVE">Active</SelectItem>
+                  <SelectItem value="INACTIVE">Inactive</SelectItem>
+                  <SelectItem value="BLACKLISTED">Blacklisted</SelectItem>
                 </SelectContent>
               </Select>
             </div>

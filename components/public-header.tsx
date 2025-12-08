@@ -45,6 +45,12 @@ export function PublicHeader() {
               {item.name}
             </Link>
           ))}
+          <Link
+            href={`/${locale}/book-now`}
+            className="text-sm font-medium text-gold-600 hover:text-gold-700 transition-colors"
+          >
+            Book Now
+          </Link>
         </div>
 
         <div className="hidden md:flex md:items-center md:space-x-4">

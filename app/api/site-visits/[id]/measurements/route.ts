@@ -40,27 +40,61 @@ export async function POST(
       }
     }
 
-    const createdMeasurements = await prisma.$transaction(
+    // First, check if a measurement already exists for this site visit
+    let measurement = await prisma.measurement.findFirst({
+      where: {
+        siteVisitId,
+        deletedAt: null,
+      },
+    });
+
+    // If no measurement exists, create one
+    if (!measurement) {
+      // Get site visit details to create measurement title
+      const siteVisit = await prisma.siteVisit.findUnique({
+        where: { id: siteVisitId },
+        include: {
+          client: true,
+          site: true,
+        },
+      });
+
+      measurement = await prisma.measurement.create({
+        data: {
+          clientId: siteVisit?.clientId || '',
+          siteId: siteVisit?.siteId || null,
+          siteVisitId,
+          title: `Measurement for ${siteVisit?.client?.name || 'Client'} - ${new Date().toLocaleDateString()}`,
+          status: 'DRAFT',
+        },
+      });
+    }
+
+    // Create measurement objects
+    const createdObjects = await prisma.$transaction(
       measurements.map((m) =>
-        prisma.measurementItem.create({
+        prisma.measurementObject.create({
           data: {
-            siteVisitId,
-            itemTypeId: m.itemTypeId,
-            roomTypeId: m.roomTypeId || null,
-            quantity: m.quantity,
+            measurementId: measurement.id,
+            type: 'ITEM',
+            name: m.customDescription || `Item from measurement`,
+            itemMasterId: m.itemTypeId,
             size: m.size || null,
-            customDescription: m.customDescription || null,
+            dirtLevel: m.dirtLevel || null,
+            quantity: m.quantity,
             notes: m.notes || null,
+            sortOrder: 0,
           },
         })
       )
-    )
+    );
 
     return NextResponse.json({
       success: true,
-      measurements: createdMeasurements,
-      count: createdMeasurements.length,
-    })
+      measurement,
+      objects: createdObjects,
+      count: createdObjects.length,
+    });
   } catch (error) {
     console.error('Error creating measurements:', error)
     return NextResponse.json(
@@ -82,18 +116,43 @@ export async function GET(
 
     const { id: siteVisitId } = params
 
-    const measurements = await prisma.measurementItem.findMany({
-      where: { siteVisitId },
+    // Get measurement for this site visit
+    const measurement = await prisma.measurement.findFirst({
+      where: { 
+        siteVisitId,
+        deletedAt: null 
+      },
       include: {
-        itemType: true,
-        roomType: true,
+        objects: {
+          where: { deletedAt: null },
+          include: {
+            itemMaster: true,
+          },
+          orderBy: {
+            createdAt: 'asc',
+          },
+        },
       },
-      orderBy: {
-        createdAt: 'asc',
-      },
-    })
+    });
 
-    return NextResponse.json(measurements)
+    if (!measurement) {
+      return NextResponse.json([]);
+    }
+
+    // Format response to match expected structure
+    const formattedMeasurements = measurement.objects.map(obj => ({
+      id: obj.id,
+      itemTypeId: obj.itemMasterId,
+      itemType: obj.itemMaster,
+      quantity: obj.quantity,
+      size: obj.size,
+      customDescription: obj.name,
+      notes: obj.notes,
+      createdAt: obj.createdAt,
+      updatedAt: obj.updatedAt,
+    }));
+
+    return NextResponse.json(formattedMeasurements);
   } catch (error) {
     console.error('Error fetching measurements:', error)
     return NextResponse.json(

@@ -223,13 +223,13 @@ export function MeasurementForm({
         <div className="space-y-4">
           {fields.map((field, index) => (
             <div key={field.id} className="rounded-lg border p-4 space-y-4 relative">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <FormField
                   control={form.control}
                   name={`measurements.${index}.itemTypeId`}
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Item Type</FormLabel>
+                      <FormLabel>Item Type *</FormLabel>
                       <Select
                         onValueChange={field.onChange}
                         defaultValue={field.value}
@@ -253,37 +253,10 @@ export function MeasurementForm({
                 />
                 <FormField
                   control={form.control}
-                  name={`measurements.${index}.roomTypeId`}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Room Type</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a room type" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {roomTypes.map((rt) => (
-                            <SelectItem key={rt.id} value={rt.id}>
-                              {rt.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
                   name={`measurements.${index}.quantity`}
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Quantity</FormLabel>
+                      <FormLabel>Quantity *</FormLabel>
                       <FormControl>
                         <Input 
                           type="number" 
@@ -298,12 +271,53 @@ export function MeasurementForm({
                 />
                 <FormField
                   control={form.control}
+                  name={`measurements.${index}.dirtLevel`}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Dirt Level</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select dirt level" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="LIGHT">Light</SelectItem>
+                          <SelectItem value="MEDIUM">Medium</SelectItem>
+                          <SelectItem value="HEAVY">Heavy</SelectItem>
+                          <SelectItem value="SEVERE">Severe</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
                   name={`measurements.${index}.size`}
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Size (e.g. 3ft x 4ft)</FormLabel>
                       <FormControl>
                         <Input placeholder="Size" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name={`measurements.${index}.customDescription`}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Custom Description</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g. Sofa (3-seater)" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
