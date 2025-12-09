@@ -77,11 +77,15 @@ export async function POST(request: NextRequest) {
       clientId,
       siteId,
       quotationId,
+      measurementId,
       scheduledDate,
       scheduledStartTime,
       scheduledEndTime,
       status,
       notes,
+      assignments, // e.g., [{ userId: '...', roleInJob: 'TECHNICIAN' }]
+      materials,   // e.g., [{ materialId: '...', quantity: 2.5 }]
+      equipment,   // e.g., [{ equipmentId: '...', quantity: 1 }]
     } = body
 
     // Validate required fields
@@ -113,11 +117,30 @@ export async function POST(request: NextRequest) {
         clientId,
         siteId,
         quotationId: quotationId || null,
+        measurementId: measurementId || null,
         scheduledDate: new Date(scheduledDate),
         scheduledStartTime: scheduledStartTime ? new Date(scheduledStartTime) : null,
         scheduledEndTime: scheduledEndTime ? new Date(scheduledEndTime) : null,
         status: status || 'SCHEDULED',
         notes: notes || null,
+        assignments: {
+            create: assignments?.map((a: any) => ({
+                userId: a.userId,
+                roleInJob: a.roleInJob,
+            }))
+        },
+        materials: {
+            create: materials?.map((m: any) => ({
+                materialId: m.materialId,
+                quantity: m.quantity,
+            }))
+        },
+        equipment: {
+            create: equipment?.map((e: any) => ({
+                equipmentId: e.equipmentId,
+                quantity: e.quantity,
+            }))
+        }
       },
       include: {
         client: true,
@@ -125,6 +148,25 @@ export async function POST(request: NextRequest) {
         quotation: true,
       },
     })
+    
+    // If a measurement is linked, create checklist items from measurement objects
+    if (measurementId) {
+        const measurementObjects = await prisma.measurementObject.findMany({
+            where: { measurementId }
+        });
+
+        if (measurementObjects.length > 0) {
+            const checklistItems = measurementObjects.map(obj => ({
+                jobOrderId: job.id,
+                description: obj.name,
+                // You can add more logic here to set photoRequired, etc.
+            }));
+
+            await prisma.checklistItem.createMany({
+                data: checklistItems,
+            });
+        }
+    }
 
     return NextResponse.json(job, { status: 201 })
   } catch (error) {

@@ -1,6 +1,5 @@
-'use client'
-
 import { useState, useEffect } from 'react'
+import Image from 'next/image'
 import { Button } from './ui/button'
 import { Image as ImageIcon, Trash2 } from 'lucide-react'
 
@@ -87,9 +86,11 @@ export function PhotoUploader({ onUpload, onRemove, uploadedUrls }: PhotoUploade
         <div className="grid grid-cols-3 gap-2">
           {uploadedUrls.map((url) => (
             <div key={url} className="relative group">
-              <img
+              <Image
                 src={url.replace('/upload/', '/upload/w_150,h_150,c_fill/')}
                 alt="Uploaded image"
+                width={150}
+                height={150}
                 className="rounded-md object-cover w-full h-full"
               />
               <Button

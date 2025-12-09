@@ -20,12 +20,9 @@ export default async function SiteVisitsPage() {
     },
     include: {
       client: true,
+      site: true,
       assignedTo: true,
-      rooms: {
-        include: {
-          items: true,
-        },
-      },
+      measurements: true,
     },
     orderBy: {
       scheduledAt: 'desc',
@@ -60,8 +57,8 @@ export default async function SiteVisitsPage() {
                 <TableHead>Client</TableHead>
                 <TableHead>Scheduled For</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Rooms</TableHead>
-                <TableHead>Items</TableHead>
+                <TableHead>Measurements</TableHead>
+                <TableHead>Has Measurements</TableHead>
                 <TableHead>Assigned To</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -77,9 +74,9 @@ export default async function SiteVisitsPage() {
                         {enumToReadable(visit.status)}
                       </Badge>
                     </TableCell>
-                    <TableCell>{visit.rooms.length}</TableCell>
+                    <TableCell>{visit.measurements.length}</TableCell>
                     <TableCell>
-                      {visit.rooms.reduce((acc, room) => acc + room.items.length, 0)}
+                      {visit.measurements.length > 0 ? 'Yes' : 'No'}
                     </TableCell>
                     <TableCell>{visit.assignedTo.name}</TableCell>
                     <TableCell className="text-right">

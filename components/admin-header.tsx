@@ -4,6 +4,7 @@ import { signOut, useSession } from 'next-auth/react'
 import { useParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { getInitials } from '@/lib/utils'
+import { NotificationBell } from './notification-bell'
 
 export function AdminHeader() {
   const { data: session } = useSession()
@@ -22,6 +23,7 @@ export function AdminHeader() {
         </div>
 
         <div className="flex items-center space-x-4">
+          <NotificationBell />
           {session?.user && (
             <>
               <div className="flex items-center space-x-3">

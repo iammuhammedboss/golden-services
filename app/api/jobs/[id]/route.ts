@@ -1,74 +1,41 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { prisma } from '@/lib/prisma'
 import { canManageJobs } from '@/lib/permissions'
 import type { UserWithRoles } from '@/lib/permissions'
 
-// GET /api/jobs/[id] - Get a single job by ID
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const session = await getServerSession(authOptions)
+  if (!session?.user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   try {
-    const session = await getServerSession(authOptions)
-
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    const user = session.user as UserWithRoles
-
-    // Note: We might want a more granular permission like canViewJobs
-    if (!canManageJobs(user)) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-    }
-
-    const { id } = params
-
     const job = await prisma.jobOrder.findUnique({
-      where: { id },
+      where: { id: params.id },
       include: {
         client: true,
         site: true,
+        quotation: true,
+        measurement: true,
         assignments: {
           include: {
-            user: {
-              select: {
-                id: true,
-                name: true,
-              },
-            },
+            user: true,
           },
         },
-        quotation: {
-          include: {
-            items: true, // This is what we need for the invoice
-          },
+        materials: {
+            include: {
+                material: true,
+            }
         },
-        statusUpdates: {
-          orderBy: {
-            createdAt: 'desc',
-          },
-          include: {
-            createdBy: {
-              select: {
-                name: true,
-              },
-            },
-          },
-        },
-        photos: {
-          orderBy: {
-            createdAt: 'desc',
-          },
-          include: {
-            uploadedBy: {
-              select: {
-                name: true,
-              },
-            },
-          },
+        equipment: {
+            include: {
+                equipment: true,
+            }
         },
       },
     })
@@ -79,7 +46,83 @@ export async function GET(
 
     return NextResponse.json(job)
   } catch (error) {
-    console.error(`GET /api/jobs/[id] error:`, error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    console.error(`Error fetching job ${params.id}:`, error)
+    return NextResponse.json(
+      { error: 'Failed to fetch job' },
+      { status: 500 }
+    )
   }
+}
+
+export async function PUT(
+    request: NextRequest,
+    { params }: { params: { id: string } }
+) {
+    const session = await getServerSession(authOptions)
+    if (!session?.user) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const user = session.user as UserWithRoles
+    if (!canManageJobs(user)) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
+    try {
+        const body = await request.json()
+        const { assignments, materials, equipment, ...jobData } = body
+
+        const updatedJob = await prisma.$transaction(async (prisma) => {
+            const job = await prisma.jobOrder.update({
+                where: { id: params.id },
+                data: jobData,
+            })
+
+            if (assignments) {
+                await prisma.jobAssignment.deleteMany({
+                    where: { jobOrderId: params.id },
+                })
+                await prisma.jobAssignment.createMany({
+                    data: assignments.map((a: any) => ({
+                        ...a,
+                        jobOrderId: params.id,
+                    })),
+                })
+            }
+            
+            if (materials) {
+                await prisma.jobMaterial.deleteMany({
+                    where: { jobOrderId: params.id },
+                })
+                await prisma.jobMaterial.createMany({
+                    data: materials.map((m: any) => ({
+                        ...m,
+                        jobOrderId: params.id,
+                    })),
+                })
+            }
+
+            if (equipment) {
+                await prisma.jobEquipment.deleteMany({
+                    where: { jobOrderId: params.id },
+                })
+                await prisma.jobEquipment.createMany({
+                    data: equipment.map((e: any) => ({
+                        ...e,
+                        jobOrderId: params.id,
+                    })),
+                })
+            }
+
+            return job
+        })
+
+        return NextResponse.json(updatedJob)
+    } catch (error) {
+        console.error(`Error updating job ${params.id}:`, error)
+        return NextResponse.json(
+            { error: 'Failed to update job' },
+            { status: 500 }
+        )
+    }
 }

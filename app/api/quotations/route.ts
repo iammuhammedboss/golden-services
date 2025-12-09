@@ -72,7 +72,20 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { clientId, siteId, leadId, validUntil, notes, items } = body
+    const { 
+        clientId, 
+        siteId, 
+        measurementId, 
+        validUntil, 
+        notes, 
+        items,
+        vatEnabled,
+        vatPercentage,
+        discountType,
+        discountValue,
+        termsTemplateId,
+        bankDetailsTemplateId
+    } = body
 
     // Validation
     if (!clientId) {
@@ -120,17 +133,45 @@ export async function POST(request: NextRequest) {
 
     const version = latestQuotation ? latestQuotation.version + 1 : 1
 
+    let termsSnapshot: string | undefined = undefined;
+    if (termsTemplateId) {
+        const template = await prisma.termsTemplate.findUnique({
+            where: { id: termsTemplateId }
+        });
+        if (template) {
+            termsSnapshot = template.content;
+        }
+    }
+
+    let bankDetailsSnapshot: string | undefined = undefined;
+    if (bankDetailsTemplateId) {
+        const template = await prisma.bankDetailsTemplate.findUnique({
+            where: { id: bankDetailsTemplateId }
+        });
+        if (template) {
+            bankDetailsSnapshot = template.content;
+        }
+    }
+
     // Create quotation with items
     const quotation = await prisma.quotation.create({
       data: {
         clientId,
         siteId: siteId || null,
-        leadId: leadId || null,
+        measurementId: measurementId || null,
         version,
         createdById: currentUser.id,
         status: 'DRAFT',
         validUntil: validUntil ? new Date(validUntil) : null,
         notes: notes || null,
+        vatEnabled: vatEnabled || false,
+        vatPercentage: vatEnabled ? new Decimal(vatPercentage || 5) : new Decimal(0),
+        discountType: discountType || null,
+        discountValue: discountValue ? new Decimal(discountValue) : null,
+        termsTemplateId,
+        termsSnapshot,
+        bankDetailsTemplateId,
+        bankDetailsSnapshot,
         items: {
           create: items.map((item: any) => ({
             serviceId: item.serviceId || null,

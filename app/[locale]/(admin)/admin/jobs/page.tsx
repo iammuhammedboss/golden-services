@@ -79,7 +79,7 @@ export default async function JobsPage({ params }: { params: { locale: string } 
           <p className="text-muted-foreground">Manage and track job orders</p>
         </div>
         <div className="flex gap-2">
-          <Link href={`/${params.locale}/admin/jobs/calendar`}>
+          <Link href={`/${params.locale}/admin/schedule`}>
             <Button variant="outline">
               <svg
                 className="mr-2 h-4 w-4"

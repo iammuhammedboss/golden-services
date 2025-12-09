@@ -111,7 +111,7 @@ export async function POST(request: NextRequest) {
       siteVisitId,
       clientId,
       locationText,
-      assigneeIds, // Expect an array of employee IDs
+      assignees, // Expect an array of objects: { employeeId: string, roleInVisit: string }
     } = body
 
     if (!type || !startDateTime || !endDateTime || !clientId) {
@@ -123,7 +123,8 @@ export async function POST(request: NextRequest) {
 
     // TODO: Implement conflict checking logic here
     const newEntry = await prisma.$transaction(async (tx) => {
-      if (assigneeIds && assigneeIds.length > 0) {
+      if (assignees && assignees.length > 0) {
+        const assigneeIds = assignees.map((a: any) => a.employeeId);
         const conflictingEntries = await tx.scheduleEntry.findMany({
           where: {
             status: { notIn: ['CANCELLED', 'NO_SHOW'] },
@@ -152,9 +153,9 @@ export async function POST(request: NextRequest) {
           locationText,
           createdById: user.id,
           assignees: {
-            create: assigneeIds?.map((id: string) => ({
-              employeeId: id,
-              roleInVisit: 'TECHNICIAN', // Default role, can be improved
+            create: assignees?.map((a: any) => ({
+              employeeId: a.employeeId,
+              roleInVisit: a.roleInVisit || 'TECHNICIAN', // Default role
             })) || [],
           },
         },

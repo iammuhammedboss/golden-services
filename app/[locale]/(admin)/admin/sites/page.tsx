@@ -11,7 +11,6 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { prisma } from '@/lib/prisma'
 import { formatDate, enumToReadable } from '@/lib/utils'
-import { AddSiteDialog } from '@/components/add-site-dialog'
 import Link from 'next/link'
 
 export default async function SitesPage() {
@@ -40,7 +39,9 @@ export default async function SitesPage() {
           <h1 className="text-3xl font-bold">Sites</h1>
           <p className="text-muted-foreground">Manage client sites and locations</p>
         </div>
-        <AddSiteDialog />
+        <Link href="/admin/sites/new">
+          <Button>+ Add Site</Button>
+        </Link>
       </div>
 
       {/* Stats */}

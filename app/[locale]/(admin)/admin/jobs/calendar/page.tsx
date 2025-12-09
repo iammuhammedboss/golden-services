@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { JobsCalendar } from '@/components/jobs-calendar'
+import { ScheduleCalendar, ScheduleEvent } from '@/components/schedule-calendar'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 
@@ -10,7 +10,7 @@ export default function JobsCalendarPage() {
   const params = useParams()
   const router = useRouter()
   const locale = (params.locale as string) || 'en'
-  const [jobs, setJobs] = useState([])
+  const [events, setEvents] = useState<ScheduleEvent[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -22,7 +22,18 @@ export default function JobsCalendarPage() {
       const response = await fetch('/api/jobs')
       if (response.ok) {
         const data = await response.json()
-        setJobs(data)
+        // Transform jobs into calendar events
+        const calendarEvents: ScheduleEvent[] = data.map((job: any) => ({
+          id: job.id,
+          title: `Job #${job.jobNumber} - ${job.client?.name || 'Unknown'}`,
+          start: job.scheduledStartTime ? new Date(job.scheduledStartTime) : new Date(job.scheduledDate),
+          end: job.scheduledEndTime ? new Date(job.scheduledEndTime) : new Date(job.scheduledDate),
+          resource: {
+            type: 'job' as const,
+            status: job.status,
+          },
+        }))
+        setEvents(calendarEvents)
       }
     } catch (error) {
       console.error('Error fetching jobs:', error)
@@ -31,7 +42,7 @@ export default function JobsCalendarPage() {
     }
   }
 
-  const handleSelectEvent = (event: any) => {
+  const handleSelectEvent = (event: ScheduleEvent) => {
     router.push(`/${locale}/admin/jobs/${event.id}`)
   }
 
@@ -91,7 +102,7 @@ export default function JobsCalendarPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <JobsCalendar jobs={jobs} onSelectEvent={handleSelectEvent} />
+          <ScheduleCalendar events={events} onSelectEvent={handleSelectEvent} />
         </CardContent>
       </Card>
     </div>

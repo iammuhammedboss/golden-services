@@ -135,6 +135,8 @@ export async function POST(request: NextRequest) {
       alternatePhone,
       type = 'INDIVIDUAL',
       notes,
+      source = 'PHONE',
+      status = 'NEW',
       address,
       city,
       siteName
@@ -175,6 +177,8 @@ export async function POST(request: NextRequest) {
         alternatePhone: alternatePhone || null,
         type,
         notes: notes || null,
+        source,
+        status,
       },
     })
 

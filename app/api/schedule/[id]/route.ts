@@ -22,7 +22,6 @@ export async function GET(
         client: true,
         jobOrder: true,
         siteVisit: true,
-        lead: true,
         assignees: {
           include: {
             employee: { select: { id: true, name: true } },

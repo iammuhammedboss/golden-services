@@ -83,8 +83,6 @@ model ItemMaster {
   deletedAt         DateTime?
   deletedById       String?
   unit              UnitMaster @relation(fields: [unitId], references: [id])
-  roomItems         RoomItem[]
-  measurementItems  MeasurementItem[]
   measurementObjects MeasurementObject[]
 
   @@map("item_masters")
@@ -128,7 +126,6 @@ model RoomTypeMaster {
   updatedAt   DateTime  @updatedAt
   deletedAt   DateTime?
   deletedById String?
-  measurementItems MeasurementItem[]
 
   @@map("room_type_masters")
 }
@@ -171,8 +168,6 @@ model ScheduleEntry {
   siteVisit   SiteVisit? @relation(fields: [siteVisitId], references: [id])
   client      Client     @relation(fields: [clientId], references: [id])
   createdBy   User       @relation(fields: [createdById], references: [id])
-  lead        Lead?      @relation(fields: [leadId], references: [id])
-  leadId      String?
   assignees   ScheduleEntryAssignee[]
   reminders   ScheduleReminder[]
 
@@ -269,7 +264,6 @@ model Lead {
   convertedToClient     Client?     @relation(fields: [convertedToClientId], references: [id])
   quotations            Quotation[]
   siteVisits            SiteVisit[]
-  scheduleEntries       ScheduleEntry[]
 
   @@index([phone])
   @@index([status])
@@ -287,6 +281,9 @@ model Site {
   city        String?
   locationUrl String?
   type        SiteType    @default(HOUSE)
+  houseType   String?
+  flatType    String?
+  bhkType     String?
   personInCharge String?
   personPhone   String?
   notes       String?
@@ -297,7 +294,6 @@ model Site {
   jobOrders   JobOrder[]
   quotations  Quotation[]
   siteVisits  SiteVisit[]
-  rooms       Room[]
   measurements Measurement[]
   client      Client      @relation(fields: [clientId], references: [id], onDelete: Cascade)
 
@@ -414,56 +410,6 @@ enum ObjectSize {
   XXXL
 }
 
-model Room {
-  id          String     @id @default(cuid())
-  siteVisitId String
-  siteId      String?
-  roomType    String // From RoomTypeMaster
-  customName  String? // "Room 1", "Master Bedroom", etc.
-  notes       String?
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-  deletedAt   DateTime?
-  deletedById String?
-  
-  parentId    String?
-  parent      Room?      @relation("RoomHierarchy", fields: [parentId], references: [id])
-  subRooms    Room[]     @relation("RoomHierarchy")
-
-  siteVisit   SiteVisit  @relation(fields: [siteVisitId], references: [id], onDelete: Cascade)
-  site        Site?      @relation(fields: [siteId], references: [id])
-  items       RoomItem[]
-  photos      Photo[]
-
-  @@index([siteVisitId])
-  @@index([siteId])
-  @@index([parentId])
-  @@index([deletedAt])
-  @@map("rooms")
-}
-
-model RoomItem {
-  id             String          @id @default(cuid())
-  roomId         String
-  itemMasterId   String // From ItemMaster
-  quantity       Int             @default(1)
-  size           String? // Dimensions or size descriptor
-  dirtLevel      DirtLevel       @default(MEDIUM)
-  notes          String?
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
-  deletedAt      DateTime?
-  deletedById    String?
-  room           Room            @relation(fields: [roomId], references: [id], onDelete: Cascade)
-  itemMaster     ItemMaster      @relation(fields: [itemMasterId], references: [id])
-  checklistItems ChecklistItem[]
-  photos         Photo[]
-
-  @@index([roomId])
-  @@index([deletedAt])
-  @@map("room_items")
-}
-
 model SiteVisit {
   id               String            @id @default(cuid())
   clientId         String
@@ -479,9 +425,7 @@ model SiteVisit {
   updatedAt        DateTime          @updatedAt
   deletedAt        DateTime?
   deletedById      String?
-  measurementItems MeasurementItem[]
   measurements     Measurement[]
-  rooms            Room[]
   photos           Photo[]
   assignedTo       User              @relation(fields: [assignedToId], references: [id])
   client           Client            @relation(fields: [clientId], references: [id])
@@ -497,38 +441,12 @@ model SiteVisit {
   @@map("site_visits")
 }
 
-model MeasurementItem {
-  id                String    @id @default(cuid())
-  siteVisitId       String
-  itemTypeId        String    // Links to ItemTypeMaster
-  roomTypeId        String?   // Links to RoomTypeMaster
-  quantity          Decimal   @db.Decimal(10, 2)
-  size              String?   // e.g., "3ft x 4ft"
-  customDescription String?
-  notes             String?
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
-  deletedAt         DateTime?
-  deletedById       String?
-
-  siteVisit  SiteVisit      @relation(fields: [siteVisitId], references: [id], onDelete: Cascade)
-  itemType   ItemMaster @relation(fields: [itemTypeId], references: [id])
-  roomType   RoomTypeMaster? @relation(fields: [roomTypeId], references: [id])
-
-  @@index([siteVisitId])
-  @@index([itemTypeId])
-  @@index([deletedAt])
-  @@map("measurement_items")
-}
-
 model Photo {
   id                 String            @id @default(cuid())
   siteVisitId        String?
   jobOrderId         String?
-  roomId             String?
   measurementId      String?
   measurementObjectId String?
-  roomItemId         String?
   phase              PhotoPhase
   url                String
   caption            String?
@@ -538,19 +456,15 @@ model Photo {
   deletedAt          DateTime?
   deletedById        String?
   jobOrder           JobOrder?         @relation(fields: [jobOrderId], references: [id])
-  room               Room?             @relation(fields: [roomId], references: [id])
   siteVisit          SiteVisit?        @relation(fields: [siteVisitId], references: [id])
   measurement        Measurement?      @relation(fields: [measurementId], references: [id])
   measurementObject  MeasurementObject? @relation(fields: [measurementObjectId], references: [id])
-  roomItem           RoomItem?         @relation(fields: [roomItemId], references: [id])
   uploadedBy         User              @relation(fields: [uploadedById], references: [id])
 
   @@index([siteVisitId])
   @@index([jobOrderId])
-  @@index([roomId])
   @@index([measurementId])
   @@index([measurementObjectId])
-  @@index([roomItemId])
   @@index([deletedAt])
   @@map("photos")
 }
@@ -706,7 +620,6 @@ model JobMaterial {
 model ChecklistItem {
   id            String    @id @default(cuid())
   jobOrderId    String
-  roomItemId    String? // Link to RoomItem if from measurement
   description   String
   isCompleted   Boolean   @default(false)
   completedAt   DateTime?
@@ -723,7 +636,6 @@ model ChecklistItem {
   deletedAt     DateTime?
   deletedById   String?
   jobOrder      JobOrder  @relation(fields: [jobOrderId], references: [id], onDelete: Cascade)
-  roomItem      RoomItem? @relation(fields: [roomItemId], references: [id])
   completedBy   User?     @relation("ChecklistItemCompletedBy", fields: [completedById], references: [id])
   verifiedBy    User?     @relation("ChecklistItemVerifiedBy", fields: [verifiedById], references: [id])
 

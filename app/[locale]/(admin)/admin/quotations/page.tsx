@@ -12,7 +12,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { prisma } from '@/lib/prisma'
 import { formatDate, formatCurrency, enumToReadable, getStatusColor } from '@/lib/utils'
 import { Decimal } from '@prisma/client/runtime/library'
-import { AddQuotationDialog } from '@/components/add-quotation-dialog'
 import Link from 'next/link'
 
 export default async function QuotationsPage() {
@@ -68,7 +67,9 @@ export default async function QuotationsPage() {
           <h1 className="text-3xl font-bold">Quotations</h1>
           <p className="text-muted-foreground">Manage quotations and proposals</p>
         </div>
-        <AddQuotationDialog />
+        <Button asChild>
+            <Link href="/admin/quotations/new">+ New Quotation</Link>
+        </Button>
       </div>
 
       {/* Stats */}

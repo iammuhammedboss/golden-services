@@ -1,14 +1,16 @@
 import { prisma } from '@/lib/prisma'
 import { notFound } from 'next/navigation'
+import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { formatDate, getStatusColor, enumToReadable } from '@/lib/utils'
-import { MeasurementSection } from '@/components/measurement-section'
+import { StartMeasurementButton } from '@/components/start-measurement-button'
 
 export default async function SiteVisitDetailsPage({
   params,
 }: {
-  params: { id: string }
+  params: { id: string, locale: string }
 }) {
   const siteVisit = await prisma.siteVisit.findUnique({
     where: { id: params.id },
@@ -16,28 +18,20 @@ export default async function SiteVisitDetailsPage({
       client: true,
       assignedTo: true,
       lead: true,
-      rooms: {
-        include: {
-          items: {
-            include: {
-              itemMaster: true,
-            },
-          },
-          photos: true,
-        },
-      },
-      measurementItems: {
-        include: {
-          itemType: true,
-          roomType: true,
-        },
-      },
+      measurements: {
+        take: 1,
+        orderBy: {
+            createdAt: 'desc'
+        }
+      }
     },
   })
 
   if (!siteVisit) {
     notFound()
   }
+  
+  const measurement = siteVisit.measurements[0];
 
   return (
     <div className="space-y-6">
@@ -96,7 +90,13 @@ export default async function SiteVisitDetailsPage({
               <CardTitle>Visit Data</CardTitle>
             </CardHeader>
             <CardContent>
-              <MeasurementSection siteVisit={siteVisit} />
+              {measurement ? (
+                <Button asChild>
+                  <Link href={`/${params.locale}/admin/measurements/${measurement.id}`}>View Measurement</Link>
+                </Button>
+              ) : (
+                <StartMeasurementButton siteVisitId={siteVisit.id} locale={params.locale} />
+              )}
             </CardContent>
           </Card>
         </div>

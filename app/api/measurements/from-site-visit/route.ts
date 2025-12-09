@@ -19,46 +19,47 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json()
-    const {
-      clientId,
-      siteId,
-      scheduledAt,
-      assignedToId,
-      requiredService,
-      notes,
-    } = body
+    const { siteVisitId } = body
 
-    if (!clientId || !siteId || !scheduledAt || !assignedToId) {
+    if (!siteVisitId) {
       return NextResponse.json(
-        { error: 'clientId, siteId, scheduledAt, and assignedToId are required' },
+        { error: 'siteVisitId is required' },
         { status: 400 }
       )
     }
 
-    const newSiteVisit = await prisma.siteVisit.create({
+    const siteVisit = await prisma.siteVisit.findUnique({
+      where: { id: siteVisitId },
+      include: { client: true, site: true }
+    })
+
+    if (!siteVisit) {
+      return NextResponse.json({ error: 'Site visit not found' }, { status: 404 })
+    }
+
+    const newMeasurement = await prisma.measurement.create({
       data: {
-        clientId,
-        siteId,
-        scheduledAt: new Date(scheduledAt),
-        assignedToId,
-        requiredService,
-        notes,
+        clientId: siteVisit.clientId,
+        siteId: siteVisit.siteId,
+        siteVisitId: siteVisit.id,
+        title: `Measurement for ${siteVisit.client?.name} - ${siteVisit.site?.name}`,
+        status: 'DRAFT',
       },
     })
 
     await createAuditLog({
       userId: user.id,
       action: 'CREATE',
-      entityType: 'SiteVisit',
-      entityId: newSiteVisit.id,
-      newValues: newSiteVisit,
+      entityType: 'Measurement',
+      entityId: newMeasurement.id,
+      newValues: newMeasurement,
     })
 
-    return NextResponse.json(newSiteVisit, { status: 201 })
+    return NextResponse.json(newMeasurement, { status: 201 })
   } catch (error) {
-    console.error('Error creating site visit:', error)
+    console.error('Error creating measurement from site visit:', error)
     return NextResponse.json(
-      { error: 'Failed to create site visit' },
+      { error: 'Failed to create measurement' },
       { status: 500 }
     )
   }

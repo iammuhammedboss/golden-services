@@ -61,26 +61,33 @@ export default function ContactPage() {
     setIsSubmitting(true)
 
     try {
-      const response = await fetch('/api/leads', {
+      const response = await fetch('/api/clients', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          ...formData,
-          source: 'WEBSITE',
-          serviceInterest: 'Contact Form',
+          name: formData.name,
+          phone: formData.phone,
+          email: formData.email || null,
+          source: 'WEBSITE_FORM',
+          status: 'NEW',
+          notes: `Contact form message: ${formData.message}`,
         }),
       })
 
       if (!response.ok) {
+        const errorData = await response.json()
+        if (response.status === 409) {
+          throw new Error('A client with this phone number already exists. We will contact you shortly.')
+        }
         throw new Error('Failed to submit form')
       }
 
       setSubmitSuccess(true)
       setFormData({ name: '', phone: '', email: '', message: '' })
     } catch (error) {
-      setErrors({ submit: 'Failed to submit form. Please try again.' })
+      setErrors({ submit: error instanceof Error ? error.message : 'Failed to submit form. Please try again.' })
     } finally {
       setIsSubmitting(false)
     }

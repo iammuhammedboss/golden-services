@@ -73,6 +73,8 @@ async function main() {
     whatsapp: string;
     email: string;
     type: ClientType;
+    source: 'PHONE' | 'WHATSAPP' | 'SOCIAL_MEDIA' | 'WEBSITE_FORM' | 'REFERRAL' | 'OTHER';
+    status: 'NEW' | 'ACTIVE' | 'INACTIVE' | 'BLACKLISTED';
     notes: string;
   }> = [
     {
@@ -81,6 +83,8 @@ async function main() {
       whatsapp: '+96898765432',
       email: 'ahmed@example.com',
       type: 'INDIVIDUAL',
+      source: 'PHONE',
+      status: 'ACTIVE',
       notes: 'Regular customer for cleaning services',
     },
     {
@@ -89,6 +93,8 @@ async function main() {
       whatsapp: '+96891234567',
       email: 'contact@omantrading.com',
       type: 'CORPORATE',
+      source: 'WEBSITE_FORM',
+      status: 'NEW',
       notes: 'Corporate client for office cleaning',
     },
     {
@@ -97,6 +103,8 @@ async function main() {
       whatsapp: '+96892345678',
       email: 'fatma@example.com',
       type: 'INDIVIDUAL',
+      source: 'WHATSAPP',
+      status: 'ACTIVE',
       notes: 'Interested in pest control services',
     },
     {
@@ -105,6 +113,8 @@ async function main() {
       whatsapp: '+96893456789',
       email: 'info@muscatgrandhotel.com',
       type: 'CORPORATE',
+      source: 'REFERRAL',
+      status: 'INACTIVE',
       notes: 'Hotel requiring regular deep cleaning',
     },
   ];
@@ -180,6 +190,7 @@ async function main() {
   // 5. Create Item Master
   console.log('Creating item master...')
   const itemMasterData = [
+    // Furniture
     {
       name: 'Sofa',
       category: 'Furniture',
@@ -190,6 +201,34 @@ async function main() {
       tags: ['fabric', 'leather'],
     },
     {
+      name: 'Office Chair',
+      category: 'Furniture',
+      unitName: 'Piece',
+      defaultPrice: '2.000',
+      requiresPhotos: false,
+      requiresChecklist: true,
+      tags: ['office'],
+    },
+    {
+      name: 'Dining Table',
+      category: 'Furniture',
+      unitName: 'Piece',
+      defaultPrice: '5.000',
+      requiresPhotos: true,
+      requiresChecklist: true,
+      tags: ['wood', 'glass'],
+    },
+    {
+      name: 'Dining Chair',
+      category: 'Furniture',
+      unitName: 'Piece',
+      defaultPrice: '1.500',
+      requiresPhotos: false,
+      requiresChecklist: true,
+      tags: ['wood', 'fabric'],
+    },
+    // Flooring
+    {
       name: 'Carpet',
       category: 'Flooring',
       unitName: 'Sq Meter',
@@ -198,6 +237,25 @@ async function main() {
       requiresChecklist: true,
       tags: ['rug', 'textile'],
     },
+    {
+      name: 'Floor Mat',
+      category: 'Flooring',
+      unitName: 'Piece',
+      defaultPrice: '2.000',
+      requiresPhotos: true,
+      requiresChecklist: true,
+      tags: ['mat'],
+    },
+    {
+      name: 'Interlock Area',
+      category: 'Flooring',
+      unitName: 'Sq Meter',
+      defaultPrice: '0.500',
+      requiresPhotos: true,
+      requiresChecklist: true,
+      tags: ['outdoor', 'pavement'],
+    },
+    // Fixtures
     {
       name: 'Window',
       category: 'Fixture',
@@ -208,6 +266,25 @@ async function main() {
       tags: ['glass'],
     },
     {
+      name: 'Door',
+      category: 'Fixture',
+      unitName: 'Piece',
+      defaultPrice: '3.000',
+      requiresPhotos: true,
+      requiresChecklist: true,
+      tags: ['wood', 'metal'],
+    },
+    {
+      name: 'Door Handle',
+      category: 'Fixture',
+      unitName: 'Piece',
+      defaultPrice: '0.500',
+      requiresPhotos: false,
+      requiresChecklist: true,
+      tags: ['metal', 'brass'],
+    },
+    // Bedding
+    {
       name: 'Mattress',
       category: 'Bedding',
       unitName: 'Piece',
@@ -216,6 +293,16 @@ async function main() {
       requiresChecklist: true,
       tags: ['bed'],
     },
+    {
+      name: 'Pillow',
+      category: 'Bedding',
+      unitName: 'Piece',
+      defaultPrice: '1.000',
+      requiresPhotos: false,
+      requiresChecklist: true,
+      tags: ['bed'],
+    },
+    // Textiles
     {
       name: 'Curtain Panel',
       category: 'Textile',
@@ -226,13 +313,69 @@ async function main() {
       tags: ['fabric', 'window'],
     },
     {
-      name: 'Office Chair',
-      category: 'Furniture',
+      name: 'Curtain',
+      category: 'Textile',
+      unitName: 'Running Meter',
+      defaultPrice: '3.000',
+      requiresPhotos: true,
+      requiresChecklist: true,
+      tags: ['fabric', 'window'],
+    },
+    // Appliances & Electronics
+    {
+      name: 'TV',
+      category: 'Appliance',
       unitName: 'Piece',
-      defaultPrice: '2.000',
+      defaultPrice: '8.000',
+      requiresPhotos: true,
+      requiresChecklist: true,
+      tags: ['electronics', 'screen'],
+    },
+    {
+      name: 'AC Unit',
+      category: 'Appliance',
+      unitName: 'Piece',
+      defaultPrice: '12.000',
+      requiresPhotos: true,
+      requiresChecklist: true,
+      tags: ['hvac'],
+    },
+    {
+      name: 'Water Tank',
+      category: 'Appliance',
+      unitName: 'Piece',
+      defaultPrice: '20.000',
+      requiresPhotos: true,
+      requiresChecklist: true,
+      tags: ['water', 'storage'],
+    },
+    // Room Components
+    {
+      name: 'Staircase',
+      category: 'Room Component',
+      unitName: 'Piece',
+      defaultPrice: '25.000',
+      requiresPhotos: true,
+      requiresChecklist: true,
+      tags: ['stairs'],
+    },
+    {
+      name: 'Balcony',
+      category: 'Room Component',
+      unitName: 'Piece',
+      defaultPrice: '15.000',
+      requiresPhotos: true,
+      requiresChecklist: true,
+      tags: ['outdoor'],
+    },
+    {
+      name: 'Passage/Corridor',
+      category: 'Room Component',
+      unitName: 'Sq Meter',
+      defaultPrice: '0.800',
       requiresPhotos: false,
       requiresChecklist: true,
-      tags: ['office'],
+      tags: ['hallway'],
     },
   ]
   for (const itemData of itemMasterData) {
@@ -332,7 +475,41 @@ async function main() {
   }
   console.log('✓ Payment method master created')
 
-  // 10. Create Services (Existing logic for services remains)
+  // 10. Create Terms and Bank Details Templates
+  console.log('Creating terms and bank details templates...');
+  const termsTemplates = [
+    {
+      name: 'Default Cleaning Terms',
+      content: '1. All prices are exclusive of VAT.\n2. Payment to be made upon completion of work.\n3. We are not responsible for any damage to old or worn-out items.',
+    },
+    {
+      name: 'Pest Control Terms',
+      content: '1. Client must vacate the premises during treatment.\n2. A follow-up visit may be required.\n3. Warranty is applicable for 3 months.',
+    },
+  ];
+  for (const template of termsTemplates) {
+    await prisma.termsTemplate.upsert({
+      where: { name: template.name },
+      update: {},
+      create: template,
+    });
+  }
+  const bankDetailsTemplates = [
+    {
+      name: 'Default Bank Account',
+      content: 'Bank Name: National Bank of Oman\nAccount Name: Golden Services Company LLC\nAccount Number: 1234-567890-001\nIBAN: OM1234567890001',
+    },
+  ];
+  for (const template of bankDetailsTemplates) {
+    await prisma.bankDetailsTemplate.upsert({
+      where: { name: template.name },
+      update: {},
+      create: template,
+    });
+  }
+  console.log('✓ Terms and bank details templates created');
+
+  // 11. Create Services (Existing logic for services remains)
   console.log('Creating services...')
   const services = [
     // Cleaning Services

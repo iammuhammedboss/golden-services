@@ -1,275 +1,311 @@
-import { notFound } from 'next/navigation'
-import Link from 'next/link'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { prisma } from '@/lib/prisma'
-import { formatDate, enumToReadable, getStatusColor } from '@/lib/utils'
-import { ChevronLeft, Calendar, Users, MapPin } from 'lucide-react'
+'use client'
 
-export default async function JobDetailPage({
-  params,
-}: {
-  params: { id: string; locale: string }
-}) {
-  const job = await prisma.jobOrder.findUnique({
-    where: { id: params.id },
-    include: {
-      client: {
-        select: {
-          id: true,
-          name: true,
-          phone: true,
-          email: true,
-        },
-      },
-      site: {
-        select: {
-          id: true,
-          name: true,
-          address: true,
-          city: true,
-        },
-      },
-      quotation: {
-        select: {
-          id: true,
-        },
-      },
-      assignments: {
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              phone: true,
-            },
-          },
-        },
-      },
-      statusUpdates: {
-        orderBy: { createdAt: 'desc' },
-        include: {
-          createdBy: {
-            select: {
-              name: true,
-            },
-          },
-        },
-      },
-    },
-  })
+import { useEffect, useState } from 'react'
+import { useParams, useRouter } from 'next/navigation'
+import { JobOrder, Client, Site, Quotation, Measurement, User, MaterialMaster, EquipmentMaster } from '@prisma/client'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+  } from '@/components/ui/table'
+import { Textarea } from '@/components/ui/textarea'
+
+type JobWithRelations = JobOrder & {
+  client: Client | null
+  site: Site | null,
+  quotation: Quotation | null,
+  measurement: Measurement | null,
+  assignments: any[],
+  materials: any[],
+  equipment: any[],
+}
+
+export default function JobDetailsPage() {
+  const [job, setJob] = useState<JobWithRelations | null>(null)
+  const [clients, setClients] = useState<Client[]>([])
+  const [sites, setSites] = useState<Site[]>([])
+  const [quotations, setQuotations] = useState<Quotation[]>([])
+  const [measurements, setMeasurements] = useState<Measurement[]>([])
+  const [users, setUsers] = useState<User[]>([])
+  const [materialMasters, setMaterialMasters] = useState<MaterialMaster[]>([])
+  const [equipmentMasters, setEquipmentMasters] = useState<EquipmentMaster[]>([])
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const params = useParams()
+  const router = useRouter()
+  const { id } = params
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const [clientsRes, sitesRes, quotationsRes, measurementsRes, usersRes, materialsRes, equipmentRes] = await Promise.all([
+          fetch('/api/clients'),
+          fetch('/api/sites'),
+          fetch('/api/quotations'),
+          fetch('/api/measurements'),
+          fetch('/api/users'),
+          fetch('/api/masters/materials'),
+          fetch('/api/masters/equipment'),
+        ]);
+        if(clientsRes.ok) setClients(await clientsRes.json());
+        if(sitesRes.ok) setSites(await sitesRes.json());
+        if(quotationsRes.ok) setQuotations(await quotationsRes.json());
+        if(measurementsRes.ok) setMeasurements(await measurementsRes.json());
+        if(usersRes.ok) setUsers(await usersRes.json());
+        if(materialsRes.ok) setMaterialMasters(await materialsRes.json());
+        if(equipmentRes.ok) setEquipmentMasters(await equipmentRes.json());
+      } catch (error) {
+        console.error('Failed to fetch initial data:', error)
+      }
+    }
+    fetchData()
+  }, [])
+  
+  useEffect(() => {
+    async function fetchJob() {
+      if (id === 'new') {
+        setJob({
+            id: 'new',
+            assignments: [],
+            materials: [],
+            equipment: [],
+        } as unknown as JobWithRelations)
+        setLoading(false)
+        return
+      }
+      try {
+        const response = await fetch(`/api/jobs/${id}`)
+        if (response.ok) {
+          const data = await response.json()
+          setJob(data)
+        }
+      } catch (error) {
+        console.error('Failed to fetch job:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchJob()
+  }, [id])
+
+  const handleSave = async () => {
+    setSaving(true)
+    const method = id === 'new' ? 'POST' : 'PUT'
+    const url = id === 'new' ? '/api/jobs' : `/api/jobs/${id}`
+    try {
+      const response = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(job),
+      })
+      if (response.ok) {
+        router.push('/admin/jobs')
+      }
+    } catch (error) {
+      console.error('Failed to save job:', error)
+    } finally {
+      setSaving(false)
+    }
+  }
+  
+  const addAssignment = () => {
+    if(!job) return;
+    setJob({
+        ...job,
+        assignments: [...job.assignments, { userId: '', roleInJob: 'CLEANER' }]
+    })
+  }
+
+  const addMaterial = () => {
+    if(!job) return;
+    setJob({
+        ...job,
+        materials: [...job.materials, { materialId: '', quantity: 1 }]
+    })
+    }
+
+    const addEquipment = () => {
+    if(!job) return;
+    setJob({
+        ...job,
+        equipment: [...job.equipment, { equipmentId: '', quantity: 1 }]
+    })
+  }
+
+  if (loading) {
+    return <div>Loading...</div>
+  }
 
   if (!job) {
-    notFound()
+    return <div>Job not found</div>
   }
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" asChild>
-            <Link href={`/${params.locale}/admin/jobs`}>
-              <ChevronLeft className="h-5 w-5" />
-            </Link>
-          </Button>
-          <div>
-            <h1 className="text-3xl font-bold">{job.jobNumber}</h1>
-            <p className="text-muted-foreground">Job Order Details</p>
-          </div>
+        <div className="flex items-center justify-between">
+            <h1 className="text-3xl font-bold">{id === 'new' ? 'New Job' : `Job ${job.jobNumber}`}</h1>
+            <Button onClick={handleSave} disabled={saving}>
+                {saving ? 'Saving...' : 'Save Job'}
+            </Button>
         </div>
-        <Badge className={getStatusColor(job.status)}>
-          {enumToReadable(job.status)}
-        </Badge>
-      </div>
+        
+        <div className="grid grid-cols-2 gap-4">
+            {/* Header fields */}
+        </div>
 
-      {/* Job Info */}
-      <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Job Information</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-muted-foreground" />
-              <div>
-                <span className="text-sm font-medium">Scheduled:</span>{' '}
-                <span className="text-sm">{formatDate(job.scheduledDate, 'PP')}</span>
-              </div>
-            </div>
-            {job.scheduledStartTime && job.scheduledEndTime && (
-              <div>
-                <span className="text-sm font-medium">Time:</span>{' '}
-                <span className="text-sm">
-                  {formatDate(job.scheduledStartTime, 'p')} -{' '}
-                  {formatDate(job.scheduledEndTime, 'p')}
-                </span>
-              </div>
-            )}
-            <div>
-              <span className="text-sm font-medium">Created:</span>{' '}
-              <span className="text-sm text-muted-foreground">
-                {formatDate(job.createdAt, 'PPp')}
-              </span>
-            </div>
-            {job.notes && (
-              <div>
-                <span className="text-sm font-medium">Notes:</span>
-                <p className="text-sm text-muted-foreground mt-1">{job.notes}</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Client & Site</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div>
-              <span className="text-sm font-medium">Client:</span>{' '}
-              <Link
-                href={`/${params.locale}/admin/clients/${job.client.id}`}
-                className="text-sm text-blue-600 hover:underline"
-              >
-                {job.client.name}
-              </Link>
-            </div>
-            <div>
-              <span className="text-sm font-medium">Phone:</span>{' '}
-              <span className="text-sm">{job.client.phone}</span>
-            </div>
-            <div className="flex items-start gap-2">
-              <MapPin className="h-4 w-4 text-muted-foreground mt-0.5" />
-              <div>
-                <Link
-                  href={`/${params.locale}/admin/sites/${job.site.id}`}
-                  className="text-sm font-medium text-blue-600 hover:underline"
-                >
-                  {job.site.name}
-                </Link>
-                <p className="text-sm text-muted-foreground">{job.site.address}</p>
-                {job.site.city && (
-                  <p className="text-sm text-muted-foreground">{job.site.city}</p>
-                )}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Team Assignments */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <Users className="h-5 w-5" />
-            <CardTitle>Assigned Team ({job.assignments.length})</CardTitle>
-          </div>
-        </CardHeader>
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
+        <div>
+            <h3 className="text-lg font-semibold">Staff Assignments</h3>
             <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Phone</TableHead>
-                  <TableHead>Role</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {job.assignments.length > 0 ? (
-                  job.assignments.map((assignment) => (
-                    <TableRow key={assignment.id}>
-                      <TableCell className="font-medium">
-                        <Link
-                          href={`/${params.locale}/admin/users/${assignment.user.id}`}
-                          className="text-blue-600 hover:underline"
-                        >
-                          {assignment.user.name}
-                        </Link>
-                      </TableCell>
-                      <TableCell className="text-sm">{assignment.user.email}</TableCell>
-                      <TableCell className="text-sm">{assignment.user.phone || '-'}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline">{enumToReadable(assignment.roleInJob)}</Badge>
-                      </TableCell>
+                <TableHeader>
+                    <TableRow>
+                        <TableHead>User</TableHead>
+                        <TableHead>Role</TableHead>
+                        <TableHead>Actions</TableHead>
                     </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={4} className="text-center text-muted-foreground">
-                      No team members assigned
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
+                </TableHeader>
+                <TableBody>
+                    {job.assignments.map((assignment, index) => (
+                        <TableRow key={index}>
+                            <TableCell>
+                                <Select
+                                    value={assignment.userId}
+                                    onValueChange={(value) => {
+                                        const newAssignments = [...job.assignments]
+                                        newAssignments[index].userId = value
+                                        setJob({ ...job, assignments: newAssignments })
+                                    }}
+                                >
+                                    <SelectTrigger><SelectValue/></SelectTrigger>
+                                    <SelectContent>
+                                        {users.map(user => (
+                                            <SelectItem key={user.id} value={user.id}>{user.name}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </TableCell>
+                            <TableCell>
+                                <Input value={assignment.roleInJob} />
+                            </TableCell>
+                            <TableCell>
+                                <Button variant="destructive" size="sm" onClick={() => {
+                                    const newAssignments = [...job.assignments]
+                                    newAssignments.splice(index, 1)
+                                    setJob({ ...job, assignments: newAssignments })
+                                }}>Remove</Button>
+                            </TableCell>
+                        </TableRow>
+                    ))}
+                </TableBody>
             </Table>
-          </div>
-        </CardContent>
-      </Card>
+            <Button onClick={addAssignment} className="mt-2">Add Assignee</Button>
+        </div>
 
-      {/* Status Updates */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Status Updates ({job.statusUpdates.length})</CardTitle>
-          <CardDescription>Activity timeline for this job</CardDescription>
-        </CardHeader>
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
+        <div>
+            <h3 className="text-lg font-semibold">Materials</h3>
             <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Notes</TableHead>
-                  <TableHead>Updated By</TableHead>
-                  <TableHead>Date</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {job.statusUpdates.length > 0 ? (
-                  job.statusUpdates.map((update) => (
-                    <TableRow key={update.id}>
-                      <TableCell>
-                        <Badge className={getStatusColor(update.status)}>
-                          {enumToReadable(update.status)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="max-w-md">
-                        {update.note ? (
-                          <span className="text-sm">{update.note}</span>
-                        ) : (
-                          <span className="text-sm text-muted-foreground">-</span>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-sm">{update.createdBy.name}</TableCell>
-                      <TableCell className="text-sm">
-                        {formatDate(update.createdAt, 'PPp')}
-                      </TableCell>
+                <TableHeader>
+                    <TableRow>
+                        <TableHead>Material</TableHead>
+                        <TableHead>Quantity</TableHead>
+                        <TableHead>Actions</TableHead>
                     </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={4} className="text-center text-muted-foreground">
-                      No status updates yet
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
+                </TableHeader>
+                <TableBody>
+                    {job.materials.map((material, index) => (
+                        <TableRow key={index}>
+                            <TableCell>
+                                <Select
+                                    value={material.materialId}
+                                    onValueChange={(value) => {
+                                        const newMaterials = [...job.materials]
+                                        newMaterials[index].materialId = value
+                                        setJob({ ...job, materials: newMaterials })
+                                    }}
+                                >
+                                    <SelectTrigger><SelectValue/></SelectTrigger>
+                                    <SelectContent>
+                                        {materialMasters.map(m => (
+                                            <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </TableCell>
+                            <TableCell>
+                                <Input type="number" value={material.quantity} />
+                            </TableCell>
+                            <TableCell>
+                                <Button variant="destructive" size="sm" onClick={() => {
+                                    const newMaterials = [...job.materials]
+                                    newMaterials.splice(index, 1)
+                                    setJob({ ...job, materials: newMaterials })
+                                }}>Remove</Button>
+                            </TableCell>
+                        </TableRow>
+                    ))}
+                </TableBody>
             </Table>
-          </div>
-        </CardContent>
-      </Card>
+            <Button onClick={addMaterial} className="mt-2">Add Material</Button>
+        </div>
+
+        <div>
+            <h3 className="text-lg font-semibold">Equipment</h3>
+            <Table>
+                <TableHeader>
+                    <TableRow>
+                        <TableHead>Equipment</TableHead>
+                        <TableHead>Quantity</TableHead>
+                        <TableHead>Actions</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {job.equipment.map((eq, index) => (
+                        <TableRow key={index}>
+                            <TableCell>
+                                <Select
+                                    value={eq.equipmentId}
+                                    onValueChange={(value) => {
+                                        const newEquipment = [...job.equipment]
+                                        newEquipment[index].equipmentId = value
+                                        setJob({ ...job, equipment: newEquipment })
+                                    }}
+                                >
+                                    <SelectTrigger><SelectValue/></SelectTrigger>
+                                    <SelectContent>
+                                        {equipmentMasters.map(e => (
+                                            <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </TableCell>
+                            <TableCell>
+                                <Input type="number" value={eq.quantity} />
+                            </TableCell>
+                            <TableCell>
+                                <Button variant="destructive" size="sm" onClick={() => {
+                                    const newEquipment = [...job.equipment]
+                                    newEquipment.splice(index, 1)
+                                    setJob({ ...job, equipment: newEquipment })
+                                }}>Remove</Button>
+                            </TableCell>
+                        </TableRow>
+                    ))}
+                </TableBody>
+            </Table>
+            <Button onClick={addEquipment} className="mt-2">Add Equipment</Button>
+        </div>
     </div>
   )
 }

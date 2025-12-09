@@ -3,67 +3,15 @@ import { getServerSession } from 'next-auth'
 import { prisma } from '@/lib/prisma'
 import { authOptions } from '@/lib/auth'
 
+/**
+ * @deprecated The Lead entity is deprecated. All new customer entries should go directly into the Client model.
+ * This endpoint is disabled and will return a 410 Gone status.
+ */
 export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json()
-    const { name, phone, email, notes, source = 'WEBSITE', serviceInterest } = body
-
-    // Validation
-    if (!name || !phone) {
-      return NextResponse.json(
-        { error: 'Missing required fields: name and phone' },
-        { status: 400 }
-      )
-    }
-
-    // Get session or use a default system user
-    const session = await getServerSession(authOptions)
-
-    let createdById = session?.user?.id
-
-    // If no session, find or create a system user
-    if (!createdById) {
-      let systemUser = await prisma.user.findFirst({
-        where: { email: 'system@goldenservices.om' },
-      })
-
-      if (!systemUser) {
-        // Create a system user if it doesn't exist
-        systemUser = await prisma.user.create({
-          data: {
-            name: 'System',
-            email: 'system@goldenservices.om',
-            hashedPassword: '', // No password for system user
-            isActive: true,
-          },
-        })
-      }
-
-      createdById = systemUser.id
-    }
-
-    // Create lead
-    const lead = await prisma.lead.create({
-      data: {
-        name,
-        phone,
-        email: email || null,
-        source,
-        serviceInterest: serviceInterest || null,
-        notes: notes || null,
-        status: 'NEW',
-        createdById,
-      },
-    })
-
-    return NextResponse.json(lead, { status: 201 })
-  } catch (error) {
-    console.error('Error creating lead:', error)
-    return NextResponse.json(
-      { error: 'Failed to create lead' },
-      { status: 500 }
-    )
-  }
+  return NextResponse.json(
+    { error: 'This endpoint is deprecated and no longer available.' },
+    { status: 410 }
+  )
 }
 
 export async function GET(request: NextRequest) {
