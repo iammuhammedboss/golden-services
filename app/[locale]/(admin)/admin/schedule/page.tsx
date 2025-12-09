@@ -67,7 +67,7 @@ export default function SchedulePage() {
   const [selectedEvent, setSelectedEvent] = useState<ScheduleEvent | null>(null)
   const [selectedSlot, setSelectedSlot] = useState<{ start: Date, end: Date } | null>(null)
   const [users, setUsers] = useState<User[]>([]);
-  const [filters, setFilters] = useState({ employeeId: '', type: '', status: '' });
+  const [filters, setFilters] = useState({ employeeId: 'all', type: 'all', status: 'all' });
 
   // ScheduleForm component moved inside main component but properly defined
   const ScheduleForm = ({ slot, onClose, onSave }: { slot: { start: Date, end: Date } | null; onClose: () => void; onSave: () => void; }) => {
@@ -302,11 +302,23 @@ export default function SchedulePage() {
 
   const fetchScheduleEntries = useCallback(async (start: Date, end: Date) => {
     try {
-      const params = new URLSearchParams({ 
-        start: start.toISOString(), 
-        end: end.toISOString(), 
-        ...filters 
-      });
+      const queryParams: Record<string, string> = {
+        start: start.toISOString(),
+        end: end.toISOString(),
+      };
+
+      // Only add filters that are not "all"
+      if (filters.employeeId && filters.employeeId !== 'all') {
+        queryParams.employeeId = filters.employeeId;
+      }
+      if (filters.type && filters.type !== 'all') {
+        queryParams.type = filters.type;
+      }
+      if (filters.status && filters.status !== 'all') {
+        queryParams.status = filters.status;
+      }
+
+      const params = new URLSearchParams(queryParams);
       const response = await fetch(`/api/schedule?${params.toString()}`);
       if (response.ok) {
         const data = await response.json();
@@ -396,7 +408,7 @@ export default function SchedulePage() {
             <SelectValue placeholder="Filter by Employee..." />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All Employees</SelectItem>
+            <SelectItem value="all">All Employees</SelectItem>
             {users.map(user => <SelectItem key={user.id} value={user.id}>{user.name}</SelectItem>)}
           </SelectContent>
         </Select>
@@ -405,7 +417,7 @@ export default function SchedulePage() {
             <SelectValue placeholder="Filter by Type..." />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All Types</SelectItem>
+            <SelectItem value="all">All Types</SelectItem>
             {Object.values(ScheduleEntryType).map(type => <SelectItem key={type} value={type}>{type.replace(/_/g, ' ')}</SelectItem>)}
           </SelectContent>
         </Select>
@@ -414,7 +426,7 @@ export default function SchedulePage() {
             <SelectValue placeholder="Filter by Status..." />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All Statuses</SelectItem>
+            <SelectItem value="all">All Statuses</SelectItem>
             {Object.values(ScheduleEntryStatus).map(status => <SelectItem key={status} value={status}>{status.replace(/_/g, ' ')}</SelectItem>)}
           </SelectContent>
         </Select>
