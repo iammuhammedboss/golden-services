@@ -31,7 +31,10 @@ export function PublicHeader() {
             className="h-12 w-auto"
             priority
           />
-          <span className="text-xl font-bold bg-gradient-to-r from-gold-600 to-gold-400 bg-clip-text text-transparent">Golden Services</span>
+          <div className="flex items-baseline">
+            <span className="text-xl font-black tracking-tight text-black">Golden</span>
+            <span className="text-xl font-black tracking-tight ml-1" style={{ color: '#ffc92b' }}>Services</span>
+          </div>
         </Link>
 
         {/* Desktop Navigation */}
