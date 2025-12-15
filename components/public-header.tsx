@@ -24,7 +24,7 @@ export function PublicHeader() {
       <nav className="container mx-auto flex h-16 items-center justify-between px-4">
         <Link href={`/${locale}`} className="flex items-center space-x-3">
           <Image
-            src="/logo.png"
+            src="/logo/logo.png"
             alt="Golden Services Logo"
             width={50}
             height={50}
@@ -48,20 +48,11 @@ export function PublicHeader() {
               {item.name}
             </Link>
           ))}
-          <Link
-            href={`/${locale}/book-now`}
-            className="text-sm font-medium text-gold-600 hover:text-gold-700 transition-colors"
-          >
-            Book Now
-          </Link>
         </div>
 
         <div className="hidden md:flex md:items-center md:space-x-4">
           <Link href={`/${locale}/book-now`}>
             <Button>Book Now</Button>
-          </Link>
-          <Link href={`/${locale}/login`}>
-            <Button variant="ghost">Login</Button>
           </Link>
         </div>
 
@@ -114,9 +105,6 @@ export function PublicHeader() {
             <div className="space-y-2 pt-4">
               <Link href={`/${locale}/book-now`} className="block" onClick={() => setMobileMenuOpen(false)}>
                 <Button className="w-full">Book Now</Button>
-              </Link>
-              <Link href={`/${locale}/login`} className="block" onClick={() => setMobileMenuOpen(false)}>
-                <Button variant="ghost" className="w-full">Login</Button>
               </Link>
             </div>
           </div>

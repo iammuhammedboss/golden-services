@@ -15,9 +15,9 @@ export default async function HomePage() {
   return (
     <div className="flex flex-col">
       {/* Hero Section */}
-      <section className="relative overflow-hidden">
+      <section className="relative overflow-hidden w-full">
         <VideoBackground src="/bg-video.mp4" type="video/mp4" />
-        <div className="container relative mx-auto px-4 py-24 md:py-40">
+        <div className="relative w-full px-4 py-24 md:py-40">
           <div className="mx-auto max-w-4xl text-center">
             
             <h1 className="mb-6 text-5xl font-bold tracking-tight text-white sm:text-6xl md:text-7xl">
