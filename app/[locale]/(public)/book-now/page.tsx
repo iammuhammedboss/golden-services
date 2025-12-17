@@ -138,10 +138,18 @@ export default function BookNowPage() {
     <div className="container mx-auto px-4 py-12">
       <div className="mx-auto max-w-3xl">
         <div className="mb-12 text-center">
-          <h1 className="mb-4 text-4xl font-bold">Book a Service</h1>
+          <h1 className="mb-4 text-4xl font-bold">Book a Service with Golden Services</h1>
           <p className="text-lg text-muted-foreground">
-            Fill out the form below and we'll contact you to confirm your booking.
+            Fill out the form below or call us directly at +968 96785802, +968 92314145, +968 96785806 for immediate booking assistance.
           </p>
+          <div className="mt-4 flex flex-wrap justify-center gap-3">
+            <a href="tel:+96896785802" className="rounded-full bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90">
+              Call +968 96785802
+            </a>
+            <a href="https://wa.me/96896785802" target="_blank" rel="noopener noreferrer" className="rounded-full bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700">
+              WhatsApp +968 96785802
+            </a>
+          </div>
         </div>
 
         <Card>

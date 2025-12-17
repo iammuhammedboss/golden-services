@@ -97,10 +97,21 @@ export default function ContactPage() {
     <div className="container mx-auto px-4 py-12">
       <div className="mx-auto max-w-5xl">
         <div className="mb-12 text-center">
-          <h1 className="mb-4 text-4xl font-bold">Get in Touch with Golden Services</h1>
+          <h1 className="mb-4 text-4xl font-bold">Contact Golden Services Oman</h1>
           <p className="text-lg text-muted-foreground">
-            Reach out to our sales representatives for expert assistance and personalized service solutions.
+            Reach our sales representatives directly at +968 96785802, +968 92314145, +968 96785806 for immediate assistance.
           </p>
+          <div className="mt-4 flex flex-wrap justify-center gap-4">
+            <a href="tel:+96896785802" className="rounded-full bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90">
+              Call +968 96785802
+            </a>
+            <a href="https://wa.me/96896785802" target="_blank" rel="noopener noreferrer" className="rounded-full bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700">
+              WhatsApp +968 96785802
+            </a>
+            <a href="mailto:info@goldenservicesom.com" className="rounded-full bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
+              Email info@goldenservicesom.com
+            </a>
+          </div>
         </div>
 
         <div className="grid gap-8 lg:grid-cols-2">

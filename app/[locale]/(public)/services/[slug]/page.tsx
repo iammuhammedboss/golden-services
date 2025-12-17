@@ -109,19 +109,49 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
                 </Link>
               </div>
 
-              <div className="rounded-lg bg-muted p-4 text-sm">
-                <p className="mb-2 font-semibold">Need Help?</p>
-                <p className="text-muted-foreground">
-                  Our sales representatives are ready to answer your questions and help you choose the right service.
+              <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 text-sm">
+                <p className="mb-2 font-semibold text-lg">Need Immediate Assistance?</p>
+                <p className="text-muted-foreground mb-3">
+                  Our sales representatives are available to answer your questions and provide personalized service solutions.
                 </p>
-                <div className="mt-2 space-y-1">
-                  <p className="text-sm">Call us: +968 96785802</p>
-                  <p className="text-sm">Also available: +968 92314145, +968 96785806</p>
-                  <p className="text-sm">Email: info@goldenservicesom.com</p>
+                <div className="mt-2 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <svg className="h-4 w-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                    </svg>
+                    <p className="text-sm font-medium">Primary: <a href="tel:+96896785802" className="text-primary hover:underline">+968 96785802</a></p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <svg className="h-4 w-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                    </svg>
+                    <p className="text-sm font-medium">Alternate: <a href="tel:+96892314145" className="text-primary hover:underline">+968 92314145</a>, <a href="tel:+96896785806" className="text-primary hover:underline">+968 96785806</a></p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <svg className="h-4 w-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                    <p className="text-sm font-medium">Email: <a href="mailto:info@goldenservicesom.com" className="text-primary hover:underline">info@goldenservicesom.com</a></p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <svg className="h-4 w-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    <p className="text-sm font-medium">Address: 23rd July Street, Opp. Lulu Hypermarket, Salalah Sultanate of Oman</p>
+                  </div>
                 </div>
-                <Link href="/contact" className="mt-2 inline-block text-primary hover:underline">
-                  Contact Us →
-                </Link>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <a href="tel:+96896785802" className="rounded-full bg-primary px-3 py-1 text-xs font-medium text-white hover:bg-primary/90">
+                    Call Now
+                  </a>
+                  <a href="https://wa.me/96896785802" target="_blank" rel="noopener noreferrer" className="rounded-full bg-green-600 px-3 py-1 text-xs font-medium text-white hover:bg-green-700">
+                    WhatsApp
+                  </a>
+                  <Link href="/contact" className="rounded-full border border-primary px-3 py-1 text-xs font-medium text-primary hover:bg-primary/10">
+                    Contact Form
+                  </Link>
+                </div>
               </div>
             </CardContent>
           </Card>
