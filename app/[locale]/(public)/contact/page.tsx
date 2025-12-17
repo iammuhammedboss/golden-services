@@ -150,7 +150,7 @@ export default function ContactPage() {
                           type="tel"
                           value={formData.phone}
                           onChange={handleChange}
-                          placeholder="+968 1234 5678"
+                          placeholder="+968 96785802"
                         />
                       
                       {errors.phone && <p className="text-sm font-medium text-destructive">{errors.phone}</p>}
@@ -309,7 +309,7 @@ export default function ContactPage() {
               </CardHeader>
               <CardContent className="space-y-2">
                 <a
-                  href={`https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '96812345678'}`}
+                  href="https://wa.me/96896785802"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="block"

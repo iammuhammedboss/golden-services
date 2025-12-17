@@ -116,6 +116,7 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
                 </p>
                 <div className="mt-2 space-y-1">
                   <p className="text-sm">Call us: +968 96785802</p>
+                  <p className="text-sm">Also available: +968 92314145, +968 96785806</p>
                   <p className="text-sm">Email: info@goldenservicesom.com</p>
                 </div>
                 <Link href="/contact" className="mt-2 inline-block text-primary hover:underline">
