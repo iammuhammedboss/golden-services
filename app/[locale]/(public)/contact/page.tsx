@@ -97,9 +97,9 @@ export default function ContactPage() {
     <div className="container mx-auto px-4 py-12">
       <div className="mx-auto max-w-5xl">
         <div className="mb-12 text-center">
-          <h1 className="mb-4 text-4xl font-bold">Contact Us</h1>
+          <h1 className="mb-4 text-4xl font-bold">Get in Touch with Golden Services</h1>
           <p className="text-lg text-muted-foreground">
-            Get in touch with our team. We're here to help!
+            Reach out to our sales representatives for expert assistance and personalized service solutions.
           </p>
         </div>
 
@@ -223,8 +223,10 @@ export default function ContactPage() {
                     />
                   </svg>
                   <div>
-                    <p className="font-semibold">Phone</p>
-                    <p className="text-sm text-muted-foreground">+968 1234 5678</p>
+                    <p className="font-semibold">Sales Representatives</p>
+                    <p className="text-sm text-muted-foreground">+968 96785802</p>
+                    <p className="text-sm text-muted-foreground">+968 92314145</p>
+                    <p className="text-sm text-muted-foreground">+968 96785806</p>
                   </div>
                 </div>
 
@@ -244,7 +246,7 @@ export default function ContactPage() {
                   </svg>
                   <div>
                     <p className="font-semibold">Email</p>
-                    <p className="text-sm text-muted-foreground">info@goldenservices.om</p>
+                    <p className="text-sm text-muted-foreground">info@goldenservicesom.com</p>
                   </div>
                 </div>
 
@@ -271,7 +273,7 @@ export default function ContactPage() {
                   <div>
                     <p className="font-semibold">Address</p>
                     <p className="text-sm text-muted-foreground">
-                      Muscat, Sultanate of Oman
+                      23rd July Street, Opp. Lulu Hypermarket, Salalah Sultanate of Oman
                     </p>
                   </div>
                 </div>

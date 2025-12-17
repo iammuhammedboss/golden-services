@@ -112,8 +112,12 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
               <div className="rounded-lg bg-muted p-4 text-sm">
                 <p className="mb-2 font-semibold">Need Help?</p>
                 <p className="text-muted-foreground">
-                  Our team is ready to answer your questions and help you choose the right service.
+                  Our sales representatives are ready to answer your questions and help you choose the right service.
                 </p>
+                <div className="mt-2 space-y-1">
+                  <p className="text-sm">Call us: +968 96785802</p>
+                  <p className="text-sm">Email: info@goldenservicesom.com</p>
+                </div>
                 <Link href="/contact" className="mt-2 inline-block text-primary hover:underline">
                   Contact Us →
                 </Link>

@@ -217,7 +217,7 @@ export default function BookNowPage() {
                             type="tel"
                             value={formData.whatsapp}
                             onChange={handleChange}
-                            placeholder="+968 1234 5678"
+                            placeholder="+968 96785802"
                           />
                         
                       </div>
