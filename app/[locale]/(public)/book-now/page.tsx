@@ -202,7 +202,7 @@ export default function BookNowPage() {
                             type="tel"
                             value={formData.phone}
                             onChange={handleChange}
-                            placeholder="+968 1234 5678"
+                            placeholder="+968 96785802"
                           />
                         
                         {errors.phone && <p className="text-sm font-medium text-destructive">{errors.phone}</p>}
