@@ -227,3 +227,29 @@ export function getMeasurementObjectTypeLabel(type: string): string {
   }
   return typeLabels[type] || type
 }
+
+/**
+ * Find a node by its ID in a tree structure
+ */
+export function findNodeById(
+  tree: any[] | undefined,
+  nodeId: string
+): any | null {
+  if (!tree) {
+    return null
+  }
+
+  for (const node of tree) {
+    if (node.id === nodeId) {
+      return node
+    }
+    if (node.children) {
+      const found = findNodeById(node.children, nodeId)
+      if (found) {
+        return found
+      }
+    }
+  }
+
+  return null
+}
