@@ -203,8 +203,9 @@ The API enforces nesting rules defined in the catalog (`ItemMaster`):
 2. **Property types** can contain spaces/rooms and items
 3. **Spaces/rooms** must be under properties
 4. **Spaces/rooms** can contain items
-5. **Items** can be under properties or spaces
-6. **CUSTOM, OTHER, ITEM** types bypass all restrictions
+5. **Items** can be at root level
+6. **Items** can be under properties, spaces, or other items
+7. **CUSTOM, OTHER, ITEM** types bypass all restrictions
 
 ### Validation Examples:
 
@@ -212,12 +213,13 @@ The API enforces nesting rules defined in the catalog (`ItemMaster`):
 - Villa (root) → Room → Sofa
 - Villa (root) → Sofa
 - House (root) → Bedroom → Bed
+- Sofa (root) - items can be at root level
+- Sofa → Chair - items can nest under other items
 - Custom (root) → Anything
 
 ❌ **Invalid:**
 - Villa → Apartment (properties cannot nest)
 - Sofa → Room (items cannot contain spaces)
-- Sofa (root) without parent (items require parent unless type is CUSTOM/OTHER/ITEM)
 
 ---
 
