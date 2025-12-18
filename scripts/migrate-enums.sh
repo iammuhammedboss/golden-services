@@ -10,7 +10,9 @@ echo "🔄 Starting enum migration..."
 # Load environment variables from .env file if it exists
 if [ -f .env ]; then
     echo "📋 Loading environment variables from .env file..."
-    export $(cat .env | grep -v '^#' | grep -v '^$' | xargs)
+    set -a
+    source <(cat .env | grep -v '^#' | grep -v '^$' | sed 's/\r$//')
+    set +a
 fi
 
 # Check if DATABASE_URL is set
@@ -23,9 +25,12 @@ fi
 
 echo "✅ Database URL found"
 
-# Run the pre-migration SQL script
+# Remove Prisma-specific query parameters for psql
+# psql doesn't support ?schema=public, so we need to strip it
+PSQL_URL=$(echo "$DATABASE_URL" | sed 's/?schema=public//' | sed 's/?.*$//')
+
 echo "📝 Updating existing enum values..."
-psql "$DATABASE_URL" -f prisma/migrations/pre-migration-enum-update.sql
+psql "$PSQL_URL" -f prisma/migrations/pre-migration-enum-update.sql
 
 if [ $? -eq 0 ]; then
     echo "✅ Enum values updated successfully"

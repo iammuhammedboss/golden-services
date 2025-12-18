@@ -11,7 +11,12 @@ ERROR: invalid input value for enum "SiteVisitStatus_new": "SCHEDULED"
 
 ```bash
 git pull
-source .env && psql "$DATABASE_URL" -f prisma/migrations/pre-migration-enum-update.sql && npx prisma db push
+
+# Load .env and run migration (removes Prisma query params for psql)
+set -a && source .env && set +a && \
+PSQL_URL=$(echo "$DATABASE_URL" | sed 's/?schema=public//' | sed 's/?.*$//') && \
+psql "$PSQL_URL" -f prisma/migrations/pre-migration-enum-update.sql && \
+npx prisma db push
 ```
 
 ### Option 2: Automated Script
@@ -35,10 +40,15 @@ scripts\migrate-enums.bat
 git pull
 
 # Load environment variables
+set -a
 source .env
+set +a
+
+# Remove Prisma query params from DATABASE_URL for psql
+PSQL_URL=$(echo "$DATABASE_URL" | sed 's/?schema=public//' | sed 's/?.*$//')
 
 # Run the SQL migration
-psql "$DATABASE_URL" -f prisma/migrations/pre-migration-enum-update.sql
+psql "$PSQL_URL" -f prisma/migrations/pre-migration-enum-update.sql
 
 # Apply Prisma schema
 npx prisma db push
@@ -61,8 +71,9 @@ npx prisma generate
 ```bash
 git pull
 
-# Connect to database
-psql postgresql://username:password@host:5432/golden_services
+# Connect to database (remove ?schema=public from your DATABASE_URL)
+# Example: postgresql://postgres:Admin123@localhost:5432/golden_services
+psql postgresql://postgres:Admin123@localhost:5432/golden_services
 
 # Then paste these commands:
 UPDATE "site_visits" SET status = 'PENDING' WHERE status = 'SCHEDULED';
