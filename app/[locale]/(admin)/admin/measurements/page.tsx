@@ -53,9 +53,9 @@ export default function MeasurementsPage() {
           <h1 className="text-3xl font-bold">Measurements</h1>
           <p className="text-muted-foreground">Manage your measurements</p>
         </div>
-        <Button asChild>
-            <Link href="/admin/measurements/new">+ New Measurement</Link>
-        </Button>
+        <Link href="/admin/measurements/new">
+          <Button>+ New Measurement</Button>
+        </Link>
       </div>
 
       {/* Measurements Table */}

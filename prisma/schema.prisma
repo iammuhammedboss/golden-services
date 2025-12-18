@@ -78,6 +78,10 @@ model ItemMaster {
   description       String?
   isActive          Boolean   @default(true)
   sortOrder         Int       @default(0)
+  // Nesting rules for catalog
+  allowedParentTypes String[] @default([]) // Which MeasurementObjectType values can contain this item
+  allowedChildTypes  String[] @default([]) // Which MeasurementObjectType values this item can contain
+  canBeRootLevel     Boolean  @default(false) // Can this item be at root level (no parent)
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
   deletedAt         DateTime?
@@ -324,6 +328,7 @@ model Measurement {
   clientId     String
   siteId       String?
   siteVisitId  String?
+  location     String?
   title        String
   notes        String?
   status       MeasurementStatus    @default(DRAFT)
@@ -354,10 +359,18 @@ model MeasurementObject {
   type            MeasurementObjectType
   name            String
   itemMasterId    String?
-  size            ObjectSize?
+  // Size measurement (two modes: preset sizes OR custom dimensions)
+  sizeMode        SizeMeasurementMode? // PRESET or DIMENSIONS
+  size            ObjectSize?          // For preset mode (S, M, L, etc.)
+  dimensionLength Decimal?             @db.Decimal(10, 2) // For dimensions mode
+  dimensionWidth  Decimal?             @db.Decimal(10, 2)
+  dimensionHeight Decimal?             @db.Decimal(10, 2)
+  dimensionUnit   String?              // e.g., "cm", "m", "inch"
+  // Other properties
   dirtLevel       DirtLevel?
   quantity        Int                  @default(1)
   notes           String?
+  remarks         String?              // Additional remarks
   sortOrder       Int                  @default(0)
   createdAt       DateTime             @default(now())
   updatedAt       DateTime             @updatedAt
@@ -369,12 +382,73 @@ model MeasurementObject {
   children        MeasurementObject[]  @relation("ObjectHierarchy")
   itemMaster      ItemMaster?          @relation(fields: [itemMasterId], references: [id])
   photos          Photo[]
+  stains          MeasurementStain[]
+  areasOfNotice   MeasurementAreaOfNotice[]
+  media           MeasurementObjectMedia[]
 
   @@index([measurementId])
   @@index([parentObjectId])
   @@index([type])
   @@index([deletedAt])
   @@map("measurement_objects")
+}
+
+model MeasurementStain {
+  id                    String            @id @default(cuid())
+  measurementObjectId   String
+  description           String
+  notes                 String?
+  photoUrl              String?           // Photo of the stain
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
+  deletedAt             DateTime?
+  deletedById           String?
+
+  measurementObject     MeasurementObject @relation(fields: [measurementObjectId], references: [id], onDelete: Cascade)
+
+  @@index([measurementObjectId])
+  @@index([deletedAt])
+  @@map("measurement_stains")
+}
+
+model MeasurementAreaOfNotice {
+  id                    String            @id @default(cuid())
+  measurementObjectId   String
+  description           String
+  notes                 String?
+  photoUrl              String?           // Photo of the area
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
+  deletedAt             DateTime?
+  deletedById           String?
+
+  measurementObject     MeasurementObject @relation(fields: [measurementObjectId], references: [id], onDelete: Cascade)
+
+  @@index([measurementObjectId])
+  @@index([deletedAt])
+  @@map("measurement_areas_of_notice")
+}
+
+model MeasurementObjectMedia {
+  id                    String            @id @default(cuid())
+  measurementObjectId   String
+  type                  MediaType
+  url                   String
+  thumbnailUrl          String?           // For videos
+  duration              Int?              // Duration in seconds for videos
+  caption               String?
+  sortOrder             Int               @default(0)
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
+  deletedAt             DateTime?
+  deletedById           String?
+
+  measurementObject     MeasurementObject @relation(fields: [measurementObjectId], references: [id], onDelete: Cascade)
+
+  @@index([measurementObjectId])
+  @@index([type])
+  @@index([deletedAt])
+  @@map("measurement_object_media")
 }
 
 enum MeasurementStatus {
@@ -384,19 +458,78 @@ enum MeasurementStatus {
 }
 
 enum MeasurementObjectType {
+  // Property Types
   HOUSE
   VILLA
   FLAT
+  APARTMENT
   OFFICE
   WAREHOUSE
+  SHOP
+
+  // Space/Room Types
   ROOM
+  BEDROOM
   KITCHEN
   TOILET
+  BATHROOM
   HALL
+  LIVING_ROOM
+  DINING_ROOM
   PASSAGE
+  CORRIDOR
   BALCONY
+  TERRACE
   STAIRCASE
+  GARAGE
+  STORAGE_ROOM
+  LAUNDRY_ROOM
+
+  // Furniture
+  SOFA
+  CHAIR
+  TABLE
+  BED
+  WARDROBE
+  CABINET
+  SHELF
+  DESK
+  DRESSER
+
+  // Fixtures
+  DOOR
+  WINDOW
+  CURTAIN
+  BLIND
+  MIRROR
+  LIGHT_FIXTURE
+
+  // Appliances
+  AC_UNIT
+  REFRIGERATOR
+  WASHING_MACHINE
+  DISHWASHER
+  OVEN
+  MICROWAVE
+  TV
+
+  // Floor & Wall
+  CARPET
+  RUG
+  MAT
+  TILE
+  WALLPAPER
+
+  // Outdoor
+  GARDEN
+  POOL
+  PATIO
+  FENCE
+  GATE
+
+  // Generic/Custom
   ITEM
+  OTHER
   CUSTOM
 }
 
@@ -410,17 +543,33 @@ enum ObjectSize {
   XXXL
 }
 
+enum SizeMeasurementMode {
+  PRESET      // Use preset sizes (S, M, L, etc.)
+  DIMENSIONS  // Use custom dimensions (length, width, height)
+}
+
+enum MediaType {
+  PHOTO
+  VIDEO
+}
+
 model SiteVisit {
   id               String            @id @default(cuid())
   clientId         String
   siteId           String?
   scheduledAt      DateTime
+  startedAt        DateTime?
   completedAt      DateTime?
-  status           SiteVisitStatus   @default(SCHEDULED)
+  status           SiteVisitStatus   @default(PENDING)
   visitType        VisitType         @default(FULL_HOUSE)
   assignedToId     String
   requiredService  String?
+  locationText     String?
+  googleMapsUrl    String?
+  siteContactName  String?
+  siteContactPhone String?
   notes            String?
+  remarks          String?
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
   deletedAt        DateTime?
@@ -438,6 +587,7 @@ model SiteVisit {
   @@index([clientId])
   @@index([siteId])
   @@index([deletedAt])
+  @@index([status])
   @@map("site_visits")
 }
 
@@ -1033,10 +1183,11 @@ enum ClientStatus {
 }
 
 enum DirtLevel {
-  LIGHT
-  MEDIUM
-  HEAVY
-  SEVERE
+  LEVEL_1
+  LEVEL_2
+  LEVEL_3
+  LEVEL_4
+  LEVEL_5
 }
 
 enum JobOrderStatus {
@@ -1109,7 +1260,8 @@ enum QuotationStatus {
 }
 
 enum SiteVisitStatus {
-  SCHEDULED
+  PENDING
+  IN_PROGRESS
   COMPLETED
   CANCELLED
 }

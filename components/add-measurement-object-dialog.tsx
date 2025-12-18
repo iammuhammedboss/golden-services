@@ -50,7 +50,7 @@ export function AddMeasurementObjectDialog({
     name: '',
     itemMasterId: '',
     size: ObjectSize.M,
-    dirtLevel: DirtLevel.MEDIUM,
+    dirtLevel: DirtLevel.LEVEL_3,
     notes: '',
   })
 
@@ -87,7 +87,7 @@ export function AddMeasurementObjectDialog({
         name: '',
         itemMasterId: '',
         size: ObjectSize.M,
-        dirtLevel: DirtLevel.MEDIUM,
+        dirtLevel: DirtLevel.LEVEL_3,
         notes: '',
     })
   }
