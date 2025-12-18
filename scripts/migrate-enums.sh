@@ -1,0 +1,43 @@
+#!/bin/bash
+
+# Enum Migration Script for Golden Services
+# This script updates enum values before applying Prisma schema changes
+
+set -e  # Exit on error
+
+echo "🔄 Starting enum migration..."
+
+# Check if DATABASE_URL is set
+if [ -z "$DATABASE_URL" ]; then
+    echo "❌ ERROR: DATABASE_URL environment variable is not set"
+    echo "Please set it in your .env file or export it:"
+    echo "export DATABASE_URL='postgresql://username:password@localhost:5432/golden_services'"
+    exit 1
+fi
+
+# Run the pre-migration SQL script
+echo "📝 Updating existing enum values..."
+psql "$DATABASE_URL" -f prisma/migrations/pre-migration-enum-update.sql
+
+if [ $? -eq 0 ]; then
+    echo "✅ Enum values updated successfully"
+    echo ""
+    echo "🚀 Now running Prisma schema push..."
+    npx prisma db push
+
+    if [ $? -eq 0 ]; then
+        echo ""
+        echo "✅ Migration completed successfully!"
+        echo "🎉 Your database is now up to date"
+    else
+        echo ""
+        echo "❌ Prisma schema push failed"
+        echo "Please check the error messages above"
+        exit 1
+    fi
+else
+    echo ""
+    echo "❌ Failed to update enum values"
+    echo "Please check your database connection and try again"
+    exit 1
+fi
