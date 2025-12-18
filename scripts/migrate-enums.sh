@@ -29,8 +29,8 @@ echo "✅ Database URL found"
 # psql doesn't support ?schema=public, so we need to strip it
 PSQL_URL=$(echo "$DATABASE_URL" | sed 's/?schema=public//' | sed 's/?.*$//')
 
-echo "📝 Updating existing enum values..."
-psql "$PSQL_URL" -f prisma/migrations/pre-migration-enum-update.sql
+echo "📝 Adding new enum values and migrating data..."
+psql "$PSQL_URL" -f prisma/migrations/fix-enum-migration.sql
 
 if [ $? -eq 0 ]; then
     echo "✅ Enum values updated successfully"

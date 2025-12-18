@@ -7,16 +7,30 @@ Run these commands on your server **in order**:
 cd /var/apps/golden-services
 ```
 
-## Step 2: Stash local changes and pull
+## Step 2: Pull latest fixes
 ```bash
 git stash
 git pull
 ```
 
-## Step 3: Run the migration script
+## Step 3: Run the fixed migration
 ```bash
-chmod +x scripts/migrate-enums.sh
-./scripts/migrate-enums.sh
+# Load environment
+set -a
+source .env
+set +a
+
+# Strip query params from DATABASE_URL
+PSQL_URL=$(echo "$DATABASE_URL" | sed 's/?schema=public//' | sed 's/?.*$//')
+
+# Run the corrected migration SQL
+psql "$PSQL_URL" -f prisma/migrations/fix-enum-migration.sql
+
+# Apply Prisma schema
+npx prisma db push
+
+# Regenerate Prisma client
+npx prisma generate
 ```
 
 ## Step 4: Restart your application
