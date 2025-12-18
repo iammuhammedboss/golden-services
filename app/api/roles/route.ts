@@ -4,6 +4,8 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { canManageUsers } from '@/lib/permissions'
 
+export const dynamic = 'force-dynamic'
+
 // GET /api/roles - List all roles
 export async function GET(request: NextRequest) {
   try {

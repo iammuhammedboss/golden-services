@@ -6,6 +6,8 @@ import { getAuditLogs } from '@/lib/audit'
 import type { UserWithRoles } from '@/lib/permissions'
 import type { AuditAction } from '@prisma/client'
 
+export const dynamic = 'force-dynamic'
+
 // GET /api/admin/audit-logs - View audit logs (OWNER, AUDITOR, OPERATIONS_MANAGER)
 export async function GET(request: NextRequest) {
   try {

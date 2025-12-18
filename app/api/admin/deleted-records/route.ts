@@ -5,6 +5,8 @@ import { canViewDeletedRecords } from '@/lib/permissions'
 import { getDeletedRecords } from '@/lib/audit'
 import type { UserWithRoles } from '@/lib/permissions'
 
+export const dynamic = 'force-dynamic'
+
 // GET /api/admin/deleted-records - View deleted records (OWNER, AUDITOR)
 export async function GET(request: NextRequest) {
   try {

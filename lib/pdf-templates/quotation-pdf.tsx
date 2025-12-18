@@ -312,6 +312,7 @@ export const QuotationPDF = ({ quotation }: { quotation: QuotationData }) => {
         <View style={styles.headerBanner}>
           <View style={styles.header}>
             <View style={styles.logoSection}>
+              {/* eslint-disable-next-line jsx-a11y/alt-text */}
               <Image
                 src={LOGO_BASE64}
                 style={styles.logo}
