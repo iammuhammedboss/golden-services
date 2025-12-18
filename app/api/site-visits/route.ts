@@ -6,6 +6,77 @@ import { canManageLeads } from '@/lib/permissions'
 import type { UserWithRoles } from '@/lib/permissions'
 import { createAuditLog } from '@/lib/audit'
 
+export async function GET(request: NextRequest) {
+  const session = await getServerSession(authOptions)
+  if (!session?.user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  const user = session.user as UserWithRoles
+  if (!canManageLeads(user)) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
+
+  try {
+    const { searchParams } = new URL(request.url)
+    const status = searchParams.get('status')
+    const clientId = searchParams.get('clientId')
+
+    const where: any = {
+      deletedAt: null,
+    }
+
+    if (status) {
+      where.status = status
+    }
+
+    if (clientId) {
+      where.clientId = clientId
+    }
+
+    const siteVisits = await prisma.siteVisit.findMany({
+      where,
+      include: {
+        client: {
+          select: {
+            id: true,
+            name: true,
+            phone: true,
+            email: true,
+          },
+        },
+        site: {
+          select: {
+            id: true,
+            name: true,
+            address: true,
+            city: true,
+            type: true,
+            bhkType: true,
+          },
+        },
+        assignedTo: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+      orderBy: {
+        scheduledAt: 'desc',
+      },
+    })
+
+    return NextResponse.json(siteVisits)
+  } catch (error) {
+    console.error('Error fetching site visits:', error)
+    return NextResponse.json(
+      { error: 'Failed to fetch site visits' },
+      { status: 500 }
+    )
+  }
+}
+
 export async function POST(request: NextRequest) {
   const session = await getServerSession(authOptions)
   if (!session?.user) {
@@ -21,16 +92,20 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const {
       clientId,
-      siteId,
       scheduledAt,
       assignedToId,
       requiredService,
+      locationText,
+      googleMapsUrl,
+      siteContactName,
+      siteContactPhone,
       notes,
+      remarks,
     } = body
 
-    if (!clientId || !siteId || !scheduledAt || !assignedToId) {
+    if (!clientId || !scheduledAt || !assignedToId) {
       return NextResponse.json(
-        { error: 'clientId, siteId, scheduledAt, and assignedToId are required' },
+        { error: 'clientId, scheduledAt, and assignedToId are required' },
         { status: 400 }
       )
     }
@@ -38,11 +113,31 @@ export async function POST(request: NextRequest) {
     const newSiteVisit = await prisma.siteVisit.create({
       data: {
         clientId,
-        siteId,
         scheduledAt: new Date(scheduledAt),
         assignedToId,
         requiredService,
+        locationText,
+        googleMapsUrl,
+        siteContactName,
+        siteContactPhone,
         notes,
+        remarks,
+        status: 'PENDING',
+      },
+      include: {
+        client: {
+          select: {
+            id: true,
+            name: true,
+            phone: true,
+          },
+        },
+        assignedTo: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
       },
     })
 

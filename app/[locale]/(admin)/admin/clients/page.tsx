@@ -10,12 +10,21 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { formatDate, enumToReadable } from '@/lib/utils'
-import { AddClientDialog } from '@/components/add-client-dialog'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { Client } from '@prisma/client'
+import { MoreHorizontal, Eye, UserPlus, Calendar, Briefcase, FileText, Receipt, Edit, Trash2, Plus } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 
 type ClientWithSites = Client & {
   sites: { id: string }[]
@@ -24,6 +33,7 @@ type ClientWithSites = Client & {
 export default function ClientsPage() {
   const [clients, setClients] = useState<ClientWithSites[]>([])
   const [loading, setLoading] = useState(true)
+  const router = useRouter()
 
   const stats = {
     total: clients.length,
@@ -50,9 +60,25 @@ export default function ClientsPage() {
     fetchClients()
   }, [])
 
-  const handleClientCreated = () => {
-    // Refresh the clients list
-    fetchClients()
+  const handleDelete = async (clientId: string) => {
+    if (!confirm('Are you sure you want to remove this client?')) {
+      return
+    }
+
+    try {
+      const response = await fetch(`/api/clients/${clientId}`, {
+        method: 'DELETE',
+      })
+
+      if (response.ok) {
+        fetchClients()
+      } else {
+        alert('Failed to delete client')
+      }
+    } catch (error) {
+      console.error('Failed to delete client:', error)
+      alert('Failed to delete client')
+    }
   }
 
   if (loading) {
@@ -66,9 +92,12 @@ export default function ClientsPage() {
           <h1 className="text-3xl font-bold">Clients</h1>
           <p className="text-muted-foreground">Manage your client database</p>
         </div>
-        <AddClientDialog onClientCreated={handleClientCreated}>
-          <Button>+ Add Client</Button>
-        </AddClientDialog>
+        <Button asChild>
+          <Link href="/admin/clients/new">
+            <Plus className="h-4 w-4 mr-2" />
+            Add Client
+          </Link>
+        </Button>
       </div>
 
       {/* Stats */}
@@ -156,9 +185,58 @@ export default function ClientsPage() {
                       </div>
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button variant="ghost" size="sm" asChild>
-                        <Link href={`/admin/clients/${client.id}`}>View</Link>
-                      </Button>
+                      <div className="flex items-center justify-end gap-2">
+                        <Button variant="ghost" size="sm" asChild>
+                          <Link href={`/admin/clients/${client.id}`}>
+                            <Eye className="h-4 w-4 mr-1" />
+                            View
+                          </Link>
+                        </Button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-48">
+                            <DropdownMenuLabel>Create</DropdownMenuLabel>
+                            <DropdownMenuItem onClick={() => router.push(`/admin/site-visits?clientId=${client.id}`)}>
+                              <UserPlus className="mr-2 h-4 w-4" />
+                              Site Visit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => router.push(`/admin/schedule?clientId=${client.id}`)}>
+                              <Calendar className="mr-2 h-4 w-4" />
+                              Schedule
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => router.push(`/admin/jobs?clientId=${client.id}`)}>
+                              <Briefcase className="mr-2 h-4 w-4" />
+                              Job
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => router.push(`/admin/invoices?clientId=${client.id}`)}>
+                              <Receipt className="mr-2 h-4 w-4" />
+                              Invoice
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => router.push(`/admin/quotations?clientId=${client.id}`)}>
+                              <FileText className="mr-2 h-4 w-4" />
+                              Quotation
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => router.push(`/admin/clients/${client.id}/edit`)}>
+                              <Edit className="mr-2 h-4 w-4" />
+                              Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleDelete(client.id)} className="text-red-600">
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Remove
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => router.push(`/admin/clients/${client.id}/ledger`)}>
+                              <Receipt className="mr-2 h-4 w-4" />
+                              Ledger Statement
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))

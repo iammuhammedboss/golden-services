@@ -25,10 +25,21 @@ export async function GET(request: NextRequest) {
         OR: [
           { name: { contains: query, mode: 'insensitive' } },
           { phone: { contains: query, mode: 'insensitive' } },
+          { email: { contains: query, mode: 'insensitive' } },
         ],
         deletedAt: null,
       },
-      take: 10,
+      select: {
+        id: true,
+        name: true,
+        phone: true,
+        email: true,
+        type: true,
+      },
+      take: 20,
+      orderBy: {
+        name: 'asc',
+      },
     })
     return NextResponse.json(clients)
   } catch (error) {

@@ -133,7 +133,7 @@ export async function POST(request: NextRequest) {
             clientId: client.id,
             siteId: site?.id || null,
             scheduledAt,
-            status: 'SCHEDULED',
+            status: 'PENDING',
             assignedToId: defaultAssignee.id,
             notes: `Site visit requested for: ${address}${city ? `, ${city}` : ''}\nService interest: ${serviceInterest}`,
           },
