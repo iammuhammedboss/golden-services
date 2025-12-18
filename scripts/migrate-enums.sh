@@ -7,13 +7,21 @@ set -e  # Exit on error
 
 echo "🔄 Starting enum migration..."
 
+# Load environment variables from .env file if it exists
+if [ -f .env ]; then
+    echo "📋 Loading environment variables from .env file..."
+    export $(cat .env | grep -v '^#' | grep -v '^$' | xargs)
+fi
+
 # Check if DATABASE_URL is set
 if [ -z "$DATABASE_URL" ]; then
     echo "❌ ERROR: DATABASE_URL environment variable is not set"
-    echo "Please set it in your .env file or export it:"
+    echo "Please check your .env file or export it manually:"
     echo "export DATABASE_URL='postgresql://username:password@localhost:5432/golden_services'"
     exit 1
 fi
+
+echo "✅ Database URL found"
 
 # Run the pre-migration SQL script
 echo "📝 Updating existing enum values..."

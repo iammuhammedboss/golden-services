@@ -7,9 +7,14 @@ ERROR: invalid input value for enum "SiteVisitStatus_new": "SCHEDULED"
 
 ## Quick Solution (Choose ONE):
 
-### Option 1: Automated Script (EASIEST) ⚡
+### Option 1: One Command (FASTEST) ⚡
 
-Pull the latest code and run:
+```bash
+git pull
+source .env && psql "$DATABASE_URL" -f prisma/migrations/pre-migration-enum-update.sql && npx prisma db push
+```
+
+### Option 2: Automated Script
 
 **Linux/Mac:**
 ```bash
@@ -24,16 +29,25 @@ git pull
 scripts\migrate-enums.bat
 ```
 
-### Option 2: Manual SQL + Prisma Push
+### Option 3: Step-by-Step Manual
 
 ```bash
 git pull
+
+# Load environment variables
+source .env
+
+# Run the SQL migration
 psql "$DATABASE_URL" -f prisma/migrations/pre-migration-enum-update.sql
+
+# Apply Prisma schema
 npx prisma db push
+
+# Regenerate Prisma client
 npx prisma generate
 ```
 
-### Option 3: Using Database GUI (TablePlus, pgAdmin, etc.)
+### Option 4: Using Database GUI (TablePlus, pgAdmin, etc.)
 
 1. Pull the latest code: `git pull`
 2. Open file: `prisma/migrations/pre-migration-enum-update.sql`
@@ -42,7 +56,7 @@ npx prisma generate
 5. Run: `npx prisma db push`
 6. Run: `npx prisma generate`
 
-### Option 4: Direct psql Connection
+### Option 5: Direct psql Connection
 
 ```bash
 git pull
