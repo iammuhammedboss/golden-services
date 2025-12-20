@@ -104,20 +104,6 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // Create site if address is provided
-    let site = null
-    if (address) {
-      site = await prisma.site.create({
-        data: {
-          clientId: client.id,
-          name: 'Primary Site',
-          address: address,
-          city: city || null,
-          notes: `Created from website booking`,
-        },
-      })
-    }
-
     // Create site visit if requested
     if (needsSiteVisit === 'true' && preferredDate && preferredTime) {
       const scheduledAt = new Date(`${preferredDate}T${preferredTime}`)
@@ -131,10 +117,10 @@ export async function POST(request: NextRequest) {
         await prisma.siteVisit.create({
           data: {
             clientId: client.id,
-            siteId: site?.id || null,
             scheduledAt,
             status: 'PENDING',
             assignedToId: defaultAssignee.id,
+            locationText: address ? `${address}${city ? `, ${city}` : ''}` : null,
             notes: `Site visit requested for: ${address}${city ? `, ${city}` : ''}\nService interest: ${serviceInterest}`,
           },
         })
@@ -164,7 +150,7 @@ export async function POST(request: NextRequest) {
     //   // Don't fail the booking if notifications fail
     // }
 
-    return NextResponse.json({ client, site }, { status: 201 })
+    return NextResponse.json({ client }, { status: 201 })
   } catch (error) {
     console.error('Error creating booking:', error)
     return NextResponse.json(

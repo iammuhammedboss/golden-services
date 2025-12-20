@@ -45,16 +45,6 @@ export async function GET(request: NextRequest) {
             email: true,
           },
         },
-        site: {
-          select: {
-            id: true,
-            name: true,
-            address: true,
-            city: true,
-            type: true,
-            bhkType: true,
-          },
-        },
         assignedTo: {
           select: {
             id: true,

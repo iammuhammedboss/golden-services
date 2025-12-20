@@ -23,7 +23,7 @@ import {
 import { Textarea } from '@/components/ui/textarea'
 import { PlusCircle, Trash2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { Client, Site, User, ItemMaster, RoomTypeMaster } from '@prisma/client'
+import { Client, User, ItemMaster, RoomTypeMaster } from '@prisma/client'
 import { useRouter } from 'next/navigation'
 
 const measurementItemSchema = z.object({
@@ -43,13 +43,7 @@ const streamlinedFormSchema = z.object({
       phone: z.string().min(1, 'Client phone is required'),
     })
     .optional(),
-  siteId: z.string().optional(),
-  newSite: z
-    .object({
-      name: z.string().min(1, 'Site name is required'),
-      address: z.string().min(1, 'Site address is required'),
-    })
-    .optional(),
+  locationText: z.string().optional(),
   scheduledAt: z.string().datetime('Scheduled date and time is required'),
   assignedToId: z.string().min(1, 'Assigned user is required'),
   notes: z.string().optional(),
@@ -62,13 +56,6 @@ const streamlinedFormSchema = z.object({
       path: ['clientId'],
     })
   }
-  if (!data.siteId && !data.newSite) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: 'Either select an existing site or create a new one.',
-      path: ['siteId'],
-    })
-  }
 })
 
 type StreamlinedFormValues = z.infer<typeof streamlinedFormSchema>
@@ -76,13 +63,11 @@ type StreamlinedFormValues = z.infer<typeof streamlinedFormSchema>
 export function StreamlinedMeasurementForm() {
   const router = useRouter()
   const [clients, setClients] = useState<Client[]>([])
-  const [sites, setSites] = useState<Site[]>([])
   const [users, setUsers] = useState<User[]>([])
   const [itemTypes, setItemTypes] = useState<ItemMaster[]>([])
   const [roomTypes, setRoomTypes] = useState<RoomTypeMaster[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [showNewClientForm, setShowNewClientForm] = useState(false)
-  const [showNewSiteForm, setShowNewSiteForm] = useState(false)
 
   const form = useForm<StreamlinedFormValues>({
     resolver: zodResolver(streamlinedFormSchema),
@@ -118,25 +103,6 @@ export function StreamlinedMeasurementForm() {
     }
     fetchInitialData()
   }, [])
-
-  useEffect(() => {
-    const fetchSites = async () => {
-      if (selectedClientId && selectedClientId !== 'new') {
-        try {
-          const sitesRes = await fetch(
-            `/api/clients/${selectedClientId}/sites`
-          )
-          setSites(await sitesRes.json())
-        } catch (error) {
-          console.error('Failed to fetch sites:', error)
-          // TODO: Show an error toast
-        }
-      } else {
-        setSites([])
-      }
-    }
-    fetchSites()
-  }, [selectedClientId])
 
   async function onSubmit(data: StreamlinedFormValues) {
     setIsLoading(true)
@@ -181,7 +147,6 @@ export function StreamlinedMeasurementForm() {
                       field.onChange(value)
                       if (value === 'new') {
                         setShowNewClientForm(true)
-                        form.setValue('siteId', '') // Clear site selection when creating new client
                       } else {
                         setShowNewClientForm(false)
                         form.setValue('newClient', undefined)
@@ -238,74 +203,20 @@ export function StreamlinedMeasurementForm() {
               </>
             )}
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+          <div className="mt-4">
             <FormField
               control={form.control}
-              name="siteId"
+              name="locationText"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Site</FormLabel>
-                  <Select
-                    onValueChange={(value) => {
-                      field.onChange(value)
-                      if (value === 'new') {
-                        setShowNewSiteForm(true)
-                      } else {
-                        setShowNewSiteForm(false)
-                        form.setValue('newSite', undefined)
-                      }
-                    }}
-                    defaultValue={field.value}
-                    disabled={!selectedClientId && !showNewClientForm}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a site" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="new">Create a new site</SelectItem>
-                      {sites.map((s) => (
-                        <SelectItem key={s.id} value={s.id}>
-                          {s.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <FormLabel>Location (Optional)</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Enter location details (e.g., address, building name, etc.)" {...field} />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            {showNewSiteForm && (
-              <>
-                <FormField
-                  control={form.control}
-                  name="newSite.name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>New Site Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Site Name" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="newSite.address"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>New Site Address</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Site Address" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </>
-            )}
           </div>
         </div>
 

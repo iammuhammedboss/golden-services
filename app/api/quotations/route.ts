@@ -183,11 +183,6 @@ export async function POST(request: NextRequest) {
             name: true,
           },
         },
-        site: {
-          select: {
-            name: true,
-          },
-        },
       },
     })
 

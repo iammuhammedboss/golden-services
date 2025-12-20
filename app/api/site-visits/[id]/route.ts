@@ -32,7 +32,6 @@ export async function GET(
             email: true,
           },
         },
-        site: true,
         photos: true,
       },
     })

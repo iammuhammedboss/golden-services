@@ -57,10 +57,6 @@ export async function GET(request: NextRequest) {
     const clients = await prisma.client.findMany({
       where,
       include: {
-        sites: {
-          where: { deletedAt: null },
-          select: { id: true, name: true }
-        },
         siteVisits: {
           where: { deletedAt: null },
           orderBy: { scheduledAt: 'desc' },
@@ -69,7 +65,6 @@ export async function GET(request: NextRequest) {
         },
         _count: {
           select: {
-            sites: { where: { deletedAt: null } },
             siteVisits: { where: { deletedAt: null } },
             quotations: { where: { deletedAt: null } },
             jobOrders: { where: { deletedAt: null } },
@@ -92,11 +87,9 @@ export async function GET(request: NextRequest) {
       notes: client.notes,
       createdAt: client.createdAt,
       updatedAt: client.updatedAt,
-      siteCount: client._count.sites,
       lastVisit: client.siteVisits[0]?.scheduledAt || null,
       quotationCount: client._count.quotations,
       jobCount: client._count.jobOrders,
-      sites: client.sites,
     }))
 
     return NextResponse.json(formattedClients)
@@ -191,28 +184,6 @@ export async function POST(request: NextRequest) {
       newValues: newClient,
     })
 
-    // Create site if address is provided
-    let site = null
-    if (address) {
-      site = await prisma.site.create({
-        data: {
-          clientId: newClient.id,
-          name: siteName || 'Primary Site',
-          address: address,
-          city: city || null,
-          notes: `Created with client`,
-        },
-      })
-
-      await createAuditLog({
-        userId: user.id,
-        action: 'CREATE',
-        entityType: 'Site',
-        entityId: site.id,
-        newValues: site,
-      })
-    }
-
     // TODO: Create notifications for relevant roles when notification system is implemented
     // try {
     //   await prisma.notificationQueue.createMany({
@@ -236,10 +207,9 @@ export async function POST(request: NextRequest) {
     //   // Don't fail client creation if notifications fail
     // }
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       client: newClient,
-      site,
-      message: 'Client created successfully' 
+      message: 'Client created successfully'
     }, { status: 201 })
   } catch (error) {
     console.error('Error creating client:', error)

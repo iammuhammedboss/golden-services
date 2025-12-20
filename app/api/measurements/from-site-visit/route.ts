@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
 
     const siteVisit = await prisma.siteVisit.findUnique({
       where: { id: siteVisitId },
-      include: { client: true, site: true }
+      include: { client: true }
     })
 
     if (!siteVisit) {
@@ -40,9 +40,9 @@ export async function POST(request: NextRequest) {
     const newMeasurement = await prisma.measurement.create({
       data: {
         clientId: siteVisit.clientId,
-        siteId: siteVisit.siteId,
         siteVisitId: siteVisit.id,
-        title: `Measurement for ${siteVisit.client?.name} - ${siteVisit.site?.name}`,
+        title: `Measurement for ${siteVisit.client?.name}`,
+        location: siteVisit.locationText || null,
         status: 'DRAFT',
       },
     })

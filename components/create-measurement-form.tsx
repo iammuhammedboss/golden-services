@@ -12,15 +12,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Client, Site } from '@prisma/client'
+import { Client } from '@prisma/client'
 
 export function CreateMeasurementForm() {
   const [clients, setClients] = useState<Client[]>([])
-  const [sites, setSites] = useState<Site[]>([])
   const [selectedClient, setSelectedClient] = useState<string>('')
   const [formData, setFormData] = useState({
     title: '',
-    siteId: '',
     notes: '',
     status: 'DRAFT',
   })
@@ -41,25 +39,6 @@ export function CreateMeasurementForm() {
     }
     fetchClients()
   }, [])
-
-  useEffect(() => {
-    async function fetchSites() {
-      if (!selectedClient) {
-        setSites([])
-        return
-      }
-      try {
-        const response = await fetch(`/api/clients/${selectedClient}`)
-        if (response.ok) {
-          const data = await response.json()
-          setSites(data.sites)
-        }
-      } catch (error) {
-        console.error('Failed to fetch sites:', error)
-      }
-    }
-    fetchSites()
-  }, [selectedClient])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -93,23 +72,6 @@ export function CreateMeasurementForm() {
           <SelectContent>
             {clients.map(client => (
               <SelectItem key={client.id} value={client.id}>{client.name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="site">Site</Label>
-        <Select
-          value={formData.siteId}
-          onValueChange={(value) => setFormData({ ...formData, siteId: value })}
-          disabled={!selectedClient || sites.length === 0}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Select a site" />
-          </SelectTrigger>
-          <SelectContent>
-            {sites.map(site => (
-              <SelectItem key={site.id} value={site.id}>{site.name}</SelectItem>
             ))}
           </SelectContent>
         </Select>

@@ -15,12 +15,11 @@ import {
 } from '@/components/ui/select'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Client, Site, SiteVisit } from '@prisma/client'
+import { Client, SiteVisit } from '@prisma/client'
 import { Info } from 'lucide-react'
 
 type SiteVisitWithDetails = SiteVisit & {
   client: Client
-  site: Site | null
 }
 
 export function EnhancedMeasurementForm() {
@@ -29,7 +28,6 @@ export function EnhancedMeasurementForm() {
 
   // Data lists
   const [clients, setClients] = useState<Client[]>([])
-  const [sites, setSites] = useState<Site[]>([])
   const [siteVisits, setSiteVisits] = useState<SiteVisitWithDetails[]>([])
   const [allSiteVisits, setAllSiteVisits] = useState<SiteVisitWithDetails[]>([])
 
@@ -75,11 +73,10 @@ export function EnhancedMeasurementForm() {
     fetchSiteVisits()
   }, [])
 
-  // When client is selected, fetch their sites and filter site visits
+  // When client is selected, filter site visits
   useEffect(() => {
-    async function fetchSitesForClient() {
+    async function fetchClientData() {
       if (!selectedClientId) {
-        setSites([])
         setSiteVisits([])
         setAutoFilledClient(null)
         return
@@ -96,10 +93,10 @@ export function EnhancedMeasurementForm() {
           setSiteVisits(filtered)
         }
       } catch (error) {
-        console.error('Failed to fetch client sites:', error)
+        console.error('Failed to fetch client data:', error)
       }
     }
-    fetchSitesForClient()
+    fetchClientData()
   }, [selectedClientId, allSiteVisits])
 
   // When site visit is selected, auto-fill client and location
@@ -115,13 +112,9 @@ export function EnhancedMeasurementForm() {
       setSelectedClientId(selectedSiteVisit.clientId)
       setAutoFilledClient(selectedSiteVisit.client)
 
-      // Auto-fill location if site exists
-      if (selectedSiteVisit.site) {
-        const siteDetails = []
-        if (selectedSiteVisit.site.name) siteDetails.push(selectedSiteVisit.site.name)
-        if (selectedSiteVisit.site.address) siteDetails.push(selectedSiteVisit.site.address)
-        if (selectedSiteVisit.site.city) siteDetails.push(selectedSiteVisit.site.city)
-        setLocation(siteDetails.join(', '))
+      // Auto-fill location if locationText exists
+      if (selectedSiteVisit.locationText) {
+        setLocation(selectedSiteVisit.locationText)
       }
     }
   }, [selectedSiteVisitId, allSiteVisits])
@@ -207,7 +200,7 @@ export function EnhancedMeasurementForm() {
                 <SelectItem value="none">None - Create without site visit</SelectItem>
                 {allSiteVisits.map(sv => (
                   <SelectItem key={sv.id} value={sv.id}>
-                    {sv.client.name} - {sv.site?.name || 'No site'} - {new Date(sv.scheduledAt).toLocaleDateString()}
+                    {sv.client.name} - {sv.locationText || 'No location'} - {new Date(sv.scheduledAt).toLocaleDateString()}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -304,7 +297,7 @@ export function EnhancedMeasurementForm() {
                   <SelectItem value="none">None</SelectItem>
                   {siteVisits.map(sv => (
                     <SelectItem key={sv.id} value={sv.id}>
-                      {sv.site?.name || 'No site'} - {new Date(sv.scheduledAt).toLocaleDateString()}
+                      {sv.locationText || 'No location'} - {new Date(sv.scheduledAt).toLocaleDateString()}
                     </SelectItem>
                   ))}
                 </SelectContent>

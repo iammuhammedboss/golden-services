@@ -45,12 +45,6 @@ export async function GET(
             phone: true,
           },
         },
-        site: {
-          select: {
-            name: true,
-            address: true,
-          },
-        },
         items: {
           orderBy: {
             createdAt: 'asc',
@@ -74,7 +68,6 @@ export async function GET(
       validUntil: quotation.validUntil ? quotation.validUntil.toISOString() : null,
       client: quotation.client,
       lead: quotation.lead,
-      site: quotation.site,
       items: quotation.items.map((item) => ({
         description: item.description,
         quantity: Number(item.quantity),

@@ -19,7 +19,6 @@ export async function GET(
       where: { id: params.id },
       include: {
         client: true,
-        site: true,
         quotation: true,
         measurement: true,
         assignments: {

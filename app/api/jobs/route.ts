@@ -136,7 +136,6 @@ export async function POST(request: NextRequest) {
       },
       include: {
         client: true,
-        site: true,
         quotation: true,
       },
     })

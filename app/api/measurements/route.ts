@@ -122,12 +122,6 @@ export async function GET(request: NextRequest) {
                         name: true,
                     },
                 },
-                site: {
-                    select: {
-                        id: true,
-                        name: true,
-                    },
-                },
             },
             orderBy: {
                 createdAt: 'desc',
