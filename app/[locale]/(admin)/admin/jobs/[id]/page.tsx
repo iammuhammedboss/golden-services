@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { JobOrder, Client, Site, Quotation, Measurement, User, MaterialMaster, EquipmentMaster } from '@prisma/client'
+import { JobOrder, Client, Quotation, Measurement, User, MaterialMaster, EquipmentMaster } from '@prisma/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -25,7 +25,6 @@ import { Textarea } from '@/components/ui/textarea'
 
 type JobWithRelations = JobOrder & {
   client: Client | null
-  site: Site | null,
   quotation: Quotation | null,
   measurement: Measurement | null,
   assignments: any[],
@@ -36,7 +35,6 @@ type JobWithRelations = JobOrder & {
 export default function JobDetailsPage() {
   const [job, setJob] = useState<JobWithRelations | null>(null)
   const [clients, setClients] = useState<Client[]>([])
-  const [sites, setSites] = useState<Site[]>([])
   const [quotations, setQuotations] = useState<Quotation[]>([])
   const [measurements, setMeasurements] = useState<Measurement[]>([])
   const [users, setUsers] = useState<User[]>([])
@@ -51,9 +49,8 @@ export default function JobDetailsPage() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const [clientsRes, sitesRes, quotationsRes, measurementsRes, usersRes, materialsRes, equipmentRes] = await Promise.all([
+        const [clientsRes, quotationsRes, measurementsRes, usersRes, materialsRes, equipmentRes] = await Promise.all([
           fetch('/api/clients'),
-          fetch('/api/sites'),
           fetch('/api/quotations'),
           fetch('/api/measurements'),
           fetch('/api/users'),
@@ -61,7 +58,6 @@ export default function JobDetailsPage() {
           fetch('/api/masters/equipment'),
         ]);
         if(clientsRes.ok) setClients(await clientsRes.json());
-        if(sitesRes.ok) setSites(await sitesRes.json());
         if(quotationsRes.ok) setQuotations(await quotationsRes.json());
         if(measurementsRes.ok) setMeasurements(await measurementsRes.json());
         if(usersRes.ok) setUsers(await usersRes.json());

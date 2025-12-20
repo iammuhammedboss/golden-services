@@ -33,11 +33,6 @@ export async function GET(request: NextRequest) {
             name: true,
           },
         },
-        site: {
-          select: {
-            name: true,
-          },
-        },
         items: {
           select: {
             total: true,
@@ -72,12 +67,11 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { 
-        clientId, 
-        siteId, 
-        measurementId, 
-        validUntil, 
-        notes, 
+    const {
+        clientId,
+        measurementId,
+        validUntil,
+        notes,
         items,
         vatEnabled,
         vatPercentage,
@@ -157,7 +151,6 @@ export async function POST(request: NextRequest) {
     const quotation = await prisma.quotation.create({
       data: {
         clientId,
-        siteId: siteId || null,
         measurementId: measurementId || null,
         version,
         createdById: currentUser.id,

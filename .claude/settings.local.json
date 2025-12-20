@@ -23,7 +23,9 @@
       "Bash(npx tsx:*)",
       "Bash(del verify-catalog.ts)",
       "Bash(npm run build:check:*)",
-      "Bash(npm run:*)"
+      "Bash(npm run:*)",
+      "Bash(npx prisma migrate:*)",
+      "Bash(del componentsadd-site-dialog.tsx)"
     ],
     "deny": [],
     "ask": []

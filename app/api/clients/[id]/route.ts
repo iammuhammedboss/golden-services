@@ -22,11 +22,6 @@ export async function GET(
   try {
     const client = await prisma.client.findUnique({
       where: { id: params.id },
-      include: {
-        sites: {
-          where: { deletedAt: null },
-        },
-      },
     })
 
     if (!client) {

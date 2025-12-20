@@ -26,11 +26,6 @@ export default async function QuotationsPage() {
           phone: true,
         },
       },
-      site: {
-        select: {
-          name: true,
-        },
-      },
       createdBy: {
         select: {
           name: true,
@@ -128,7 +123,6 @@ export default async function QuotationsPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Client</TableHead>
-                <TableHead>Site</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Total</TableHead>
                 <TableHead>Valid Until</TableHead>
@@ -150,13 +144,6 @@ export default async function QuotationsPage() {
                           {quotation.client?.phone || '-'}
                         </div>
                       </div>
-                    </TableCell>
-                    <TableCell>
-                      {quotation.site ? (
-                        <span className="text-sm">{quotation.site.name}</span>
-                      ) : (
-                        <span className="text-sm text-muted-foreground">-</span>
-                      )}
                     </TableCell>
                     <TableCell>
                       <Badge className={getStatusColor(quotation.status)}>

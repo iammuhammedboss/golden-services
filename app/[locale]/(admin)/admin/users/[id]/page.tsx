@@ -74,9 +74,6 @@ export default async function UserDetailPage({
           client: {
             select: { name: true },
           },
-          site: {
-            select: { name: true },
-          },
         },
       },
       jobAssignments: {
@@ -245,7 +242,6 @@ export default async function UserDetailPage({
               <TableHeader>
                 <TableRow>
                   <TableHead>Client</TableHead>
-                  <TableHead>Site</TableHead>
                   <TableHead>Scheduled</TableHead>
                   <TableHead>Status</TableHead>
                 </TableRow>
@@ -255,7 +251,6 @@ export default async function UserDetailPage({
                   user.siteVisits.map((visit) => (
                     <TableRow key={visit.id}>
                       <TableCell className="text-sm">{visit.client?.name || '-'}</TableCell>
-                      <TableCell className="text-sm">{visit.site?.name || '-'}</TableCell>
                       <TableCell className="text-sm">
                         {formatDate(visit.scheduledAt, 'PPp')}
                       </TableCell>
@@ -268,7 +263,7 @@ export default async function UserDetailPage({
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center text-muted-foreground">
+                    <TableCell colSpan={3} className="text-center text-muted-foreground">
                       No site visits assigned
                     </TableCell>
                   </TableRow>

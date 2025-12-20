@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json()
-    const { clientId, siteId, siteVisitId, location, title, notes, status, objects } = body
+    const { clientId, siteVisitId, location, title, notes, status, objects } = body
 
     if (!clientId || !title) {
       return NextResponse.json(
@@ -54,7 +54,6 @@ export async function POST(request: NextRequest) {
     const measurement = await prisma.measurement.create({
       data: {
         clientId,
-        siteId: siteId || null,
         siteVisitId: siteVisitId || null,
         location: location || null,
         title,

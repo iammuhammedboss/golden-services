@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { Client, Site } from '@prisma/client'
+import { Client } from '@prisma/client'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -15,19 +15,14 @@ import {
   Phone,
   Mail,
   MessageSquare,
-  MapPin,
   User,
   Calendar
 } from 'lucide-react'
 import { formatDate, enumToReadable } from '@/lib/utils'
 import Link from 'next/link'
 
-type ClientWithSites = Client & {
-  sites: Site[]
-}
-
 export default function ClientDetailsPage() {
-  const [client, setClient] = useState<ClientWithSites | null>(null)
+  const [client, setClient] = useState<Client | null>(null)
   const [loading, setLoading] = useState(true)
   const params = useParams()
   const router = useRouter()
@@ -243,65 +238,6 @@ export default function ClientDetailsPage() {
                 <p className="text-base whitespace-pre-wrap">{client.notes}</p>
               </div>
             </>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Sites Card */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>Sites</CardTitle>
-              <CardDescription>
-                {client.sites.length} {client.sites.length === 1 ? 'site' : 'sites'} associated with this client
-              </CardDescription>
-            </div>
-            <Button asChild variant="outline" size="sm">
-              <Link href={`/admin/sites/new?clientId=${client.id}`}>
-                <MapPin className="h-4 w-4 mr-2" />
-                Add Site
-              </Link>
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {client.sites.length > 0 ? (
-            <div className="space-y-3">
-              {client.sites.map(site => (
-                <Card key={site.id} className="border">
-                  <CardContent className="pt-4">
-                    <div className="flex justify-between items-start">
-                      <div className="space-y-1">
-                        <p className="font-semibold">{site.name}</p>
-                        {site.address && (
-                          <p className="text-sm text-muted-foreground flex items-center gap-1">
-                            <MapPin className="h-3 w-3" />
-                            {site.address}
-                          </p>
-                        )}
-                        {site.city && (
-                          <p className="text-sm text-muted-foreground">{site.city}</p>
-                        )}
-                        <div className="flex gap-2 mt-2">
-                          <Badge variant="outline">{enumToReadable(site.type)}</Badge>
-                          {site.bhkType && <Badge variant="secondary">{site.bhkType}</Badge>}
-                        </div>
-                      </div>
-                      <Button variant="ghost" size="sm" asChild>
-                        <Link href={`/admin/sites/${site.id}`}>View</Link>
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-8 text-muted-foreground">
-              <MapPin className="h-12 w-12 mx-auto mb-2 opacity-50" />
-              <p>No sites found for this client</p>
-              <p className="text-sm">Add a site to get started</p>
-            </div>
           )}
         </CardContent>
       </Card>

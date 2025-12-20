@@ -31,12 +31,6 @@ export async function GET(request: NextRequest) {
             phone: true,
           },
         },
-        site: {
-          select: {
-            name: true,
-            city: true,
-          },
-        },
         assignments: {
           select: {
             user: {
@@ -75,7 +69,6 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const {
       clientId,
-      siteId,
       quotationId,
       measurementId,
       scheduledDate,
@@ -89,9 +82,9 @@ export async function POST(request: NextRequest) {
     } = body
 
     // Validate required fields
-    if (!clientId || !siteId || !scheduledDate) {
+    if (!clientId || !scheduledDate) {
       return NextResponse.json(
-        { error: 'Client, site, and scheduled date are required' },
+        { error: 'Client and scheduled date are required' },
         { status: 400 }
       )
     }
@@ -115,7 +108,6 @@ export async function POST(request: NextRequest) {
       data: {
         jobNumber,
         clientId,
-        siteId,
         quotationId: quotationId || null,
         measurementId: measurementId || null,
         scheduledDate: new Date(scheduledDate),

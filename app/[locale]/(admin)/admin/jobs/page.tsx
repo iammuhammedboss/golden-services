@@ -25,12 +25,6 @@ export default async function JobsPage({ params }: { params: { locale: string } 
           phone: true,
         },
       },
-      site: {
-        select: {
-          name: true,
-          city: true,
-        },
-      },
       assignments: {
         select: {
           user: {
@@ -191,7 +185,6 @@ export default async function JobsPage({ params }: { params: { locale: string } 
               <TableRow>
                 <TableHead>Job Number</TableHead>
                 <TableHead>Client</TableHead>
-                <TableHead>Site</TableHead>
                 <TableHead>Scheduled Date</TableHead>
                 <TableHead>Time</TableHead>
                 <TableHead>Assigned Team</TableHead>
@@ -209,14 +202,6 @@ export default async function JobsPage({ params }: { params: { locale: string } 
                       <div className="text-sm">
                         <div>{job.client.name}</div>
                         <div className="text-muted-foreground">{job.client.phone}</div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="text-sm">
-                        <div>{job.site.name}</div>
-                        {job.site.city && (
-                          <div className="text-muted-foreground">{job.site.city}</div>
-                        )}
                       </div>
                     </TableCell>
                     <TableCell>

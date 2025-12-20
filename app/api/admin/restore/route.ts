@@ -44,7 +44,6 @@ export async function POST(request: NextRequest) {
       PaymentMethodMaster: prisma.paymentMethodMaster,
       Lead: prisma.lead,
       Client: prisma.client,
-      Site: prisma.site,
       SiteVisit: prisma.siteVisit,
       Measurement: prisma.measurement,
       MeasurementObject: prisma.measurementObject,
