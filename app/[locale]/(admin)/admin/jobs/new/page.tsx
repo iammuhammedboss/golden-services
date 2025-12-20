@@ -21,13 +21,11 @@ export default function NewJobPage() {
   const locale = (params.locale as string) || 'en'
 
   const [clients, setClients] = useState<any[]>([])
-  const [sites, setSites] = useState<any[]>([])
   const [quotations, setQuotations] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
 
   const [formData, setFormData] = useState({
     clientId: '',
-    siteId: '',
     quotationId: '',
     scheduledDate: '',
     scheduledStartTime: '',
@@ -42,10 +40,8 @@ export default function NewJobPage() {
 
   useEffect(() => {
     if (formData.clientId) {
-      fetchSites(formData.clientId)
       fetchQuotations(formData.clientId)
     } else {
-      setSites([])
       setQuotations([])
     }
   }, [formData.clientId])
@@ -59,18 +55,6 @@ export default function NewJobPage() {
       }
     } catch (error) {
       console.error('Error fetching clients:', error)
-    }
-  }
-
-  const fetchSites = async (clientId: string) => {
-    try {
-      const response = await fetch(`/api/sites?clientId=${clientId}`)
-      if (response.ok) {
-        const data = await response.json()
-        setSites(data)
-      }
-    } catch (error) {
-      console.error('Error fetching sites:', error)
     }
   }
 
@@ -89,7 +73,7 @@ export default function NewJobPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!formData.clientId || !formData.siteId || !formData.scheduledDate) {
+    if (!formData.clientId || !formData.scheduledDate) {
       alert('Please fill in all required fields')
       return
     }
@@ -146,7 +130,7 @@ export default function NewJobPage() {
               <CardTitle>Job Details</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="clientId">Client *</Label>
                   <Select
@@ -155,7 +139,6 @@ export default function NewJobPage() {
                       setFormData({
                         ...formData,
                         clientId: value,
-                        siteId: '',
                         quotationId: '',
                       })
                     }}
@@ -173,27 +156,7 @@ export default function NewJobPage() {
                   </Select>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="siteId">Site *</Label>
-                  <Select
-                    value={formData.siteId}
-                    onValueChange={(value) =>
-                      setFormData({ ...formData, siteId: value })
-                    }
-                    disabled={!formData.clientId}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select site" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {sites.map((site) => (
-                        <SelectItem key={site.id} value={site.id}>
-                          {site.name} - {site.city}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                
               </div>
 
               <div className="space-y-2">
@@ -211,7 +174,7 @@ export default function NewJobPage() {
                   <SelectContent>
                     {quotations.map((quotation) => (
                       <SelectItem key={quotation.id} value={quotation.id}>
-                        {quotation.client.name} - {quotation.site?.name || 'No site'} ({quotation.status})
+                        {quotation.client.name} - ({quotation.status})
                       </SelectItem>
                     ))}
                   </SelectContent>

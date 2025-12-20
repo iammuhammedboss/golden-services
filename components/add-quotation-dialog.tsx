@@ -35,12 +35,6 @@ interface Client {
   name: string
 }
 
-interface Site {
-  id: string
-  name: string
-  clientId: string
-}
-
 interface Service {
   id: string
   name: string
@@ -69,13 +63,10 @@ export function AddQuotationDialog({
   const [success, setSuccess] = useState('')
 
   const [clients, setClients] = useState<Client[]>([])
-  const [sites, setSites] = useState<Site[]>([])
   const [services, setServices] = useState<Service[]>([])
-  const [filteredSites, setFilteredSites] = useState<Site[]>([])
 
   const [formData, setFormData] = useState({
     clientId: '',
-    siteId: '',
     validUntil: '',
     notes: '',
   })
@@ -99,16 +90,6 @@ export function AddQuotationDialog({
     }
   }, [open])
 
-  // Filter sites when client changes
-  useEffect(() => {
-    if (formData.clientId) {
-      const filtered = sites.filter((site) => site.clientId === formData.clientId)
-      setFilteredSites(filtered)
-    } else {
-      setFilteredSites([])
-    }
-  }, [formData.clientId, sites])
-
   const fetchData = async () => {
     try {
       // Fetch clients
@@ -116,13 +97,6 @@ export function AddQuotationDialog({
       const clientsData = await clientsRes.json()
       if (Array.isArray(clientsData)) {
         setClients(clientsData)
-      }
-
-      // Fetch sites
-      const sitesRes = await fetch('/api/sites')
-      const sitesData = await sitesRes.json()
-      if (Array.isArray(sitesData)) {
-        setSites(sitesData)
       }
 
       // Fetch services
@@ -212,7 +186,6 @@ export function AddQuotationDialog({
         },
         body: JSON.stringify({
           clientId: formData.clientId,
-          siteId: formData.siteId || null,
           validUntil: formData.validUntil ? new Date(formData.validUntil).toISOString() : null,
           notes: formData.notes || null,
           items: lineItems
@@ -239,7 +212,6 @@ export function AddQuotationDialog({
       // Reset form
       setFormData({
         clientId: '',
-        siteId: '',
         validUntil: '',
         notes: '',
       })
@@ -292,7 +264,7 @@ export function AddQuotationDialog({
               <Select
                 value={formData.clientId}
                 onValueChange={(value) => {
-                  setFormData({ ...formData, clientId: value, siteId: '' })
+                  setFormData({ ...formData, clientId: value })
                 }}
               >
                 <SelectTrigger id="client">
@@ -308,34 +280,7 @@ export function AddQuotationDialog({
               </Select>
             </div>
 
-            {/* Site Selection */}
-            <div className="space-y-2">
-              <Label htmlFor="site">Site (Optional)</Label>
-              <Select
-                value={formData.siteId}
-                onValueChange={(value) => setFormData({ ...formData, siteId: value })}
-                disabled={!formData.clientId}
-              >
-                <SelectTrigger id="site">
-                  <SelectValue
-                    placeholder={formData.clientId ? 'Select a site' : 'Select a client first'}
-                  />
-                </SelectTrigger>
-                <SelectContent>
-                  {filteredSites.length > 0 ? (
-                    filteredSites.map((site) => (
-                      <SelectItem key={site.id} value={site.id}>
-                        {site.name}
-                      </SelectItem>
-                    ))
-                  ) : (
-                    <div className="p-2 text-sm text-muted-foreground">
-                      No sites available for this client
-                    </div>
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
+            
           </div>
 
           {/* Valid Until Date */}

@@ -118,7 +118,7 @@ export function ConvertToClientDialog({
         <DialogHeader>
           <DialogTitle>Convert Lead to Client</DialogTitle>
           <DialogDescription>
-            Convert {leadName} into a client. This will allow you to create sites and schedule visits.
+            Convert {leadName} into a client. This will allow you to schedule visits and create quotations.
           </DialogDescription>
         </DialogHeader>
 

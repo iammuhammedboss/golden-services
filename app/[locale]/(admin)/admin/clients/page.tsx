@@ -26,12 +26,8 @@ import { Client } from '@prisma/client'
 import { MoreHorizontal, Eye, UserPlus, Calendar, Briefcase, FileText, Receipt, Edit, Trash2, Plus } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
-type ClientWithSites = Client & {
-  sites: { id: string }[]
-}
-
 export default function ClientsPage() {
-  const [clients, setClients] = useState<ClientWithSites[]>([])
+  const [clients, setClients] = useState<Client[]>([])
   const [loading, setLoading] = useState(true)
   const router = useRouter()
 
@@ -143,7 +139,6 @@ export default function ClientsPage() {
                 <TableHead>Phone</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>Type</TableHead>
-                <TableHead>Sites</TableHead>
                 <TableHead>Created</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -170,13 +165,6 @@ export default function ClientsPage() {
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline">{enumToReadable(client.type)}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      {client.sites.length > 0 ? (
-                        <span className="text-sm font-medium">{client.sites.length}</span>
-                      ) : (
-                        <span className="text-sm text-muted-foreground">0</span>
-                      )}
                     </TableCell>
                     <TableCell>
                       <div className="text-sm">{formatDate(client.createdAt, 'PP')}</div>
@@ -242,7 +230,7 @@ export default function ClientsPage() {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center text-muted-foreground">
+                  <TableCell colSpan={6} className="text-center text-muted-foreground">
                     No clients found
                   </TableCell>
                 </TableRow>

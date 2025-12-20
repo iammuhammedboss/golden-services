@@ -24,11 +24,10 @@ import { User } from '@prisma/client'
 interface AddSiteVisitDialogProps {
   children: React.ReactNode
   clientId: string
-  siteId: string
   onSiteVisitCreated?: () => void
 }
 
-export function AddSiteVisitDialog({ children, clientId, siteId, onSiteVisitCreated }: AddSiteVisitDialogProps) {
+export function AddSiteVisitDialog({ children, clientId, onSiteVisitCreated }: AddSiteVisitDialogProps) {
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [users, setUsers] = useState<User[]>([])
@@ -61,7 +60,7 @@ export function AddSiteVisitDialog({ children, clientId, siteId, onSiteVisitCrea
       const response = await fetch('/api/site-visits', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...formData, clientId, siteId }),
+        body: JSON.stringify({ ...formData, clientId }),
       })
       if (response.ok) {
         setOpen(false)

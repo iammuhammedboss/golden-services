@@ -169,15 +169,7 @@ export function LeadActions({ lead }: LeadActionsProps) {
             </DropdownMenuItem>
           )}
 
-          {/* Create Site */}
-          {isConverted && lead.convertedToClientId && (
-            <DropdownMenuItem asChild>
-              <Link href={`/admin/sites/new?clientId=${lead.convertedToClientId}`} className="flex items-center">
-                <Building2 className="mr-2 h-4 w-4" />
-                Create Site
-              </Link>
-            </DropdownMenuItem>
-          )}
+          
         </DropdownMenuContent>
       </DropdownMenu>
     </div>
