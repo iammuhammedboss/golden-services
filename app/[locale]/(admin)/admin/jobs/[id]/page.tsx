@@ -42,6 +42,7 @@ export default function JobDetailsPage() {
   const [equipmentMasters, setEquipmentMasters] = useState<EquipmentMaster[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [showShareConfirmation, setShowShareConfirmation] = useState(false)
   const params = useParams()
   const router = useRouter()
   const { id } = params
@@ -116,6 +117,26 @@ export default function JobDetailsPage() {
       setSaving(false)
     }
   }
+
+  const handleShare = () => {
+    if (!job) return;
+
+    const jobDetails = `
+*Job Order Details*
+
+*Job Number:* ${job.jobNumber}
+*Client:* ${job.client?.name}
+*Phone:* ${job.client?.phone}
+*Location:* ${job.location}
+*Scheduled Date:* ${new Date(job.scheduledDate).toLocaleDateString()}
+    `;
+
+    navigator.clipboard.writeText(jobDetails.trim()).then(() => {
+      setShowShareConfirmation(true);
+      setTimeout(() => setShowShareConfirmation(false), 2000);
+      window.open('https://web.whatsapp.com', '_blank');
+    });
+  };
   
   const addAssignment = () => {
     if(!job) return;
@@ -153,11 +174,27 @@ export default function JobDetailsPage() {
     <div className="space-y-6">
         <div className="flex items-center justify-between">
             <h1 className="text-3xl font-bold">{id === 'new' ? 'New Job' : `Job ${job.jobNumber}`}</h1>
-            <Button onClick={handleSave} disabled={saving}>
-                {saving ? 'Saving...' : 'Save Job'}
-            </Button>
+            <div className="flex gap-2">
+                <Button onClick={handleSave} disabled={saving}>
+                    {saving ? 'Saving...' : 'Save Job'}
+                </Button>
+                <Button 
+                    onClick={handleShare} 
+                    disabled={id === 'new'}
+                    variant="outline"
+                >
+                    Share on WhatsApp
+                </Button>
+            </div>
         </div>
         
+        {showShareConfirmation && (
+          <div className="bg-green-100 border-l-4 border-green-500 text-green-700 p-4" role="alert">
+            <p className="font-bold">Copied to clipboard!</p>
+            <p>Job details copied. You can now paste it in WhatsApp.</p>
+          </div>
+        )}
+
         <div className="grid grid-cols-2 gap-4">
             {/* Header fields */}
         </div>

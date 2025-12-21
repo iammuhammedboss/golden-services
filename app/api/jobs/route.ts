@@ -77,8 +77,11 @@ export async function POST(request: NextRequest) {
       status,
       notes,
       assignments, // e.g., [{ userId: '...', roleInJob: 'TECHNICIAN' }]
-      materials,   // e.g., [{ materialId: '...', quantity: 2.5 }]
+      jobMaterials,   // e.g., [{ materialId: '...', quantity: 2.5 }]
       equipment,   // e.g., [{ equipmentId: '...', quantity: 1 }]
+      location,
+      isMultiDay,
+      endDate,
     } = body
 
     // Validate required fields
@@ -111,10 +114,13 @@ export async function POST(request: NextRequest) {
         quotationId: quotationId || null,
         measurementId: measurementId || null,
         scheduledDate: new Date(scheduledDate),
-        scheduledStartTime: scheduledStartTime ? new Date(scheduledStartTime) : null,
-        scheduledEndTime: scheduledEndTime ? new Date(scheduledEndTime) : null,
+        scheduledStartTime: scheduledStartTime ? new Date(`${scheduledDate}T${scheduledStartTime}`) : null,
+        scheduledEndTime: scheduledEndTime ? new Date(`${endDate || scheduledDate}T${scheduledEndTime}`) : null,
         status: status || 'SCHEDULED',
         notes: notes || null,
+        location: location || null,
+        isMultiDay: isMultiDay || false,
+        endDate: endDate ? new Date(endDate) : null,
         assignments: {
             create: assignments?.map((a: any) => ({
                 userId: a.userId,
@@ -122,7 +128,7 @@ export async function POST(request: NextRequest) {
             }))
         },
         materials: {
-            create: materials?.map((m: any) => ({
+            create: jobMaterials?.map((m: any) => ({
                 materialId: m.materialId,
                 quantity: m.quantity,
             }))

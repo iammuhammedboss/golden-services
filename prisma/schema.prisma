@@ -655,6 +655,7 @@ model JobOrder {
   scheduledEndTime   DateTime?
   isMultiDay         Boolean           @default(false)
   endDate            DateTime?         @db.Date
+  location           String?
   notes              String?
   createdAt          DateTime          @default(now())
   updatedAt          DateTime          @updatedAt
