@@ -1,3 +1,4 @@
+// Harmless comment to force migration
 generator client {
   provider = "prisma-client-js"
 }
