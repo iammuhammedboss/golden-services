@@ -171,9 +171,8 @@ export default function NewJobPage() {
     setFormData({ ...formData, jobMaterials: newMaterials });
   };
 
-  const onClientCreated = (newClient: any) => {
+  const onClientCreated = () => {
     fetchClients();
-    setFormData({ ...formData, clientId: newClient.id });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -199,7 +198,9 @@ export default function NewJobPage() {
       })
 
       if (response.ok) {
-        router.push(`/${locale}/admin/jobs/${job.id}`)      } else {
+        const job = await response.json()
+        router.push(`/${locale}/admin/jobs/${job.id}`)
+      } else {
         const error = await response.json()
         alert(error.error || 'Failed to create job order')
       }
