@@ -25,6 +25,7 @@ export default function NewJobPage() {
   const [quotations, setQuotations] = useState<any[]>([])
   const [users, setUsers] = useState<any[]>([])
   const [materials, setMaterials] = useState<any[]>([])
+  const [equipment, setEquipment] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
 
   const [formData, setFormData] = useState({
@@ -43,12 +44,14 @@ export default function NewJobPage() {
     durationMinutes: 0,
     assignments: [] as { userId: string; roleInJob: string }[],
     jobMaterials: [] as { materialId: string; quantity: number }[],
+    equipment: [] as { equipmentId: string; quantity: number }[],
   })
 
   useEffect(() => {
     fetchClients()
     fetchUsers()
     fetchMaterials()
+    fetchEquipment()
   }, [])
 
   useEffect(() => {
@@ -92,6 +95,18 @@ export default function NewJobPage() {
       }
     } catch (error) {
       console.error('Error fetching materials:', error)
+    }
+  }
+
+  const fetchEquipment = async () => {
+    try {
+      const response = await fetch('/api/masters/equipment')
+      if (response.ok) {
+        const data = await response.json()
+        setEquipment(data)
+      }
+    } catch (error) {
+      console.error('Error fetching equipment:', error)
     }
   }
 
@@ -171,6 +186,24 @@ export default function NewJobPage() {
     setFormData({ ...formData, jobMaterials: newMaterials });
   };
 
+  const handleEquipmentChange = (index: number, field: string, value: string | number) => {
+    const newEquipment = [...formData.equipment];
+    newEquipment[index] = { ...newEquipment[index], [field]: value };
+    setFormData({ ...formData, equipment: newEquipment });
+  };
+
+  const addEquipment = () => {
+    setFormData({
+      ...formData,
+      equipment: [...formData.equipment, { equipmentId: '', quantity: 1 }],
+    });
+  };
+
+  const removeEquipment = (index: number) => {
+    const newEquipment = formData.equipment.filter((_, i) => i !== index);
+    setFormData({ ...formData, equipment: newEquipment });
+  };
+
   const onClientCreated = () => {
     fetchClients();
   };
@@ -194,6 +227,7 @@ export default function NewJobPage() {
           quotationId: formData.quotationId || null,
           assignments: formData.assignments,
           jobMaterials: formData.jobMaterials,
+          equipment: formData.equipment,
         }),
       })
 
@@ -475,6 +509,40 @@ export default function NewJobPage() {
                 </div>
               ))}
               <Button type="button" variant="outline" onClick={addMaterial}>Add Material</Button>
+            </CardContent>
+          </Card>
+
+          {/* Equipment */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Equipment</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {formData.equipment.map((eq, index) => (
+                <div key={index} className="grid grid-cols-3 gap-2 items-center">
+                  <Select
+                    value={eq.equipmentId}
+                    onValueChange={(value) => handleEquipmentChange(index, 'equipmentId', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Equipment" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {equipment.map((equip) => (
+                        <SelectItem key={equip.id} value={equip.id}>{equip.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Input
+                    type="number"
+                    value={eq.quantity}
+                    onChange={(e) => handleEquipmentChange(index, 'quantity', parseInt(e.target.value) || 0)}
+                    placeholder="Quantity"
+                  />
+                  <Button type="button" variant="ghost" onClick={() => removeEquipment(index)}>Remove</Button>
+                </div>
+              ))}
+              <Button type="button" variant="outline" onClick={addEquipment}>Add Equipment</Button>
             </CardContent>
           </Card>
 

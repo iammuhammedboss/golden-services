@@ -30,6 +30,8 @@ type JobWithRelations = JobOrder & {
   assignments: any[],
   materials: any[],
   equipment: any[],
+  checklistItems: any[],
+  statusUpdates: any[],
 }
 
 export default function JobDetailsPage() {
@@ -79,6 +81,8 @@ export default function JobDetailsPage() {
             assignments: [],
             materials: [],
             equipment: [],
+            checklistItems: [],
+            statusUpdates: [],
         } as unknown as JobWithRelations)
         setLoading(false)
         return
@@ -196,7 +200,119 @@ export default function JobDetailsPage() {
         )}
 
         <div className="grid grid-cols-2 gap-4">
-            {/* Header fields */}
+            {/* Job Information */}
+            <div className="space-y-2">
+                <Label>Client</Label>
+                <Select
+                    value={job.clientId || ''}
+                    onValueChange={(value) => setJob({ ...job, clientId: value })}
+                >
+                    <SelectTrigger><SelectValue placeholder="Select Client" /></SelectTrigger>
+                    <SelectContent>
+                        {clients.map(client => (
+                            <SelectItem key={client.id} value={client.id}>{client.name}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            </div>
+            <div className="space-y-2">
+                <Label>Quotation</Label>
+                <Select
+                    value={job.quotationId || ''}
+                    onValueChange={(value) => setJob({ ...job, quotationId: value || null })}
+                >
+                    <SelectTrigger><SelectValue placeholder="Select Quotation" /></SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="">None</SelectItem>
+                        {quotations.map(q => (
+                            <SelectItem key={q.id} value={q.id}>Quotation #{q.id}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            </div>
+            <div className="space-y-2">
+                <Label>Measurement</Label>
+                <Select
+                    value={job.measurementId || ''}
+                    onValueChange={(value) => setJob({ ...job, measurementId: value || null })}
+                >
+                    <SelectTrigger><SelectValue placeholder="Select Measurement" /></SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="">None</SelectItem>
+                        {measurements.map(m => (
+                            <SelectItem key={m.id} value={m.id}>Measurement #{m.id}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            </div>
+            <div className="space-y-2">
+                <Label>Status</Label>
+                <Select
+                    value={job.status || 'SCHEDULED'}
+                    onValueChange={(value) => setJob({ ...job, status: value as any })}
+                >
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="SCHEDULED">Scheduled</SelectItem>
+                        <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
+                        <SelectItem value="COMPLETED">Completed</SelectItem>
+                        <SelectItem value="CANCELLED">Cancelled</SelectItem>
+                    </SelectContent>
+                </Select>
+            </div>
+            <div className="space-y-2">
+                <Label>Scheduled Date</Label>
+                <Input
+                    type="date"
+                    value={job.scheduledDate ? new Date(job.scheduledDate).toISOString().split('T')[0] : ''}
+                    onChange={(e) => setJob({ ...job, scheduledDate: new Date(e.target.value) })}
+                />
+            </div>
+            <div className="space-y-2">
+                <Label>Scheduled Start Time</Label>
+                <Input
+                    type="time"
+                    value={job.scheduledStartTime ? new Date(job.scheduledStartTime).toTimeString().slice(0, 5) : ''}
+                    onChange={(e) => {
+                        const date = job.scheduledDate ? new Date(job.scheduledDate) : new Date()
+                        const dateStr = date.toISOString().split('T')[0]
+                        setJob({ ...job, scheduledStartTime: new Date(`${dateStr}T${e.target.value}`) })
+                    }}
+                />
+            </div>
+            <div className="space-y-2">
+                <Label>Location</Label>
+                <Input
+                    value={job.location || ''}
+                    onChange={(e) => setJob({ ...job, location: e.target.value })}
+                    placeholder="Enter job location"
+                />
+            </div>
+            <div className="space-y-2">
+                <Label>Payment Status</Label>
+                <Select
+                    value={job.paymentStatus || 'UNPAID'}
+                    onValueChange={(value) => setJob({ ...job, paymentStatus: value as any })}
+                >
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="UNPAID">Unpaid</SelectItem>
+                        <SelectItem value="PARTIALLY_PAID">Partially Paid</SelectItem>
+                        <SelectItem value="PAID">Paid</SelectItem>
+                        <SelectItem value="OVERDUE">Overdue</SelectItem>
+                    </SelectContent>
+                </Select>
+            </div>
+        </div>
+
+        <div className="space-y-2">
+            <Label>Notes</Label>
+            <Textarea
+                value={job.notes || ''}
+                onChange={(e) => setJob({ ...job, notes: e.target.value })}
+                placeholder="Add notes about this job..."
+                rows={3}
+            />
         </div>
 
         <div>
@@ -230,7 +346,23 @@ export default function JobDetailsPage() {
                                 </Select>
                             </TableCell>
                             <TableCell>
-                                <Input value={assignment.roleInJob} />
+                                <Select
+                                    value={assignment.roleInJob}
+                                    onValueChange={(value) => {
+                                        const newAssignments = [...job.assignments]
+                                        newAssignments[index].roleInJob = value
+                                        setJob({ ...job, assignments: newAssignments })
+                                    }}
+                                >
+                                    <SelectTrigger><SelectValue /></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="SUPERVISOR">Supervisor</SelectItem>
+                                        <SelectItem value="CLEANER">Cleaner</SelectItem>
+                                        <SelectItem value="TECHNICIAN">Technician</SelectItem>
+                                        <SelectItem value="DRIVER">Driver</SelectItem>
+                                        <SelectItem value="OTHER">Other</SelectItem>
+                                    </SelectContent>
+                                </Select>
                             </TableCell>
                             <TableCell>
                                 <Button variant="destructive" size="sm" onClick={() => {
@@ -277,7 +409,15 @@ export default function JobDetailsPage() {
                                 </Select>
                             </TableCell>
                             <TableCell>
-                                <Input type="number" value={material.quantity} />
+                                <Input
+                                    type="number"
+                                    value={material.quantity}
+                                    onChange={(e) => {
+                                        const newMaterials = [...job.materials]
+                                        newMaterials[index].quantity = parseFloat(e.target.value) || 0
+                                        setJob({ ...job, materials: newMaterials })
+                                    }}
+                                />
                             </TableCell>
                             <TableCell>
                                 <Button variant="destructive" size="sm" onClick={() => {
@@ -324,7 +464,15 @@ export default function JobDetailsPage() {
                                 </Select>
                             </TableCell>
                             <TableCell>
-                                <Input type="number" value={eq.quantity} />
+                                <Input
+                                    type="number"
+                                    value={eq.quantity}
+                                    onChange={(e) => {
+                                        const newEquipment = [...job.equipment]
+                                        newEquipment[index].quantity = parseInt(e.target.value) || 0
+                                        setJob({ ...job, equipment: newEquipment })
+                                    }}
+                                />
                             </TableCell>
                             <TableCell>
                                 <Button variant="destructive" size="sm" onClick={() => {
@@ -339,6 +487,88 @@ export default function JobDetailsPage() {
             </Table>
             <Button onClick={addEquipment} className="mt-2">Add Equipment</Button>
         </div>
+
+        {id !== 'new' && (
+          <>
+            <div>
+                <h3 className="text-lg font-semibold">Checklist Items</h3>
+                {job.checklistItems && job.checklistItems.length > 0 ? (
+                  <Table>
+                      <TableHeader>
+                          <TableRow>
+                              <TableHead>Description</TableHead>
+                              <TableHead>Completed</TableHead>
+                              <TableHead>Verified</TableHead>
+                              <TableHead>Photo</TableHead>
+                              <TableHead>Notes</TableHead>
+                          </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                          {job.checklistItems.map((item: any) => (
+                              <TableRow key={item.id}>
+                                  <TableCell>{item.description}</TableCell>
+                                  <TableCell>
+                                      {item.isCompleted ? (
+                                        <span className="text-green-600">
+                                          ✓ {item.completedBy?.name} ({new Date(item.completedAt).toLocaleString()})
+                                        </span>
+                                      ) : (
+                                        <span className="text-gray-400">Not completed</span>
+                                      )}
+                                  </TableCell>
+                                  <TableCell>
+                                      {item.isVerified ? (
+                                        <span className="text-blue-600">
+                                          ✓ {item.verifiedBy?.name} ({new Date(item.verifiedAt).toLocaleString()})
+                                        </span>
+                                      ) : (
+                                        <span className="text-gray-400">Not verified</span>
+                                      )}
+                                  </TableCell>
+                                  <TableCell>
+                                      {item.photoUrl ? (
+                                        <a href={item.photoUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">
+                                          View Photo
+                                        </a>
+                                      ) : (
+                                        item.photoRequired ? <span className="text-red-600">Required</span> : <span className="text-gray-400">-</span>
+                                      )}
+                                  </TableCell>
+                                  <TableCell>{item.notes || '-'}</TableCell>
+                              </TableRow>
+                          ))}
+                      </TableBody>
+                  </Table>
+                ) : (
+                  <p className="text-muted-foreground text-sm mt-2">No checklist items for this job.</p>
+                )}
+            </div>
+
+            <div>
+                <h3 className="text-lg font-semibold">Job Progress Updates</h3>
+                {job.statusUpdates && job.statusUpdates.length > 0 ? (
+                  <div className="space-y-2">
+                      {job.statusUpdates.map((update: any) => (
+                          <div key={update.id} className="border-l-4 border-blue-500 pl-4 py-2">
+                              <div className="flex items-center gap-2">
+                                  <span className="font-semibold">{update.status}</span>
+                                  {update.progressPercent !== null && (
+                                    <span className="text-sm text-gray-600">({update.progressPercent}%)</span>
+                                  )}
+                              </div>
+                              {update.note && <p className="text-sm text-gray-700 mt-1">{update.note}</p>}
+                              <p className="text-xs text-gray-500 mt-1">
+                                  By {update.createdBy?.name} on {new Date(update.createdAt).toLocaleString()}
+                              </p>
+                          </div>
+                      ))}
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground text-sm mt-2">No status updates yet.</p>
+                )}
+            </div>
+          </>
+        )}
     </div>
   )
 }

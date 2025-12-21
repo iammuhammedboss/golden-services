@@ -21,6 +21,9 @@ export async function GET(request: NextRequest) {
     }
 
     const jobs = await prisma.jobOrder.findMany({
+      where: {
+        deletedAt: null,
+      },
       orderBy: {
         scheduledDate: 'desc',
       },

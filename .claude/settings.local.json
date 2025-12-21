@@ -25,7 +25,8 @@
       "Bash(npm run build:check:*)",
       "Bash(npm run:*)",
       "Bash(npx prisma migrate:*)",
-      "Bash(del componentsadd-site-dialog.tsx)"
+      "Bash(del componentsadd-site-dialog.tsx)",
+      "Bash(find:*)"
     ],
     "deny": [],
     "ask": []

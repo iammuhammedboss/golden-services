@@ -15,8 +15,11 @@ export async function GET(
   }
 
   try {
-    const job = await prisma.jobOrder.findUnique({
-      where: { id: params.id },
+    const job = await prisma.jobOrder.findFirst({
+      where: {
+        id: params.id,
+        deletedAt: null,
+      },
       include: {
         client: true,
         quotation: true,
@@ -35,6 +38,38 @@ export async function GET(
             include: {
                 equipment: true,
             }
+        },
+        checklistItems: {
+          where: {
+            deletedAt: null,
+          },
+          orderBy: {
+            sortOrder: 'asc',
+          },
+          include: {
+            completedBy: {
+              select: {
+                name: true,
+              },
+            },
+            verifiedBy: {
+              select: {
+                name: true,
+              },
+            },
+          },
+        },
+        statusUpdates: {
+          orderBy: {
+            createdAt: 'desc',
+          },
+          include: {
+            createdBy: {
+              select: {
+                name: true,
+              },
+            },
+          },
         },
       },
     })
@@ -88,7 +123,7 @@ export async function PUT(
                     })),
                 })
             }
-            
+
             if (materials) {
                 await prisma.jobMaterial.deleteMany({
                     where: { jobOrderId: params.id },
@@ -121,6 +156,39 @@ export async function PUT(
         console.error(`Error updating job ${params.id}:`, error)
         return NextResponse.json(
             { error: 'Failed to update job' },
+            { status: 500 }
+        )
+    }
+}
+
+export async function DELETE(
+    request: NextRequest,
+    { params }: { params: { id: string } }
+) {
+    const session = await getServerSession(authOptions)
+    if (!session?.user) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const user = session.user as UserWithRoles
+    if (!canManageJobs(user)) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
+    try {
+        await prisma.jobOrder.update({
+            where: { id: params.id },
+            data: {
+                deletedAt: new Date(),
+                deletedById: user.id,
+            },
+        })
+
+        return NextResponse.json({ message: 'Job deleted successfully' })
+    } catch (error) {
+        console.error(`Error deleting job ${params.id}:`, error)
+        return NextResponse.json(
+            { error: 'Failed to delete job' },
             { status: 500 }
         )
     }
