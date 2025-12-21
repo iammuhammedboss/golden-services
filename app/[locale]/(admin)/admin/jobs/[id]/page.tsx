@@ -218,12 +218,12 @@ export default function JobDetailsPage() {
             <div className="space-y-2">
                 <Label>Quotation</Label>
                 <Select
-                    value={job.quotationId || ''}
-                    onValueChange={(value) => setJob({ ...job, quotationId: value || null })}
+                    value={job.quotationId || '__NONE__'}
+                    onValueChange={(value) => setJob({ ...job, quotationId: value === '__NONE__' ? null : value })}
                 >
                     <SelectTrigger><SelectValue placeholder="Select Quotation" /></SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="">None</SelectItem>
+                        <SelectItem value="__NONE__">None</SelectItem>
                         {quotations.map(q => (
                             <SelectItem key={q.id} value={q.id}>Quotation #{q.id}</SelectItem>
                         ))}
@@ -233,12 +233,12 @@ export default function JobDetailsPage() {
             <div className="space-y-2">
                 <Label>Measurement</Label>
                 <Select
-                    value={job.measurementId || ''}
-                    onValueChange={(value) => setJob({ ...job, measurementId: value || null })}
+                    value={job.measurementId || '__NONE__'}
+                    onValueChange={(value) => setJob({ ...job, measurementId: value === '__NONE__' ? null : value })}
                 >
                     <SelectTrigger><SelectValue placeholder="Select Measurement" /></SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="">None</SelectItem>
+                        <SelectItem value="__NONE__">None</SelectItem>
                         {measurements.map(m => (
                             <SelectItem key={m.id} value={m.id}>Measurement #{m.id}</SelectItem>
                         ))}
