@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { Quotation, Client, Measurement, MeasurementObject } from '@prisma/client'
+import { Quotation, Client, Measurement, MeasurementObject, QuotationItem, TermsTemplate, BankDetailsTemplate } from '@prisma/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -27,18 +27,18 @@ import { Textarea } from '@/components/ui/textarea'
 
 type QuotationWithRelations = Quotation & {
   client: Client | null
-  items: any[]
-  termsTemplate: any | null
-  bankDetailsTemplate: any | null
+  items: QuotationItem[]
+  termsTemplate: TermsTemplate | null
+  bankDetailsTemplate: BankDetailsTemplate | null
 }
 
 export default function QuotationDetailsPage() {
   const [quotation, setQuotation] = useState<any | null>(null)
   const [clients, setClients] = useState<Client[]>([])
   const [measurements, setMeasurements] = useState<Measurement[]>([])
-  const [selectedMeasurement, setSelectedMeasurement] = useState<any | null>(null)
-  const [termsTemplates, setTermsTemplates] = useState<any[]>([])
-  const [bankTemplates, setBankTemplates] = useState<any[]>([])
+  const [selectedMeasurement, setSelectedMeasurement] = useState<(Measurement & { objects: MeasurementObject[] }) | null>(null)
+  const [termsTemplates, setTermsTemplates] = useState<TermsTemplate[]>([])
+  const [bankTemplates, setBankTemplates] = useState<BankDetailsTemplate[]>([])
   const [lineItems, setLineItems] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)

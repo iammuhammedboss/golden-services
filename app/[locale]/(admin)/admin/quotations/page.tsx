@@ -11,7 +11,6 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { prisma } from '@/lib/prisma'
 import { formatDate, formatCurrency, enumToReadable, getStatusColor } from '@/lib/utils'
-import { Decimal } from '@prisma/client/runtime/library'
 import Link from 'next/link'
 
 export default async function QuotationsPage() {
@@ -43,8 +42,8 @@ export default async function QuotationsPage() {
   const quotationsWithTotals = quotations.map((q) => ({
     ...q,
     total: q.items.reduce((sum, item) => {
-      return sum.add(item.total)
-    }, new Decimal(0)),
+      return sum + item.total.toNumber()
+    }, 0),
   }))
 
   const stats = {
@@ -152,7 +151,7 @@ export default async function QuotationsPage() {
                     </TableCell>
                     <TableCell>
                       <div className="text-sm font-medium">
-                        {formatCurrency(quotation.total.toNumber())}
+                        {formatCurrency(quotation.total)}
                       </div>
                     </TableCell>
                     <TableCell>

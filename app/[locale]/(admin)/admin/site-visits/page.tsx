@@ -13,35 +13,20 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { formatDate } from '@/lib/utils'
+import { formatDate, getStatusColor } from '@/lib/utils'
 import Link from 'next/link'
 import { MapPin, Eye, Plus } from 'lucide-react'
+import { SiteVisit, Client, User } from '@prisma/client'
 
-type SiteVisit = {
-  id: string
-  scheduledAt: string
-  startedAt: string | null
-  completedAt: string | null
-  status: string
-  locationText: string | null
-  googleMapsUrl: string | null
-  siteContactName: string | null
-  siteContactPhone: string | null
-  notes: string | null
-  remarks: string | null
-  client: {
-    id: string
-    name: string
-    phone: string
-  }
-  assignedTo: {
-    id: string
-    name: string
-  }
-}
+type SiteVisitWithRelations = SiteVisit & {
+  client: Client;
+  assignedTo: User;
+};
+
+
 
 export default function SiteVisitsPage() {
-  const [siteVisits, setSiteVisits] = useState<SiteVisit[]>([])
+  const [siteVisits, setSiteVisits] = useState<SiteVisitWithRelations[]>([])
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('all')
 
@@ -68,20 +53,7 @@ export default function SiteVisitsPage() {
     }
   }, [activeTab])
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'PENDING':
-        return 'bg-yellow-100 text-yellow-800'
-      case 'IN_PROGRESS':
-        return 'bg-blue-100 text-blue-800'
-      case 'COMPLETED':
-        return 'bg-green-100 text-green-800'
-      case 'CANCELLED':
-        return 'bg-red-100 text-red-800'
-      default:
-        return 'bg-gray-100 text-gray-800'
-    }
-  }
+
 
   const statusCounts = {
     all: siteVisits.length,

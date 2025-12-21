@@ -22,35 +22,15 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { InvoiceItem, Client, JobOrder, QuotationItem } from '@prisma/client'
 
-interface InvoiceItem {
-  description: string
-  quantity: number
-  unitPrice: number
-  total: number
-}
-
-// Define types for better type safety
-interface Client {
-  id: string;
-  name: string;
-  phone: string;
-}
-
-interface Job {
-  id: string;
-  jobNumber: string;
+interface JobOrderWithClient extends JobOrder {
   client: {
     name: string;
   };
 }
 
-interface QuotationItem {
-  description: string;
-  quantity: string | number;
-  unitPrice: string | number;
-  total: string | number;
-}
+
 
 function NewInvoiceForm() {
   const params = useParams()
@@ -59,7 +39,7 @@ function NewInvoiceForm() {
   const locale = (params.locale as string) || 'en'
 
   const [clients, setClients] = useState<Client[]>([])
-  const [jobs, setJobs] = useState<Job[]>([])
+  const [jobs, setJobs] = useState<JobOrderWithClient[]>([])
   const [loading, setLoading] = useState(false)
 
   const [formData, setFormData] = useState({
@@ -71,7 +51,7 @@ function NewInvoiceForm() {
     status: 'DRAFT',
   })
 
-  const [items, setItems] = useState<InvoiceItem[]>([
+  const [items, setItems] = useState<any[]>([
     { description: '', quantity: 1, unitPrice: 0, total: 0 },
   ])
 
@@ -131,7 +111,7 @@ function NewInvoiceForm() {
       }
     }
 
-    const fetchJobs = async (): Promise<Job[]> => {
+    const fetchJobs = async (): Promise<JobOrderWithClient[]> => {
       try {
         const response = await fetch('/api/jobs')
         if (response.ok) {
@@ -148,7 +128,7 @@ function NewInvoiceForm() {
     fetchClients()
     fetchJobs().then((fetchedJobs) => {
       const jobIdFromUrl = searchParams.get('jobId')
-      if (jobIdFromUrl && fetchedJobs?.find((j: Job) => j.id === jobIdFromUrl)) {
+      if (jobIdFromUrl && fetchedJobs?.find((j: JobOrderWithClient) => j.id === jobIdFromUrl)) {
         handleJobChange(jobIdFromUrl)
       }
     })

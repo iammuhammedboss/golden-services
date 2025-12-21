@@ -16,18 +16,9 @@ import {
 } from '@/components/ui/select'
 import { ArrowLeft, Search } from 'lucide-react'
 import Link from 'next/link'
+import { User, Client } from '@prisma/client'
 
-type User = {
-  id: string
-  name: string
-}
 
-type Client = {
-  id: string
-  name: string
-  phone: string
-  email: string | null
-}
 
 export default function NewSiteVisitPage() {
   const router = useRouter()

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { JobOrder, Client, Quotation, Measurement, User, MaterialMaster, EquipmentMaster } from '@prisma/client'
+import { JobOrder, Client, Quotation, Measurement, User, MaterialMaster, EquipmentMaster, JobAssignment, JobMaterial, JobEquipment, ChecklistItem, JobStatusUpdate, JobRole } from '@prisma/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -23,15 +23,19 @@ import {
   } from '@/components/ui/table'
 import { Textarea } from '@/components/ui/textarea'
 
+type JobAssignmentInput = Omit<JobAssignment, 'id' | 'jobOrderId' | 'createdAt' | 'deletedAt'>;
+type JobMaterialInput = Omit<JobMaterial, 'id' | 'jobOrderId' | 'quantity'> & { quantity: number };
+type JobEquipmentInput = Omit<JobEquipment, 'id' | 'jobOrderId'>;
+
 type JobWithRelations = JobOrder & {
   client: Client | null
   quotation: Quotation | null,
   measurement: Measurement | null,
-  assignments: any[],
-  materials: any[],
-  equipment: any[],
-  checklistItems: any[],
-  statusUpdates: any[],
+  assignments: (JobAssignment | JobAssignmentInput)[],
+  materials: (JobMaterial | JobMaterialInput)[],
+  equipment: (JobEquipment | JobEquipmentInput)[],
+  checklistItems: ChecklistItem[],
+  statusUpdates: JobStatusUpdate[],
 }
 
 export default function JobDetailsPage() {
@@ -154,15 +158,15 @@ export default function JobDetailsPage() {
     if(!job) return;
     setJob({
         ...job,
-        materials: [...job.materials, { materialId: '', quantity: 1 }]
+        materials: [...job.materials, { materialId: '', quantity: 1, notes: '' }]
     })
     }
 
-    const addEquipment = () => {
+const addEquipment = () => {
     if(!job) return;
     setJob({
         ...job,
-        equipment: [...job.equipment, { equipmentId: '', quantity: 1 }]
+        equipment: [...job.equipment, { equipmentId: '', quantity: 1, notes: '' }]
     })
   }
 
@@ -350,7 +354,7 @@ export default function JobDetailsPage() {
                                     value={assignment.roleInJob}
                                     onValueChange={(value) => {
                                         const newAssignments = [...job.assignments]
-                                        newAssignments[index].roleInJob = value
+                                        newAssignments[index].roleInJob = value as JobRole
                                         setJob({ ...job, assignments: newAssignments })
                                     }}
                                 >
@@ -411,10 +415,13 @@ export default function JobDetailsPage() {
                             <TableCell>
                                 <Input
                                     type="number"
-                                    value={material.quantity}
+                                    value={typeof material.quantity === 'number' ? material.quantity : material.quantity.toNumber()}
                                     onChange={(e) => {
                                         const newMaterials = [...job.materials]
-                                        newMaterials[index].quantity = parseFloat(e.target.value) || 0
+                                        const material = newMaterials[index];
+                                        if ('quantity' in material) {
+                                            (material.quantity as number) = parseFloat(e.target.value) || 0
+                                        }
                                         setJob({ ...job, materials: newMaterials })
                                     }}
                                 />

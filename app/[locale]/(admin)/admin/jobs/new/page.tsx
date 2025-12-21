@@ -14,6 +14,8 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Client, User, MaterialMaster, EquipmentMaster } from '@prisma/client'
+import { QuotationWithClient } from '@/types/schedule'
 import { AddClientDialog } from '@/components/add-client-dialog'
 
 export default function NewJobPage() {
@@ -21,11 +23,11 @@ export default function NewJobPage() {
   const router = useRouter()
   const locale = (params.locale as string) || 'en'
 
-  const [clients, setClients] = useState<any[]>([])
-  const [quotations, setQuotations] = useState<any[]>([])
-  const [users, setUsers] = useState<any[]>([])
-  const [materials, setMaterials] = useState<any[]>([])
-  const [equipment, setEquipment] = useState<any[]>([])
+  const [clients, setClients] = useState<Client[]>([])
+const [quotations, setQuotations] = useState<QuotationWithClient[]>([]);
+  const [users, setUsers] = useState<User[]>([])
+  const [materials, setMaterials] = useState<MaterialMaster[]>([])
+  const [equipment, setEquipment] = useState<EquipmentMaster[]>([]);
   const [loading, setLoading] = useState(false)
 
   const [formData, setFormData] = useState({

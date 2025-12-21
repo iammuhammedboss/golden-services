@@ -27,7 +27,7 @@ export default async function UsersPage() {
 
   // Fetch user with roles
   // Note: We cast to 'any' to avoid TS errors if types/next-auth.d.ts isn't set up yet
-  const userId = (session.user as any).id
+  const userId = session.user.id
 
   const currentUser = await prisma.user.findUnique({
     where: { id: userId },
