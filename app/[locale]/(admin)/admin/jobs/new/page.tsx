@@ -490,6 +490,21 @@ export default function NewJobPage() {
               rows={3}
             />
           </div>
+
+          {/* Submit Button */}
+          <div className="flex justify-end gap-4 pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => router.push(`/${locale}/admin/jobs`)}
+              disabled={loading}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" disabled={loading}>
+              {loading ? 'Creating...' : 'Create Job Order'}
+            </Button>
+          </div>
         </div>
       </form>
     </div>
