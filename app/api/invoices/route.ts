@@ -94,17 +94,11 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Generate invoice number (INV-YYYYMMDD-XXX format)
-    const today = new Date()
-    const dateStr = today.toISOString().split('T')[0].replace(/-/g, '')
-    const count = await prisma.invoice.count({
-      where: {
-        invoiceNumber: {
-          startsWith: `INV-${dateStr}`,
-        },
-      },
-    })
-    const invoiceNumber = `INV-${dateStr}-${String(count + 1).padStart(3, '0')}`
+    // Generate invoice number (GSINV-XXXXXXXXXX format)
+    // Get the total count of all invoices to generate sequential number
+    const totalCount = await prisma.invoice.count()
+    const sequentialNumber = String(totalCount + 1).padStart(10, '0')
+    const invoiceNumber = `GSINV-${sequentialNumber}`
 
     // Calculate totals
     const subtotal = items.reduce(

@@ -6,6 +6,8 @@ import { canViewQuotations } from '@/lib/permissions'
 import type { UserWithRoles } from '@/lib/permissions'
 import { renderToStream } from '@react-pdf/renderer'
 import { QuotationPDF } from '@/lib/pdf-templates/quotation-pdf'
+import { QuotationPDFEnhanced, PDFMode } from '@/lib/pdf-templates/quotation-pdf-enhanced'
+import { getSalesExecutiveId } from '@/lib/sales-executive'
 
 // GET /api/quotations/[id]/download - Download quotation as PDF
 export async function GET(
@@ -28,7 +30,11 @@ export async function GET(
       )
     }
 
-    // Fetch quotation with all related data
+    // Get PDF mode from query parameter (default: plain-model)
+    const { searchParams } = new URL(request.url)
+    const mode = (searchParams.get('mode') || 'plain-model') as PDFMode
+
+    // Fetch quotation with all related data including creator
     const quotation = await prisma.quotation.findUnique({
       where: { id: params.id },
       include: {
@@ -45,6 +51,11 @@ export async function GET(
             phone: true,
           },
         },
+        createdBy: {
+          select: {
+            name: true,
+          },
+        },
         items: {
           orderBy: {
             createdAt: 'asc',
@@ -59,6 +70,9 @@ export async function GET(
 
     // Calculate total
     const total = quotation.items.reduce((sum, item) => sum + Number(item.total), 0)
+
+    // Get sales executive ID from creator name
+    const salesExecutiveId = getSalesExecutiveId(quotation.createdBy?.name)
 
     // Prepare data for PDF template
     const quotationData = {
@@ -78,12 +92,14 @@ export async function GET(
       total,
       notes: quotation.notes,
       status: quotation.status,
+      createdBy: quotation.createdBy,
+      salesExecutiveId,
     }
 
-    // Generate PDF stream
+    // Generate PDF stream using enhanced template
     let stream
     try {
-      stream = await renderToStream(<QuotationPDF quotation={quotationData} />)
+      stream = await renderToStream(<QuotationPDFEnhanced quotation={quotationData} mode={mode} />)
     } catch (error) {
       console.error('Error rendering PDF stream:', error)
       return NextResponse.json(

@@ -6,6 +6,8 @@ import { canViewInvoices } from '@/lib/permissions'
 import type { UserWithRoles } from '@/lib/permissions'
 import { renderToStream } from '@react-pdf/renderer'
 import { InvoicePDF } from '@/lib/pdf-templates/invoice-pdf'
+import { InvoicePDFEnhanced, PDFMode } from '@/lib/pdf-templates/invoice-pdf-enhanced'
+import { getSalesExecutiveId } from '@/lib/sales-executive'
 
 // GET /api/invoices/[id]/download - Download invoice as PDF
 export async function GET(
@@ -28,12 +30,21 @@ export async function GET(
       )
     }
 
-    // Fetch invoice with all related data
+    // Get PDF mode from query parameter (default: plain-model)
+    const { searchParams } = new URL(request.url)
+    const mode = (searchParams.get('mode') || 'plain-model') as PDFMode
+
+    // Fetch invoice with all related data including creator
     const invoice = await prisma.invoice.findUnique({
       where: { id: params.id },
       include: {
         client: true,
         jobOrder: true,
+        createdBy: {
+          select: {
+            name: true,
+          },
+        },
         items: {
           orderBy: {
             createdAt: 'asc',
@@ -45,6 +56,9 @@ export async function GET(
     if (!invoice) {
       return NextResponse.json({ error: 'Invoice not found' }, { status: 404 })
     }
+
+    // Get sales executive ID from creator name
+    const salesExecutiveId = getSalesExecutiveId(invoice.createdBy?.name)
 
     // Prepare data for PDF template
     const invoiceData = {
@@ -73,12 +87,14 @@ export async function GET(
       total: Number(invoice.total),
       notes: invoice.notes,
       status: invoice.status,
+      createdBy: invoice.createdBy,
+      salesExecutiveId,
     }
 
-    // Generate PDF stream
+    // Generate PDF stream using enhanced template
     let stream
     try {
-      stream = await renderToStream(<InvoicePDF invoice={invoiceData} />)
+      stream = await renderToStream(<InvoicePDFEnhanced invoice={invoiceData} mode={mode} />)
     } catch (error) {
       console.error('Error rendering PDF stream:', error)
       return NextResponse.json(
