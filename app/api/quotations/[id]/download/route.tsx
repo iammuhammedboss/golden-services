@@ -77,7 +77,7 @@ export async function GET(
     // Prepare data for PDF template
     const quotationData = {
       id: quotation.id,
-      quotationNumber: `Q-${quotation.id.substring(0, 8).toUpperCase()}`,
+      quotationNumber: quotation.quotationNumber || `Q-${quotation.id.substring(0, 8).toUpperCase()}`,
       createdAt: quotation.createdAt.toISOString(),
       validUntil: quotation.validUntil ? quotation.validUntil.toISOString() : null,
       client: quotation.client,

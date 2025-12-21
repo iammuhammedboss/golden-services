@@ -127,6 +127,11 @@ export async function POST(request: NextRequest) {
 
     const version = latestQuotation ? latestQuotation.version + 1 : 1
 
+    // Generate quotation number (GSQ-XXXXXXXXXX format)
+    const totalCount = await prisma.quotation.count()
+    const sequentialNumber = String(totalCount + 1).padStart(10, '0')
+    const quotationNumber = `GSQ-${sequentialNumber}`
+
     let termsSnapshot: string | undefined = undefined;
     if (termsTemplateId) {
         const template = await prisma.termsTemplate.findUnique({
@@ -150,6 +155,7 @@ export async function POST(request: NextRequest) {
     // Create quotation with items
     const quotation = await prisma.quotation.create({
       data: {
+        quotationNumber,
         clientId,
         measurementId: measurementId || null,
         version,

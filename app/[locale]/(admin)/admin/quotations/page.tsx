@@ -172,7 +172,7 @@ export default async function QuotationsPage() {
                     </TableCell>
                     <TableCell className="text-right">
                       <Button variant="ghost" size="sm" asChild>
-                        <Link href={`/admin/quotations/${quotation.id}`}>View</Link>
+                        <Link href={`/admin/quotations/${quotation.id}/view`}>View</Link>
                       </Button>
                     </TableCell>
                   </TableRow>

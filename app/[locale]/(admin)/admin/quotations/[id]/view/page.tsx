@@ -26,49 +26,51 @@ import {
 import { formatDate, formatCurrency, enumToReadable, getStatusColor } from '@/lib/utils'
 import { InlineLoader } from '@/components/loading-screen'
 
-export default function InvoiceDetailPage() {
+export default function QuotationViewPage() {
   const params = useParams()
   const router = useRouter()
   const locale = (params.locale as string) || 'en'
-  const invoiceId = params.id as string
-  const [invoice, setInvoice] = useState<any>(null)
+  const quotationId = params.id as string
+  const [quotation, setQuotation] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const printRef = useRef<HTMLDivElement>(null)
 
-  const fetchInvoice = useCallback(async () => {
+  const fetchQuotation = useCallback(async () => {
     try {
-      const response = await fetch(`/api/invoices/${invoiceId}`)
+      const response = await fetch(`/api/quotations/${quotationId}`)
       if (response.ok) {
         const data = await response.json()
-        setInvoice(data)
+        setQuotation(data)
       } else {
-        console.error('Failed to fetch invoice')
+        console.error('Failed to fetch quotation')
       }
     } catch (error) {
-      console.error('Error fetching invoice:', error)
+      console.error('Error fetching quotation:', error)
     } finally {
       setLoading(false)
     }
-  }, [invoiceId])
+  }, [quotationId])
 
   useEffect(() => {
-    fetchInvoice()
-  }, [fetchInvoice])
+    fetchQuotation()
+  }, [fetchQuotation])
 
   const handlePrint = useReactToPrint({
     contentRef: printRef,
-    documentTitle: invoice ? `Invoice-${invoice.invoiceNumber}` : 'Invoice',
+    documentTitle: quotation ? `Quotation-${quotation.quotationNumber || quotation.id}` : 'Quotation',
   })
 
   const handleShareWhatsApp = () => {
-    if (!invoice) return
+    if (!quotation) return
 
-    const message = `*Invoice ${invoice.invoiceNumber}*%0A%0A` +
-      `Client: ${invoice.client.name}%0A` +
-      `Amount: ${formatCurrency(Number(invoice.total))}%0A` +
-      `Due Date: ${invoice.dueDate ? formatDate(new Date(invoice.dueDate), 'PP') : 'N/A'}%0A` +
-      `Status: ${enumToReadable(invoice.status)}%0A%0A` +
-      `View full invoice: ${window.location.href}`
+    const total = quotation.items.reduce((sum: number, item: any) => sum + Number(item.total), 0)
+
+    const message = `*Quotation ${quotation.quotationNumber || `Q-${quotation.id.substring(0, 8).toUpperCase()}`}*%0A%0A` +
+      `Client: ${quotation.client?.name || quotation.lead?.name || 'N/A'}%0A` +
+      `Amount: ${formatCurrency(total)}%0A` +
+      `Valid Until: ${quotation.validUntil ? formatDate(new Date(quotation.validUntil), 'PP') : 'N/A'}%0A` +
+      `Status: ${enumToReadable(quotation.status)}%0A%0A` +
+      `View full quotation: ${window.location.href}`
 
     const whatsappUrl = `https://wa.me/?text=${message}`
     window.open(whatsappUrl, '_blank')
@@ -76,35 +78,36 @@ export default function InvoiceDetailPage() {
 
   const handleUpdateStatus = async (newStatus: string) => {
     try {
-      const response = await fetch(`/api/invoices/${invoiceId}`, {
+      const response = await fetch(`/api/quotations/${quotationId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus }),
       })
 
       if (response.ok) {
-        fetchInvoice()
+        fetchQuotation()
       }
     } catch (error) {
       console.error('Error updating status:', error)
     }
   }
 
-
   if (loading) {
-    return <InlineLoader message="Loading invoice details..." />
+    return <InlineLoader message="Loading quotation details..." />
   }
 
-  if (!invoice) {
+  if (!quotation) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen gap-4">
-        <p className="text-muted-foreground">Invoice not found</p>
-        <Button onClick={() => router.push(`/${locale}/admin/invoices`)}>
-          Back to Invoices
+        <p className="text-muted-foreground">Quotation not found</p>
+        <Button onClick={() => router.push(`/${locale}/admin/quotations`)}>
+          Back to Quotations
         </Button>
       </div>
     )
   }
+
+  const total = quotation.items.reduce((sum: number, item: any) => sum + Number(item.total), 0)
 
   return (
     <div className="space-y-6">
@@ -112,11 +115,30 @@ export default function InvoiceDetailPage() {
       <div className="flex items-center justify-between">
         <Button
           variant="outline"
-          onClick={() => router.push(`/${locale}/admin/invoices`)}
+          onClick={() => router.push(`/${locale}/admin/quotations`)}
         >
-          ← Back to Invoices
+          ← Back to Quotations
         </Button>
         <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => router.push(`/${locale}/admin/quotations/${quotationId}`)}
+          >
+            <svg
+              className="mr-2 h-4 w-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+              />
+            </svg>
+            Edit
+          </Button>
           <Button variant="outline" onClick={handlePrint}>
             <svg
               className="mr-2 h-4 w-4"
@@ -169,7 +191,7 @@ export default function InvoiceDetailPage() {
               <DropdownMenuLabel>PDF Format</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
-                <a href={`/api/invoices/${invoiceId}/download?mode=plain-model`} target="_blank" rel="noopener noreferrer" className="cursor-pointer">
+                <a href={`/api/quotations/${quotationId}/download?mode=plain-model`} target="_blank" rel="noopener noreferrer" className="cursor-pointer">
                   <svg className="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
@@ -178,7 +200,7 @@ export default function InvoiceDetailPage() {
                 </a>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <a href={`/api/invoices/${invoiceId}/download?mode=letterhead`} target="_blank" rel="noopener noreferrer" className="cursor-pointer">
+                <a href={`/api/quotations/${quotationId}/download?mode=letterhead`} target="_blank" rel="noopener noreferrer" className="cursor-pointer">
                   <svg className="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                   </svg>
@@ -187,7 +209,7 @@ export default function InvoiceDetailPage() {
                 </a>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <a href={`/api/invoices/${invoiceId}/download?mode=plain`} target="_blank" rel="noopener noreferrer" className="cursor-pointer">
+                <a href={`/api/quotations/${quotationId}/download?mode=plain`} target="_blank" rel="noopener noreferrer" className="cursor-pointer">
                   <svg className="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
@@ -197,20 +219,20 @@ export default function InvoiceDetailPage() {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          {invoice.status === 'DRAFT' && (
+          {quotation.status === 'DRAFT' && (
             <Button onClick={() => handleUpdateStatus('SENT')}>
               Mark as Sent
             </Button>
           )}
-          {invoice.status === 'SENT' && (
-            <Button onClick={() => handleUpdateStatus('PAID')}>
-              Mark as Paid
+          {quotation.status === 'SENT' && (
+            <Button onClick={() => handleUpdateStatus('ACCEPTED')}>
+              Mark as Accepted
             </Button>
           )}
         </div>
       </div>
 
-      {/* Printable Invoice */}
+      {/* Printable Quotation */}
       <div ref={printRef} className="bg-white">
         <Card>
           <CardHeader className="border-b">
@@ -224,10 +246,10 @@ export default function InvoiceDetailPage() {
                   className="h-15 w-auto"
                 />
                 <div>
-                  <CardTitle className="text-3xl font-bold">INVOICE</CardTitle>
-                  <p className="text-lg mt-2">{invoice.invoiceNumber}</p>
-                  <Badge className={`mt-2 ${getStatusColor(invoice.status)}`}>
-                    {enumToReadable(invoice.status)}
+                  <CardTitle className="text-3xl font-bold">QUOTATION</CardTitle>
+                  <p className="text-lg mt-2">{quotation.quotationNumber || `Q-${quotation.id.substring(0, 8).toUpperCase()}`}</p>
+                  <Badge className={`mt-2 ${getStatusColor(quotation.status)}`}>
+                    {enumToReadable(quotation.status)}
                   </Badge>
                 </div>
               </div>
@@ -243,33 +265,35 @@ export default function InvoiceDetailPage() {
           </CardHeader>
 
           <CardContent className="pt-6">
-            {/* Bill To & Invoice Details */}
+            {/* Quote To & Quotation Details */}
             <div className="grid grid-cols-2 gap-8 mb-8">
               <div>
                 <h3 className="font-semibold text-sm text-muted-foreground mb-2">
-                  BILL TO:
+                  QUOTE TO:
                 </h3>
-                <p className="font-semibold text-lg">{invoice.client.name}</p>
-                <p className="text-sm text-muted-foreground">{invoice.client.phone}</p>
-                {invoice.client.email && (
-                  <p className="text-sm text-muted-foreground">{invoice.client.email}</p>
+                <p className="font-semibold text-lg">{quotation.client?.name || quotation.lead?.name || 'N/A'}</p>
+                <p className="text-sm text-muted-foreground">
+                  {quotation.client?.phone || quotation.lead?.phone || 'N/A'}
+                </p>
+                {quotation.client?.email && (
+                  <p className="text-sm text-muted-foreground">{quotation.client.email}</p>
                 )}
               </div>
               <div className="text-right">
                 <div className="mb-2">
-                  <span className="text-sm text-muted-foreground">Issue Date:</span>
-                  <p className="font-medium">{formatDate(new Date(invoice.issueDate), 'PP')}</p>
+                  <span className="text-sm text-muted-foreground">Created Date:</span>
+                  <p className="font-medium">{formatDate(new Date(quotation.createdAt), 'PP')}</p>
                 </div>
-                {invoice.dueDate && (
+                {quotation.validUntil && (
                   <div className="mb-2">
-                    <span className="text-sm text-muted-foreground">Due Date:</span>
-                    <p className="font-medium">{formatDate(new Date(invoice.dueDate), 'PP')}</p>
+                    <span className="text-sm text-muted-foreground">Valid Until:</span>
+                    <p className="font-medium">{formatDate(new Date(quotation.validUntil), 'PP')}</p>
                   </div>
                 )}
-                {invoice.jobOrder && (
+                {quotation.createdBy && (
                   <div>
-                    <span className="text-sm text-muted-foreground">Job Number:</span>
-                    <p className="font-medium">{invoice.jobOrder.jobNumber}</p>
+                    <span className="text-sm text-muted-foreground">Created By:</span>
+                    <p className="font-medium">{quotation.createdBy.name}</p>
                   </div>
                 )}
               </div>
@@ -281,15 +305,17 @@ export default function InvoiceDetailPage() {
                 <TableRow>
                   <TableHead>Description</TableHead>
                   <TableHead className="text-right">Quantity</TableHead>
+                  <TableHead className="text-right">Unit</TableHead>
                   <TableHead className="text-right">Unit Price</TableHead>
                   <TableHead className="text-right">Total</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {invoice.items.map((item: any) => (
+                {quotation.items.map((item: any) => (
                   <TableRow key={item.id}>
                     <TableCell>{item.description}</TableCell>
                     <TableCell className="text-right">{Number(item.quantity).toFixed(2)}</TableCell>
+                    <TableCell className="text-right">{item.unit}</TableCell>
                     <TableCell className="text-right">{formatCurrency(Number(item.unitPrice))}</TableCell>
                     <TableCell className="text-right">{formatCurrency(Number(item.total))}</TableCell>
                   </TableRow>
@@ -297,37 +323,45 @@ export default function InvoiceDetailPage() {
               </TableBody>
             </Table>
 
-            {/* Totals */}
+            {/* Total */}
             <div className="mt-8 flex justify-end">
               <div className="w-64 space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Subtotal:</span>
-                  <span className="font-medium">{formatCurrency(Number(invoice.subtotal))}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Tax:</span>
-                  <span className="font-medium">{formatCurrency(Number(invoice.tax))}</span>
-                </div>
                 <div className="border-t border-gold-400 pt-2 flex justify-between">
-                  <span className="font-semibold text-lg">Total ({invoice.currency}):</span>
+                  <span className="font-semibold text-lg">Total (OMR):</span>
                   <span className="font-bold text-lg text-gold-600">
-                    {formatCurrency(Number(invoice.total))}
+                    {formatCurrency(total)}
                   </span>
                 </div>
               </div>
             </div>
 
             {/* Notes */}
-            {invoice.notes && (
+            {quotation.notes && (
               <div className="mt-8 pt-8 border-t">
                 <h3 className="font-semibold text-sm text-muted-foreground mb-2">NOTES:</h3>
-                <p className="text-sm whitespace-pre-wrap">{invoice.notes}</p>
+                <p className="text-sm whitespace-pre-wrap">{quotation.notes}</p>
+              </div>
+            )}
+
+            {/* Terms & Conditions */}
+            {quotation.termsSnapshot && (
+              <div className="mt-8 pt-8 border-t">
+                <h3 className="font-semibold text-sm text-muted-foreground mb-2">TERMS & CONDITIONS:</h3>
+                <p className="text-sm whitespace-pre-wrap">{quotation.termsSnapshot}</p>
+              </div>
+            )}
+
+            {/* Bank Details */}
+            {quotation.bankDetailsSnapshot && (
+              <div className="mt-8 pt-8 border-t">
+                <h3 className="font-semibold text-sm text-muted-foreground mb-2">BANK DETAILS:</h3>
+                <p className="text-sm whitespace-pre-wrap">{quotation.bankDetailsSnapshot}</p>
               </div>
             )}
 
             {/* Footer */}
             <div className="mt-12 pt-8 border-t text-center text-sm text-muted-foreground">
-              <p>Thank you for your business!</p>
+              <p>Thank you for considering our services!</p>
               <p className="mt-1">For questions, contact us at info@goldenservices.om</p>
             </div>
           </CardContent>

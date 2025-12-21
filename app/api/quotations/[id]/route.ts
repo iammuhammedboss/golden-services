@@ -20,7 +20,14 @@ export async function GET(
       where: { id: params.id },
       include: {
         client: true,
+        lead: true,
         items: true,
+        createdBy: {
+          select: {
+            name: true,
+            email: true,
+          },
+        },
       },
     })
 
@@ -88,5 +95,64 @@ export async function PUT(
             { error: 'Failed to update quotation' },
             { status: 500 }
         )
+    }
+}
+
+export async function PATCH(
+    request: NextRequest,
+    { params }: { params: { id: string } }
+) {
+    try {
+        const session = await getServerSession(authOptions)
+
+        if (!session?.user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        }
+
+        const user = session.user as UserWithRoles
+
+        if (!canManageQuotations(user)) {
+            return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+        }
+
+        const body = await request.json()
+        const { status, validUntil, notes } = body
+
+        // Update quotation
+        const updateData: any = {}
+        if (status) updateData.status = status
+        if (validUntil !== undefined) updateData.validUntil = validUntil ? new Date(validUntil) : null
+        if (notes !== undefined) updateData.notes = notes
+
+        const quotation = await prisma.quotation.update({
+            where: { id: params.id },
+            data: updateData,
+            include: {
+                client: {
+                    select: {
+                        name: true,
+                        phone: true,
+                        email: true,
+                    },
+                },
+                lead: {
+                    select: {
+                        name: true,
+                        phone: true,
+                    },
+                },
+                items: true,
+                createdBy: {
+                    select: {
+                        name: true,
+                    },
+                },
+            },
+        })
+
+        return NextResponse.json(quotation)
+    } catch (error) {
+        console.error('PATCH /api/quotations/[id] error:', error)
+        return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
     }
 }

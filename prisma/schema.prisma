@@ -578,6 +578,7 @@ model Photo {
 
 model Quotation {
   id            String          @id @default(cuid())
+  quotationNumber String?       @unique
   clientId      String
   measurementId String?
   version       Int             @default(1) // Multiple versions per client
