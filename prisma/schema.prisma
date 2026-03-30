@@ -588,6 +588,39 @@ model AmcVisit {
   @@map("amc_visits")
 }
 
+// ============================================
+// JOB ADJUSTMENT MODELS (On-site additions/deductions)
+// ============================================
+
+enum JobAdjustmentType {
+  ADDITION
+  DEDUCTION
+}
+
+model JobAdjustment {
+  id              String            @id @default(cuid())
+  jobOrderId      String
+  type            JobAdjustmentType
+  description     String
+  quantity        Decimal           @db.Decimal(10, 2) @default(1)
+  unitPrice       Decimal           @db.Decimal(10, 3)
+  total           Decimal           @db.Decimal(10, 3)
+  reason          String?           // Required for deductions
+  createdById     String
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  deletedAt       DateTime?
+  deletedById     String?
+
+  jobOrder        JobOrder          @relation(fields: [jobOrderId], references: [id], onDelete: Cascade)
+  createdBy       User              @relation(fields: [createdById], references: [id])
+
+  @@index([jobOrderId])
+  @@index([type])
+  @@index([deletedAt])
+  @@map("job_adjustments")
+}
+
 model SiteVisit {
   id               String            @id @default(cuid())
   clientId         String
@@ -785,6 +818,7 @@ model JobOrder {
   materials         JobMaterial[]
   scheduleEntries    ScheduleEntry[]
   amcVisit           AmcVisit?
+  adjustments        JobAdjustment[]
 
   @@index([status])
   @@index([paymentStatus])
@@ -1109,6 +1143,7 @@ model User {
   createdScheduleEntries ScheduleEntry[]
   assignedScheduleEntries ScheduleEntryAssignee[]
   scheduleReminders    ScheduleReminder[]
+  jobAdjustments       JobAdjustment[]
 
   @@index([email])
   @@index([deletedAt])

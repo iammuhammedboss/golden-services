@@ -72,6 +72,13 @@ export async function GET(
             },
           },
         },
+        adjustments: {
+          where: { deletedAt: null },
+          orderBy: { createdAt: 'desc' },
+          include: {
+            createdBy: { select: { name: true } },
+          },
+        },
       },
     })
 

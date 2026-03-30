@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Textarea } from '@/components/ui/textarea'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { useRealtimeEvents } from '@/hooks/use-realtime-events'
 import { formatDate, formatTime } from '@/lib/utils'
 
@@ -28,24 +30,28 @@ export default function FieldJobPage() {
   const [job, setJob] = useState<any>(null)
   const [statusUpdates, setStatusUpdates] = useState<any[]>([])
   const [photos, setPhotos] = useState<any[]>([])
+  const [adjustments, setAdjustments] = useState<any>({ adjustments: [], summary: { additions: 0, deductions: 0, net: 0 } })
   const [loading, setLoading] = useState(true)
   const [note, setNote] = useState('')
   const [progressPercent, setProgressPercent] = useState(0)
-  const [activeTab, setActiveTab] = useState<'feed' | 'photos' | 'checklist'>('feed')
+  const [activeTab, setActiveTab] = useState<'feed' | 'photos' | 'checklist' | 'adjust'>('feed')
   const [submitting, setSubmitting] = useState(false)
+  const [adjForm, setAdjForm] = useState({ type: 'ADDITION', description: '', quantity: '1', unitPrice: '', reason: '' })
   const params = useParams()
   const jobId = params.id as string
 
   const fetchJob = useCallback(async () => {
     try {
-      const [jobRes, updatesRes, photosRes] = await Promise.all([
+      const [jobRes, updatesRes, photosRes, adjRes] = await Promise.all([
         fetch(`/api/jobs/${jobId}`),
         fetch(`/api/jobs/${jobId}/status-updates`),
         fetch(`/api/jobs/${jobId}/photos`),
+        fetch(`/api/jobs/${jobId}/adjustments`),
       ])
       if (jobRes.ok) setJob(await jobRes.json())
       if (updatesRes.ok) setStatusUpdates(await updatesRes.json())
       if (photosRes.ok) setPhotos(await photosRes.json())
+      if (adjRes.ok) setAdjustments(await adjRes.json())
     } catch (error) {
       console.error('Failed to fetch job:', error)
     } finally {
@@ -217,17 +223,17 @@ export default function FieldJobPage() {
 
       {/* Tab Navigation */}
       <div className="flex rounded-lg border bg-muted p-1">
-        {(['feed', 'photos', 'checklist'] as const).map((tab) => (
+        {(['feed', 'photos', 'checklist', 'adjust'] as const).map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`flex-1 rounded-md py-2 text-sm font-medium transition-colors ${
+            className={`flex-1 rounded-md py-2 text-xs font-medium transition-colors sm:text-sm ${
               activeTab === tab
                 ? 'bg-background shadow-sm'
                 : 'text-muted-foreground'
             }`}
           >
-            {tab === 'feed' ? 'Status' : tab === 'photos' ? 'Photos' : 'Checklist'}
+            {tab === 'feed' ? 'Status' : tab === 'photos' ? 'Photos' : tab === 'checklist' ? 'Tasks' : 'Adjust'}
           </button>
         ))}
       </div>
@@ -422,6 +428,163 @@ export default function FieldJobPage() {
             )}
           </CardContent>
         </Card>
+      )}
+
+      {activeTab === 'adjust' && (
+        <div className="space-y-4">
+          {/* Add/Deduct Form */}
+          <Card>
+            <CardContent className="p-4 space-y-3">
+              <p className="text-sm font-medium">Add or Deduct Item</p>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setAdjForm({ ...adjForm, type: 'ADDITION' })}
+                  className={`flex-1 rounded-lg border py-2 text-sm font-medium ${
+                    adjForm.type === 'ADDITION' ? 'border-green-500 bg-green-50 text-green-700' : ''
+                  }`}
+                >
+                  + Add
+                </button>
+                <button
+                  onClick={() => setAdjForm({ ...adjForm, type: 'DEDUCTION' })}
+                  className={`flex-1 rounded-lg border py-2 text-sm font-medium ${
+                    adjForm.type === 'DEDUCTION' ? 'border-red-500 bg-red-50 text-red-700' : ''
+                  }`}
+                >
+                  - Deduct
+                </button>
+              </div>
+              <div>
+                <Label className="text-xs">Description</Label>
+                <Input
+                  value={adjForm.description}
+                  onChange={(e) => setAdjForm({ ...adjForm, description: e.target.value })}
+                  placeholder="e.g., Extra carpet cleaning"
+                  className="mt-1"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Label className="text-xs">Qty</Label>
+                  <Input
+                    type="number"
+                    value={adjForm.quantity}
+                    onChange={(e) => setAdjForm({ ...adjForm, quantity: e.target.value })}
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs">Price (OMR)</Label>
+                  <Input
+                    type="number"
+                    step="0.001"
+                    value={adjForm.unitPrice}
+                    onChange={(e) => setAdjForm({ ...adjForm, unitPrice: e.target.value })}
+                    className="mt-1"
+                  />
+                </div>
+              </div>
+              {adjForm.type === 'DEDUCTION' && (
+                <div>
+                  <Label className="text-xs">Reason</Label>
+                  <select
+                    value={adjForm.reason}
+                    onChange={(e) => setAdjForm({ ...adjForm, reason: e.target.value })}
+                    className="mt-1 w-full rounded-md border px-3 py-2 text-sm"
+                  >
+                    <option value="">Select reason...</option>
+                    <option value="Customer cancelled">Customer cancelled</option>
+                    <option value="Not accessible">Not accessible</option>
+                    <option value="Already clean">Already clean</option>
+                    <option value="Not needed">Not needed</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+              )}
+              <Button
+                className="w-full"
+                disabled={submitting || !adjForm.description || !adjForm.unitPrice || (adjForm.type === 'DEDUCTION' && !adjForm.reason)}
+                onClick={async () => {
+                  setSubmitting(true)
+                  try {
+                    await fetch(`/api/jobs/${jobId}/adjustments`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify(adjForm),
+                    })
+                    setAdjForm({ type: 'ADDITION', description: '', quantity: '1', unitPrice: '', reason: '' })
+                    await fetchJob()
+                  } finally {
+                    setSubmitting(false)
+                  }
+                }}
+              >
+                {adjForm.type === 'ADDITION' ? 'Add Item' : 'Deduct Item'}
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Adjustments Summary */}
+          {adjustments.adjustments.length > 0 && (
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex justify-between border-b pb-2 text-sm">
+                  <span className="text-muted-foreground">Additions</span>
+                  <span className="font-medium text-green-600">+{adjustments.summary.additions.toFixed(3)} OMR</span>
+                </div>
+                <div className="flex justify-between border-b py-2 text-sm">
+                  <span className="text-muted-foreground">Deductions</span>
+                  <span className="font-medium text-red-600">-{adjustments.summary.deductions.toFixed(3)} OMR</span>
+                </div>
+                <div className="flex justify-between pt-2 text-sm font-bold">
+                  <span>Net Adjustment</span>
+                  <span className={adjustments.summary.net >= 0 ? 'text-green-600' : 'text-red-600'}>
+                    {adjustments.summary.net >= 0 ? '+' : ''}{adjustments.summary.net.toFixed(3)} OMR
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Adjustments List */}
+          <Card>
+            <CardContent className="p-4">
+              <p className="mb-3 text-sm font-medium">History</p>
+              {adjustments.adjustments.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No adjustments yet</p>
+              ) : (
+                <div className="space-y-2">
+                  {adjustments.adjustments.map((adj: any) => (
+                    <div
+                      key={adj.id}
+                      className={`rounded-lg border p-3 ${
+                        adj.type === 'ADDITION' ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <p className="text-sm font-medium">{adj.description}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {adj.quantity} x {Number(adj.unitPrice).toFixed(3)} OMR
+                          </p>
+                          {adj.reason && (
+                            <p className="mt-1 text-xs text-muted-foreground">Reason: {adj.reason}</p>
+                          )}
+                        </div>
+                        <span className={`text-sm font-bold ${adj.type === 'ADDITION' ? 'text-green-600' : 'text-red-600'}`}>
+                          {adj.type === 'ADDITION' ? '+' : '-'}{Number(adj.total).toFixed(3)}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        by {adj.createdBy?.name} - {formatDate(adj.createdAt)}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       )}
 
       {/* Finish Job Button */}
