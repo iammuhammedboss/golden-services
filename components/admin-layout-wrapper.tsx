@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { SplashScreen } from './splash-screen'
 import { AdminSidebar } from './admin-sidebar'
 import { AdminHeader } from './admin-header'
+import { OfflineIndicator } from './offline-indicator'
 
 export function AdminLayoutWrapper({ children }: { children: React.ReactNode }) {
   const [showSplash, setShowSplash] = useState(false)
@@ -32,6 +33,7 @@ export function AdminLayoutWrapper({ children }: { children: React.ReactNode }) 
           <AdminHeader onMenuToggle={() => setSidebarOpen(!sidebarOpen)} />
           <main className="flex-1 p-3 md:p-6">{children}</main>
         </div>
+        <OfflineIndicator />
       </div>
     </>
   )
