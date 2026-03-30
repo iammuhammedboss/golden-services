@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
+import { useRealtimeEvents } from '@/hooks/use-realtime-events'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -33,10 +34,14 @@ export function NotificationBell() {
 
   useEffect(() => {
     fetchNotifications()
-    // Optional: Poll for new notifications every minute
-    const interval = setInterval(fetchNotifications, 60000)
-    return () => clearInterval(interval)
   }, [])
+
+  // Real-time: refresh notifications on any relevant event
+  useRealtimeEvents({
+    onNotificationCreated: useCallback(() => fetchNotifications(), []),
+    onJobStatusChanged: useCallback(() => fetchNotifications(), []),
+    onPaymentReceived: useCallback(() => fetchNotifications(), []),
+  })
 
   const handleMarkAsRead = async (id: string) => {
     try {

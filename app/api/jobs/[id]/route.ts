@@ -4,6 +4,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { canManageJobs } from '@/lib/permissions'
 import type { UserWithRoles } from '@/lib/permissions'
+import { emitEvent } from '@/lib/events/emit'
 
 export async function GET(
   request: NextRequest,
@@ -106,6 +107,12 @@ export async function PUT(
         const body = await request.json()
         const { assignments, materials, equipment, ...jobData } = body
 
+        // Fetch current job to detect status changes
+        const currentJob = await prisma.jobOrder.findUnique({
+            where: { id: params.id },
+            select: { status: true, jobNumber: true },
+        })
+
         const updatedJob = await prisma.$transaction(async (prisma) => {
             const job = await prisma.jobOrder.update({
                 where: { id: params.id },
@@ -150,6 +157,20 @@ export async function PUT(
 
             return job
         })
+
+        // Emit real-time event if status changed
+        if (currentJob && jobData.status && jobData.status !== currentJob.status) {
+            emitEvent({
+                type: 'JOB_STATUS_CHANGED',
+                jobId: params.id,
+                jobNumber: currentJob.jobNumber,
+                oldStatus: currentJob.status,
+                newStatus: jobData.status,
+                updatedBy: user.id,
+                updatedByName: user.name || 'Unknown',
+                timestamp: new Date().toISOString(),
+            })
+        }
 
         return NextResponse.json(updatedJob)
     } catch (error) {
