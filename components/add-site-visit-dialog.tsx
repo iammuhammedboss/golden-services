@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 import {
   Select,
   SelectContent,
@@ -30,11 +31,17 @@ interface AddSiteVisitDialogProps {
 export function AddSiteVisitDialog({ children, clientId, onSiteVisitCreated }: AddSiteVisitDialogProps) {
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
   const [users, setUsers] = useState<User[]>([])
   const [formData, setFormData] = useState({
     scheduledAt: '',
     assignedToId: '',
+    visitType: 'FULL_HOUSE',
     requiredService: '',
+    locationText: '',
+    googleMapsUrl: '',
+    siteContactName: '',
+    siteContactPhone: '',
     notes: '',
   })
 
@@ -46,8 +53,8 @@ export function AddSiteVisitDialog({ children, clientId, onSiteVisitCreated }: A
           const data = await response.json()
           setUsers(data)
         }
-      } catch (error) {
-        console.error('Failed to fetch users:', error)
+      } catch (err) {
+        console.error('Failed to fetch users:', err)
       }
     }
     fetchUsers()
@@ -55,6 +62,17 @@ export function AddSiteVisitDialog({ children, clientId, onSiteVisitCreated }: A
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setError('')
+
+    if (!formData.scheduledAt) {
+      setError('Scheduled date is required')
+      return
+    }
+    if (!formData.assignedToId) {
+      setError('Please assign a team member')
+      return
+    }
+
     setLoading(true)
     try {
       const response = await fetch('/api/site-visits', {
@@ -66,14 +84,24 @@ export function AddSiteVisitDialog({ children, clientId, onSiteVisitCreated }: A
         setOpen(false)
         onSiteVisitCreated?.()
         setFormData({
-            scheduledAt: '',
-            assignedToId: '',
-            requiredService: '',
-            notes: '',
+          scheduledAt: '',
+          assignedToId: '',
+          visitType: 'FULL_HOUSE',
+          requiredService: '',
+          locationText: '',
+          googleMapsUrl: '',
+          siteContactName: '',
+          siteContactPhone: '',
+          notes: '',
         })
+        setError('')
+      } else {
+        const data = await response.json()
+        setError(data.error || 'Failed to create site visit')
       }
-    } catch (error) {
-      console.error('Failed to create site visit:', error)
+    } catch (err) {
+      console.error('Failed to create site visit:', err)
+      setError('Network error. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -84,64 +112,128 @@ export function AddSiteVisitDialog({ children, clientId, onSiteVisitCreated }: A
       <DialogTrigger asChild>
         {children}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Add New Site Visit</DialogTitle>
+          <DialogTitle>Schedule Site Visit</DialogTitle>
           <DialogDescription>
-            Schedule a new site visit for the selected site.
+            Schedule a new site visit for the customer
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="scheduledAt">Scheduled Date and Time *</Label>
-            <Input
-              id="scheduledAt"
-              type="datetime-local"
-              value={formData.scheduledAt}
-              onChange={(e) => setFormData({ ...formData, scheduledAt: e.target.value })}
-              required
-            />
+          {error && (
+            <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-600">
+              {error}
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label>Date & Time <span className="text-red-500">*</span></Label>
+              <Input
+                type="datetime-local"
+                value={formData.scheduledAt}
+                onChange={(e) => setFormData({ ...formData, scheduledAt: e.target.value })}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Assign To <span className="text-red-500">*</span></Label>
+              <Select
+                value={formData.assignedToId}
+                onValueChange={(value) => setFormData({ ...formData, assignedToId: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select team member" />
+                </SelectTrigger>
+                <SelectContent>
+                  {users.map(user => (
+                    <SelectItem key={user.id} value={user.id}>{user.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
+
           <div className="space-y-2">
-            <Label htmlFor="assignedToId">Assign To</Label>
+            <Label>Visit Type</Label>
             <Select
-              value={formData.assignedToId}
-              onValueChange={(value: string) =>
-                setFormData({ ...formData, assignedToId: value })
-              }
+              value={formData.visitType}
+              onValueChange={(value) => setFormData({ ...formData, visitType: value })}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select a user" />
+                <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {users.map(user => (
-                  <SelectItem key={user.id} value={user.id}>{user.name}</SelectItem>
-                ))}
+                <SelectItem value="FULL_HOUSE">Full House</SelectItem>
+                <SelectItem value="SPECIFIC_SERVICE">Specific Service</SelectItem>
               </SelectContent>
             </Select>
           </div>
+
           <div className="space-y-2">
-            <Label htmlFor="requiredService">Required Service</Label>
+            <Label>Required Service</Label>
             <Input
-              id="requiredService"
               value={formData.requiredService}
               onChange={(e) => setFormData({ ...formData, requiredService: e.target.value })}
+              placeholder="e.g., Deep Cleaning, Pest Control"
             />
           </div>
+
           <div className="space-y-2">
-            <Label htmlFor="notes">Notes</Label>
+            <Label>Location</Label>
             <Input
-              id="notes"
+              value={formData.locationText}
+              onChange={(e) => setFormData({ ...formData, locationText: e.target.value })}
+              placeholder="Address or location description"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Google Maps URL</Label>
+            <Input
+              value={formData.googleMapsUrl}
+              onChange={(e) => setFormData({ ...formData, googleMapsUrl: e.target.value })}
+              placeholder="Paste Google Maps link"
+              className="text-xs"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label>Site Contact Name</Label>
+              <Input
+                value={formData.siteContactName}
+                onChange={(e) => setFormData({ ...formData, siteContactName: e.target.value })}
+                placeholder="Person on site"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Site Contact Phone</Label>
+              <Input
+                type="tel"
+                value={formData.siteContactPhone}
+                onChange={(e) => setFormData({ ...formData, siteContactPhone: e.target.value })}
+                placeholder="+968 XXXX XXXX"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Notes</Label>
+            <Textarea
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+              placeholder="Additional notes..."
+              rows={2}
             />
           </div>
-          <div className="flex justify-end space-x-2">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+
+          <div className="flex justify-end gap-2 pt-2">
+            <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={loading}>
               Cancel
             </Button>
             <Button type="submit" disabled={loading}>
-              {loading ? 'Creating...' : 'Create Site Visit'}
+              {loading ? 'Creating...' : 'Schedule Visit'}
             </Button>
           </div>
         </form>

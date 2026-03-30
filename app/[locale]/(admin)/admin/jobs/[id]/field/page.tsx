@@ -8,6 +8,13 @@ import { Badge } from '@/components/ui/badge'
 import { Textarea } from '@/components/ui/textarea'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { useRealtimeEvents } from '@/hooks/use-realtime-events'
 import { AudioRecorder, AudioPlayer } from '@/components/audio-recorder'
 import { formatDate, formatTime } from '@/lib/utils'
@@ -503,19 +510,22 @@ export default function FieldJobPage() {
               </div>
               {adjForm.type === 'DEDUCTION' && (
                 <div>
-                  <Label className="text-xs">Reason</Label>
-                  <select
+                  <Label className="text-xs">Reason <span className="text-red-500">*</span></Label>
+                  <Select
                     value={adjForm.reason}
-                    onChange={(e) => setAdjForm({ ...adjForm, reason: e.target.value })}
-                    className="mt-1 w-full rounded-md border px-3 py-2 text-sm"
+                    onValueChange={(value) => setAdjForm({ ...adjForm, reason: value })}
                   >
-                    <option value="">Select reason...</option>
-                    <option value="Customer cancelled">Customer cancelled</option>
-                    <option value="Not accessible">Not accessible</option>
-                    <option value="Already clean">Already clean</option>
-                    <option value="Not needed">Not needed</option>
-                    <option value="Other">Other</option>
-                  </select>
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder="Select reason..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Customer cancelled">Customer cancelled</SelectItem>
+                      <SelectItem value="Not accessible">Not accessible</SelectItem>
+                      <SelectItem value="Already clean">Already clean</SelectItem>
+                      <SelectItem value="Not needed">Not needed</SelectItem>
+                      <SelectItem value="Other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               )}
               <Button

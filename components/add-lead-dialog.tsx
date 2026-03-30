@@ -26,35 +26,35 @@ export function AddLeadDialog() {
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
     whatsapp: '',
     email: '',
-    source: 'PHONE_CALL',
+    source: 'PHONE',
     serviceInterest: '',
     notes: '',
-    status: 'NEW',
   })
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setError('')
 
     if (!formData.name || !formData.phone) {
-      alert('Name and phone are required')
+      setError('Name and phone are required')
       return
     }
 
     setLoading(true)
 
     try {
-      const response = await fetch('/api/clients', {
+      const response = await fetch('/api/leads', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...formData,
           whatsapp: formData.whatsapp || formData.phone,
-          status: 'NEW',
         }),
       })
 
@@ -65,21 +65,19 @@ export function AddLeadDialog() {
           phone: '',
           whatsapp: '',
           email: '',
-          source: 'PHONE_CALL',
+          source: 'PHONE',
           serviceInterest: '',
           notes: '',
-          status: 'NEW',
         })
+        setError('')
         router.refresh()
-        // Show success message
-        alert('Client created successfully!')
       } else {
-        const error = await response.json()
-        alert(error.error || 'Failed to create client')
+        const data = await response.json()
+        setError(data.error || 'Failed to create lead')
       }
-    } catch (error) {
-      console.error('Error creating client:', error)
-      alert('Failed to create client')
+    } catch (err) {
+      console.error('Error creating lead:', err)
+      setError('Network error. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -102,21 +100,27 @@ export function AddLeadDialog() {
               d="M12 4v16m8-8H4"
             />
           </svg>
-          Add Client
+          Add Lead
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Add New Client</DialogTitle>
+          <DialogTitle>Add New Lead</DialogTitle>
           <DialogDescription>
-            Create a new client entry for customer management
+            Create a new lead for follow-up
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          {error && (
+            <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-600">
+              {error}
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="name">Name *</Label>
+              <Label htmlFor="name">Name <span className="text-red-500">*</span></Label>
               <Input
                 id="name"
                 value={formData.name}
@@ -127,7 +131,7 @@ export function AddLeadDialog() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="phone">Phone *</Label>
+              <Label htmlFor="phone">Phone <span className="text-red-500">*</span></Label>
               <Input
                 id="phone"
                 type="tel"
@@ -139,20 +143,20 @@ export function AddLeadDialog() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="whatsapp">WhatsApp (Optional)</Label>
+              <Label htmlFor="whatsapp">WhatsApp</Label>
               <Input
                 id="whatsapp"
                 type="tel"
                 value={formData.whatsapp}
                 onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
-                placeholder="+968 1234 5678"
+                placeholder="Same as phone if empty"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email">Email (Optional)</Label>
+              <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
                 type="email"
@@ -163,48 +167,29 @@ export function AddLeadDialog() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="source">Lead Source *</Label>
-              <Select
-                value={formData.source}
-                onValueChange={(value) => setFormData({ ...formData, source: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="WEBSITE">Website</SelectItem>
-                  <SelectItem value="WHATSAPP">WhatsApp</SelectItem>
-                  <SelectItem value="INSTAGRAM">Instagram</SelectItem>
-                  <SelectItem value="PHONE_CALL">Phone Call</SelectItem>
-                  <SelectItem value="REFERRAL">Referral</SelectItem>
-                  <SelectItem value="OTHER">Other</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="status">Status</Label>
-              <Select
-                value={formData.status}
-                onValueChange={(value) => setFormData({ ...formData, status: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="NEW">New</SelectItem>
-                  <SelectItem value="ACTIVE">Active</SelectItem>
-                  <SelectItem value="INACTIVE">Inactive</SelectItem>
-                  <SelectItem value="BLACKLISTED">Blacklisted</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="source">Lead Source <span className="text-red-500">*</span></Label>
+            <Select
+              value={formData.source}
+              onValueChange={(value) => setFormData({ ...formData, source: value })}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="PHONE">Phone</SelectItem>
+                <SelectItem value="WHATSAPP">WhatsApp</SelectItem>
+                <SelectItem value="SOCIAL_MEDIA">Social Media</SelectItem>
+                <SelectItem value="SITE_VISIT_MARKETING">Site Visit</SelectItem>
+                <SelectItem value="WEBSITE_FORM">Website Form</SelectItem>
+                <SelectItem value="REFERRAL">Referral</SelectItem>
+                <SelectItem value="OTHER">Other</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="serviceInterest">Service Interest (Optional)</Label>
+            <Label htmlFor="serviceInterest">Service Interest</Label>
             <Input
               id="serviceInterest"
               value={formData.serviceInterest}
@@ -216,12 +201,12 @@ export function AddLeadDialog() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="notes">Notes (Optional)</Label>
+            <Label htmlFor="notes">Notes</Label>
             <Textarea
               id="notes"
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-              placeholder="Add any additional information..."
+              placeholder="Additional information..."
               rows={3}
             />
           </div>
@@ -236,7 +221,7 @@ export function AddLeadDialog() {
               Cancel
             </Button>
             <Button type="submit" disabled={loading}>
-              {loading ? 'Creating...' : 'Create Client'}
+              {loading ? 'Creating...' : 'Create Lead'}
             </Button>
           </div>
         </form>

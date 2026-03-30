@@ -37,6 +37,7 @@ export default function QuotationDetailsPage() {
   const [clients, setClients] = useState<Client[]>([])
   const [measurements, setMeasurements] = useState<Measurement[]>([])
   const [selectedMeasurement, setSelectedMeasurement] = useState<(Measurement & { objects: MeasurementObject[] }) | null>(null)
+  const [salesExecutives, setSalesExecutives] = useState<any[]>([])
   const [termsTemplates, setTermsTemplates] = useState<TermsTemplate[]>([])
   const [bankTemplates, setBankTemplates] = useState<BankDetailsTemplate[]>([])
   const [lineItems, setLineItems] = useState<any[]>([])
@@ -49,16 +50,18 @@ export default function QuotationDetailsPage() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const [clientsRes, measurementsRes, termsRes, bankRes] = await Promise.all([
+        const [clientsRes, measurementsRes, termsRes, bankRes, salesRes] = await Promise.all([
           fetch('/api/clients'),
           fetch('/api/measurements'),
           fetch('/api/templates/terms'),
           fetch('/api/templates/bank-details'),
+          fetch('/api/sales-executives'),
         ])
         if (clientsRes.ok) setClients(await clientsRes.json())
         if (measurementsRes.ok) setMeasurements(await measurementsRes.json())
         if (termsRes.ok) setTermsTemplates(await termsRes.json())
         if (bankRes.ok) setBankTemplates(await bankRes.json())
+        if (salesRes.ok) setSalesExecutives(await salesRes.json())
       } catch (error) {
         console.error('Failed to fetch data:', error)
       }
@@ -124,7 +127,29 @@ export default function QuotationDetailsPage() {
     fetchMeasurementDetails()
   }, [quotation?.measurementId])
 
+  const [saveError, setSaveError] = useState('')
+
   const handleSave = async () => {
+    setSaveError('')
+    // Validation
+    if (!quotation.clientId) {
+      setSaveError('Please select a client')
+      return
+    }
+    if (lineItems.length === 0) {
+      setSaveError('Please add at least one line item')
+      return
+    }
+    const emptyItems = lineItems.filter(i => !i.description?.trim())
+    if (emptyItems.length > 0) {
+      setSaveError('All line items must have a description')
+      return
+    }
+    if (quotation.isAmc && (!quotation.amcFrequency || !quotation.amcDurationMonths || !quotation.amcStartDate)) {
+      setSaveError('AMC contracts require frequency, duration, and start date')
+      return
+    }
+
     setSaving(true)
     const method = id === 'new' ? 'POST' : 'PUT'
     const url = id === 'new' ? '/api/quotations' : `/api/quotations/${id}`
@@ -136,9 +161,13 @@ export default function QuotationDetailsPage() {
       })
       if (response.ok) {
         router.push('/admin/quotations')
+      } else {
+        const data = await response.json()
+        setSaveError(data.error || 'Failed to save quotation')
       }
     } catch (error) {
       console.error('Failed to save quotation:', error)
+      setSaveError('Network error. Please try again.')
     } finally {
       setSaving(false)
     }
@@ -223,15 +252,21 @@ export default function QuotationDetailsPage() {
   return (
     <div className="space-y-6">
         <div className="flex items-center justify-between">
-            <h1 className="text-3xl font-bold">{id === 'new' ? 'New Quotation' : `Quotation ${quotation.id}`}</h1>
+            <h1 className="text-2xl font-bold md:text-3xl">{id === 'new' ? 'New Quotation' : `Quotation ${quotation.quotationNumber || quotation.id}`}</h1>
             <Button onClick={handleSave} disabled={saving}>
                 {saving ? 'Saving...' : 'Save Quotation'}
             </Button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {saveError && (
+            <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-600">
+                {saveError}
+            </div>
+        )}
+
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div className="space-y-2">
-                <Label>Client</Label>
+                <Label>Client <span className="text-red-500">*</span></Label>
                 <Select
                     value={quotation.clientId || ''}
                     onValueChange={(value) => setQuotation({ ...quotation, clientId: value })}
@@ -262,6 +297,31 @@ export default function QuotationDetailsPage() {
                     </SelectContent>
                 </Select>
             </div>
+            <div className="space-y-2">
+                <Label>Sales Executive</Label>
+                <Select
+                    value={quotation.salesExecutiveId || '__NONE__'}
+                    onValueChange={(value) => setQuotation({ ...quotation, salesExecutiveId: value === '__NONE__' ? null : value })}
+                >
+                    <SelectTrigger>
+                        <SelectValue placeholder="Select sales exec" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="__NONE__">None</SelectItem>
+                        {salesExecutives.map((se: any) => (
+                            <SelectItem key={se.id} value={se.id}>{se.name} ({se.code})</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            </div>
+            <div className="space-y-2">
+                <Label>Valid Until</Label>
+                <Input
+                    type="date"
+                    value={quotation.validUntil ? new Date(quotation.validUntil).toISOString().split('T')[0] : ''}
+                    onChange={(e) => setQuotation({ ...quotation, validUntil: e.target.value || null })}
+                />
+            </div>
         </div>
 
         {selectedMeasurement && (
@@ -290,31 +350,41 @@ export default function QuotationDetailsPage() {
                 <CardTitle>Line Items</CardTitle>
             </CardHeader>
             <CardContent>
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Description</TableHead>
-                            <TableHead>Quantity</TableHead>
-                            <TableHead>Unit</TableHead>
-                            <TableHead>Unit Price</TableHead>
-                            <TableHead>Total</TableHead>
-                            <TableHead className="text-right">Actions</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {lineItems.map((item, index) => (
-                            <TableRow key={index}>
-                                <TableCell>
-                                    <Input
-                                        value={item.description}
-                                        onChange={(e) => {
-                                            const newLineItems = [...lineItems];
-                                            newLineItems[index].description = e.target.value;
-                                            setLineItems(newLineItems);
-                                        }}
-                                    />
-                                </TableCell>
-                                <TableCell>
+                {/* Mobile: card-based items / Desktop: table */}
+                <div className="space-y-3">
+                    {lineItems.map((item, index) => (
+                        <div key={index} className="rounded-lg border p-3 space-y-2">
+                            <div className="flex items-start justify-between">
+                                <span className="text-xs font-medium text-muted-foreground">Item {index + 1}</span>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-6 px-2 text-xs text-red-500"
+                                    onClick={() => {
+                                        const newLineItems = [...lineItems];
+                                        newLineItems.splice(index, 1);
+                                        setLineItems(newLineItems);
+                                    }}
+                                >
+                                    Remove
+                                </Button>
+                            </div>
+                            <div>
+                                <Label className="text-xs">Description <span className="text-red-500">*</span></Label>
+                                <Input
+                                    value={item.description}
+                                    onChange={(e) => {
+                                        const newLineItems = [...lineItems];
+                                        newLineItems[index].description = e.target.value;
+                                        setLineItems(newLineItems);
+                                    }}
+                                    placeholder="Item description"
+                                    className="mt-1"
+                                />
+                            </div>
+                            <div className="grid grid-cols-3 gap-2">
+                                <div>
+                                    <Label className="text-xs">Qty</Label>
                                     <Input
                                         type="number"
                                         value={item.quantity}
@@ -323,9 +393,11 @@ export default function QuotationDetailsPage() {
                                             newLineItems[index].quantity = e.target.value;
                                             setLineItems(newLineItems);
                                         }}
+                                        className="mt-1"
                                     />
-                                </TableCell>
-                                <TableCell>
+                                </div>
+                                <div>
+                                    <Label className="text-xs">Unit</Label>
                                     <Input
                                         value={item.unit}
                                         onChange={(e) => {
@@ -333,9 +405,11 @@ export default function QuotationDetailsPage() {
                                             newLineItems[index].unit = e.target.value;
                                             setLineItems(newLineItems);
                                         }}
+                                        className="mt-1"
                                     />
-                                </TableCell>
-                                <TableCell>
+                                </div>
+                                <div>
+                                    <Label className="text-xs">Price</Label>
                                     <Input
                                         type="number"
                                         value={item.unitPrice}
@@ -344,34 +418,22 @@ export default function QuotationDetailsPage() {
                                             newLineItems[index].unitPrice = e.target.value;
                                             setLineItems(newLineItems);
                                         }}
+                                        className="mt-1"
                                     />
-                                </TableCell>
-                                <TableCell>
-                                    {(parseFloat(item.quantity) * parseFloat(item.unitPrice)).toFixed(3)}
-                                </TableCell>
-                                <TableCell className="text-right">
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => {
-                                            const newLineItems = [...lineItems];
-                                            newLineItems.splice(index, 1);
-                                            setLineItems(newLineItems);
-                                        }}
-                                    >
-                                        Remove
-                                    </Button>
-                                </TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
+                                </div>
+                            </div>
+                            <div className="text-right text-sm font-semibold">
+                                Total: {(parseFloat(item.quantity || '0') * parseFloat(item.unitPrice || '0')).toFixed(3)} OMR
+                            </div>
+                        </div>
+                    ))}
+                </div>
                 <Button
-                    className="mt-2"
+                    className="mt-3 w-full md:w-auto"
                     variant="outline"
                     onClick={() => setLineItems([...lineItems, { description: '', quantity: '1', unit: 'unit', unitPrice: '0', total: '0' }])}
                 >
-                    Add Line Item
+                    + Add Line Item
                 </Button>
             </CardContent>
         </Card>
