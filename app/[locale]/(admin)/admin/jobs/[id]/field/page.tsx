@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useRealtimeEvents } from '@/hooks/use-realtime-events'
+import { AudioRecorder, AudioPlayer } from '@/components/audio-recorder'
 import { formatDate, formatTime } from '@/lib/utils'
 
 const PROGRESS_STATUSES = [
@@ -263,15 +264,31 @@ export default function FieldJobPage() {
                 ))}
               </div>
 
-              {/* Note input */}
-              <div className="mt-3">
-                <Textarea
-                  placeholder="Add a note (optional)..."
-                  value={note}
-                  onChange={(e) => setNote(e.target.value)}
-                  rows={2}
-                  className="text-sm"
-                />
+              {/* Note input + Voice note */}
+              <div className="mt-3 space-y-2">
+                <div className="flex gap-2">
+                  <Textarea
+                    placeholder="Add a note (optional)..."
+                    value={note}
+                    onChange={(e) => setNote(e.target.value)}
+                    rows={2}
+                    className="flex-1 text-sm"
+                  />
+                  <div className="flex items-end">
+                    <AudioRecorder
+                      onRecorded={async (url) => {
+                        // Save voice note as a photo record with DURING phase
+                        await fetch(`/api/jobs/${jobId}/photos`, {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ url, phase: 'DURING', caption: 'Voice note' }),
+                        })
+                        await fetchJob()
+                      }}
+                      disabled={submitting}
+                    />
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>
