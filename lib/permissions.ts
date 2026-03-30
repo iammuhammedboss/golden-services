@@ -89,7 +89,15 @@ export function canViewInvoices(user: UserWithRoles | null | undefined): boolean
 }
 
 export function canManagePayments(user: UserWithRoles | null | undefined): boolean {
-  return hasAnyRole(user, ['OWNER', 'ACCOUNTANT'])
+  return hasAnyRole(user, ['OWNER', 'ACCOUNTANT', 'PAYMENT_COLLECTOR'])
+}
+
+export function canCollectPayments(user: UserWithRoles | null | undefined): boolean {
+  return hasAnyRole(user, ['OWNER', 'ACCOUNTANT', 'PAYMENT_COLLECTOR', 'OPERATIONS_MANAGER'])
+}
+
+export function canApproveCreditPayments(user: UserWithRoles | null | undefined): boolean {
+  return hasAnyRole(user, ['OWNER', 'SALES', 'OPERATIONS_MANAGER'])
 }
 
 // --- Schedule Permissions ---

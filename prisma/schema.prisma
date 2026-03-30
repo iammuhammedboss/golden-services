@@ -138,7 +138,7 @@ model RoomTypeMaster {
 
 model PaymentMethodMaster {
   id          String    @id @default(cuid())
-  name        String    @unique // CASH, CARD, BANK_TRANSFER, etc.
+  name        String    @unique // CASH, TRANSFER_MOBILE, TRANSFER_ACCOUNT, CREDIT
   description String?
   isActive    Boolean   @default(true)
   sortOrder   Int       @default(0)
@@ -146,8 +146,25 @@ model PaymentMethodMaster {
   updatedAt   DateTime  @updatedAt
   deletedAt   DateTime?
   deletedById String?
+  subOptions  PaymentSubOption[]
 
   @@map("payment_method_masters")
+}
+
+model PaymentSubOption {
+  id                    String              @id @default(cuid())
+  paymentMethodId       String
+  name                  String              // e.g., "Boss", "Tufool", "Golden Services AC"
+  isActive              Boolean             @default(true)
+  sortOrder             Int                 @default(0)
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
+  deletedAt             DateTime?
+  paymentMethod         PaymentMethodMaster @relation(fields: [paymentMethodId], references: [id], onDelete: Cascade)
+
+  @@index([paymentMethodId])
+  @@index([deletedAt])
+  @@map("payment_sub_options")
 }
 
 // ============================================
@@ -825,6 +842,7 @@ model JobOrder {
   scheduleEntries    ScheduleEntry[]
   amcVisit           AmcVisit?
   adjustments        JobAdjustment[]
+  payments           Payment[]
 
   @@index([status])
   @@index([paymentStatus])
@@ -989,10 +1007,16 @@ model Payment {
   id              String    @id @default(cuid())
   invoiceId       String
   clientId        String
+  jobOrderId      String?
   amount          Decimal   @db.Decimal(10, 3)
-  paymentMethod   String // From PaymentMethodMaster
+  paymentMethod   String    // From PaymentMethodMaster name
+  paymentSubOption String?  // From PaymentSubOption name (e.g., "Boss", "Golden Services")
   paymentDate     DateTime  @default(now())
   referenceNumber String?
+  receiptUrl      String?   // Screenshot/receipt upload URL
+  creditStatus    String?   // PENDING_APPROVAL, APPROVED, REJECTED (for credit payments)
+  creditApprovedById String?
+  creditApprovedAt DateTime?
   notes           String?
   recordedById    String
   createdAt       DateTime  @default(now())
@@ -1001,7 +1025,9 @@ model Payment {
   deletedById     String?
   invoice         Invoice   @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
   client          Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  jobOrder        JobOrder? @relation(fields: [jobOrderId], references: [id])
   recordedBy      User      @relation(fields: [recordedById], references: [id])
+  creditApprovedBy User?    @relation("PaymentCreditApproval", fields: [creditApprovedById], references: [id])
 
   @@index([invoiceId])
   @@index([clientId])
@@ -1150,6 +1176,7 @@ model User {
   assignedScheduleEntries ScheduleEntryAssignee[]
   scheduleReminders    ScheduleReminder[]
   jobAdjustments       JobAdjustment[]
+  creditApprovedPayments Payment[] @relation("PaymentCreditApproval")
 
   @@index([email])
   @@index([deletedAt])
