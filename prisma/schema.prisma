@@ -239,6 +239,7 @@ model Client {
   customerNotes  CustomerNote[]
   scheduleEntries ScheduleEntry[]
   measurements   Measurement[]
+  amcContracts   AmcContract[]
 
   @@index([phone])
   @@index([status])
@@ -507,6 +508,84 @@ enum SizeMeasurementMode {
 enum MediaType {
   PHOTO
   VIDEO
+  AUDIO
+}
+
+// ============================================
+// AMC (Annual Maintenance Contract) MODELS
+// ============================================
+
+enum AmcFrequency {
+  WEEKLY
+  BI_WEEKLY
+  MONTHLY
+  QUARTERLY
+}
+
+enum AmcContractStatus {
+  ACTIVE
+  PAUSED
+  CANCELLED
+  COMPLETED
+}
+
+enum AmcVisitStatus {
+  SCHEDULED
+  COMPLETED
+  SKIPPED
+  CANCELLED
+}
+
+model AmcContract {
+  id                 String            @id @default(cuid())
+  quotationId        String            @unique
+  clientId           String
+  contractNumber     String            @unique // e.g., "AMC-0000000001"
+  frequency          AmcFrequency
+  durationMonths     Int               // 3, 6, 12 or custom
+  startDate          DateTime          @db.Date
+  endDate            DateTime          @db.Date  // computed from startDate + duration
+  status             AmcContractStatus @default(ACTIVE)
+  pausedAt           DateTime?
+  cancelledAt        DateTime?
+  cancellationReason String?
+  notes              String?
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+  deletedAt          DateTime?
+  deletedById        String?
+
+  quotation          Quotation         @relation(fields: [quotationId], references: [id])
+  client             Client            @relation(fields: [clientId], references: [id])
+  visits             AmcVisit[]
+
+  @@index([clientId])
+  @@index([status])
+  @@index([startDate, endDate])
+  @@index([deletedAt])
+  @@map("amc_contracts")
+}
+
+model AmcVisit {
+  id              String         @id @default(cuid())
+  amcContractId   String
+  jobOrderId      String?        @unique // null until job order is created
+  visitNumber     Int            // sequential: 1, 2, 3...
+  scheduledDate   DateTime       @db.Date
+  status          AmcVisitStatus @default(SCHEDULED)
+  completedAt     DateTime?
+  skippedReason   String?
+  notes           String?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  amcContract     AmcContract    @relation(fields: [amcContractId], references: [id], onDelete: Cascade)
+  jobOrder        JobOrder?      @relation(fields: [jobOrderId], references: [id])
+
+  @@index([amcContractId])
+  @@index([scheduledDate])
+  @@index([status])
+  @@map("amc_visits")
 }
 
 model SiteVisit {
@@ -583,9 +662,16 @@ model Quotation {
   measurementId String?
   version       Int             @default(1) // Multiple versions per client
   createdById   String
+  salesExecutiveId String?
   status        QuotationStatus @default(DRAFT)
   validUntil    DateTime?
   notes         String?
+  // AMC fields
+  isAmc             Boolean         @default(false)
+  amcFrequency      AmcFrequency?
+  amcDurationMonths Int?
+  amcStartDate      DateTime?       @db.Date
+  // Financial fields
   vatEnabled    Boolean         @default(false)
   vatPercentage Decimal         @default(5) @db.Decimal(5, 2)
   discountType  DiscountType?
@@ -601,8 +687,10 @@ model Quotation {
   jobOrders     JobOrder[]
   items         QuotationItem[]
   invoices      Invoice[]
+  amcContract   AmcContract?
   client        Client          @relation(fields: [clientId], references: [id], onDelete: Cascade)
   createdBy     User            @relation(fields: [createdById], references: [id])
+  salesExecutive SalesExecutive? @relation(fields: [salesExecutiveId], references: [id])
   measurement   Measurement?    @relation(fields: [measurementId], references: [id])
   termsTemplate TermsTemplate?  @relation(fields: [termsTemplateId], references: [id])
   bankDetailsTemplate BankDetailsTemplate? @relation(fields: [bankDetailsTemplateId], references: [id])
@@ -613,6 +701,7 @@ model Quotation {
   @@index([status])
   @@index([measurementId])
   @@index([deletedAt])
+  @@index([salesExecutiveId])
   @@map("quotations")
 }
 
@@ -632,13 +721,33 @@ model QuotationItem {
   total       Decimal   @db.Decimal(10, 3)
   optionGroup String?
   createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
   deletedAt   DateTime?
+  deletedById String?
   quotation   Quotation @relation(fields: [quotationId], references: [id], onDelete: Cascade)
   service     Service?  @relation(fields: [serviceId], references: [id])
+  deletedBy   User?     @relation("QuotationItemDeletedBy", fields: [deletedById], references: [id])
 
   @@index([quotationId])
   @@index([deletedAt])
   @@map("quotation_items")
+}
+
+model SalesExecutive {
+  id          String      @id @default(cuid())
+  code        String      @unique // e.g., "JS", "HS", "AS"
+  name        String
+  email       String?
+  phone       String?
+  isActive    Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  deletedAt   DateTime?
+  quotations  Quotation[]
+
+  @@index([isActive])
+  @@index([deletedAt])
+  @@map("sales_executives")
 }
 
 // ============================================
@@ -675,6 +784,7 @@ model JobOrder {
   equipment         JobEquipment[]
   materials         JobMaterial[]
   scheduleEntries    ScheduleEntry[]
+  amcVisit           AmcVisit?
 
   @@index([status])
   @@index([paymentStatus])
@@ -989,6 +1099,7 @@ model User {
   customerNotes        CustomerNote[]
   completedChecklistItems ChecklistItem[] @relation("ChecklistItemCompletedBy")
   verifiedChecklistItems ChecklistItem[] @relation("ChecklistItemVerifiedBy")
+  deletedQuotationItems QuotationItem[] @relation("QuotationItemDeletedBy")
   auditLogs            AuditLog[]
   deletedRecords       DeletedRecord[]         @relation("DeletedBy")
   restoredRecords      DeletedRecord[]         @relation("RestoredBy")

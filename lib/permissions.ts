@@ -130,3 +130,12 @@ export function canRestoreRecords(user: UserWithRoles | null | undefined): boole
 export function canViewDeletedRecords(user: UserWithRoles | null | undefined): boolean {
   return hasAnyRole(user, ['OWNER', 'AUDITOR'])
 }
+
+// --- AMC Contract Permissions ---
+export function canManageAmcContracts(user: UserWithRoles | null | undefined): boolean {
+  return hasAnyRole(user, ['OWNER', 'OPERATIONS_MANAGER', 'SALES'])
+}
+
+export function canViewAmcContracts(user: UserWithRoles | null | undefined): boolean {
+  return hasAnyRole(user, ['OWNER', 'OPERATIONS_MANAGER', 'SALES', 'ACCOUNTANT', 'SUPERVISOR'])
+}

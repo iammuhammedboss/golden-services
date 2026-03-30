@@ -81,6 +81,10 @@ export default function QuotationDetailsPage() {
             termsSnapshot: '',
             bankDetailsTemplateId: '',
             bankDetailsSnapshot: '',
+            isAmc: false,
+            amcFrequency: null,
+            amcDurationMonths: null,
+            amcStartDate: null,
         })
         setLoading(false)
         return
@@ -369,6 +373,91 @@ export default function QuotationDetailsPage() {
                 >
                     Add Line Item
                 </Button>
+            </CardContent>
+        </Card>
+
+        {/* AMC Contract Settings */}
+        <Card>
+            <CardHeader>
+                <CardTitle>AMC Contract</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                <div className="flex items-center space-x-2">
+                    <Checkbox
+                        id="isAmc"
+                        checked={quotation.isAmc || false}
+                        onCheckedChange={(checked) => setQuotation({ ...quotation, isAmc: !!checked })}
+                    />
+                    <Label htmlFor="isAmc">This is an Annual Maintenance Contract</Label>
+                </div>
+
+                {quotation.isAmc && (
+                    <div className="space-y-4 rounded-lg border p-4 bg-amber-50/50">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <div className="space-y-2">
+                                <Label>Frequency</Label>
+                                <Select
+                                    value={quotation.amcFrequency || ''}
+                                    onValueChange={(value) => setQuotation({ ...quotation, amcFrequency: value })}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select frequency" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="WEEKLY">Weekly</SelectItem>
+                                        <SelectItem value="BI_WEEKLY">Bi-Weekly</SelectItem>
+                                        <SelectItem value="MONTHLY">Monthly</SelectItem>
+                                        <SelectItem value="QUARTERLY">Quarterly</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Duration (Months)</Label>
+                                <Select
+                                    value={quotation.amcDurationMonths?.toString() || ''}
+                                    onValueChange={(value) => setQuotation({ ...quotation, amcDurationMonths: parseInt(value) })}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select duration" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="3">3 Months</SelectItem>
+                                        <SelectItem value="6">6 Months</SelectItem>
+                                        <SelectItem value="12">12 Months</SelectItem>
+                                        <SelectItem value="18">18 Months</SelectItem>
+                                        <SelectItem value="24">24 Months</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Start Date</Label>
+                                <Input
+                                    type="date"
+                                    value={quotation.amcStartDate ? new Date(quotation.amcStartDate).toISOString().split('T')[0] : ''}
+                                    onChange={(e) => setQuotation({ ...quotation, amcStartDate: e.target.value })}
+                                />
+                            </div>
+                        </div>
+
+                        {quotation.amcFrequency && quotation.amcDurationMonths && quotation.amcStartDate && (
+                            <div className="text-sm text-muted-foreground bg-white rounded p-3 border">
+                                {(() => {
+                                    const freqMap: Record<string, number> = { WEEKLY: 52/12, BI_WEEKLY: 26/12, MONTHLY: 1, QUARTERLY: 1/3 }
+                                    const visitsPerMonth = freqMap[quotation.amcFrequency] || 1
+                                    const totalVisits = Math.floor(visitsPerMonth * quotation.amcDurationMonths)
+                                    const perVisitCost = totalVisits > 0 ? (total / totalVisits) : 0
+                                    return (
+                                        <span>
+                                            This will generate approximately <strong>{totalVisits} visits</strong> over{' '}
+                                            <strong>{quotation.amcDurationMonths} months</strong>.
+                                            {total > 0 && <> Cost per visit: <strong>{perVisitCost.toFixed(3)} OMR</strong></>}
+                                        </span>
+                                    )
+                                })()}
+                            </div>
+                        )}
+                    </div>
+                )}
             </CardContent>
         </Card>
 

@@ -36,6 +36,9 @@ export default async function QuotationsPage() {
         },
       },
     },
+    where: {
+      deletedAt: null,
+    },
   })
 
   // Calculate totals for each quotation
@@ -145,9 +148,16 @@ export default async function QuotationsPage() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge className={getStatusColor(quotation.status)}>
-                        {enumToReadable(quotation.status)}
-                      </Badge>
+                      <div className="flex items-center gap-1.5">
+                        <Badge className={getStatusColor(quotation.status)}>
+                          {enumToReadable(quotation.status)}
+                        </Badge>
+                        {quotation.isAmc && (
+                          <Badge variant="outline" className="border-amber-500 text-amber-600 text-xs">
+                            AMC
+                          </Badge>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell>
                       <div className="text-sm font-medium">
