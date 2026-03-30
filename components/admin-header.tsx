@@ -1,19 +1,19 @@
 'use client'
 
 import { signOut, useSession } from 'next-auth/react'
-import { useParams } from 'next/navigation'
+import { useParams, usePathname, useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { getInitials } from '@/lib/utils'
 import { NotificationBell } from './notification-bell'
 
-interface AdminHeaderProps {
-  onMenuToggle?: () => void
-}
-
-export function AdminHeader({ onMenuToggle }: AdminHeaderProps) {
+export function AdminHeader() {
   const { data: session } = useSession()
   const params = useParams()
+  const pathname = usePathname()
+  const router = useRouter()
   const locale = (params.locale as string) || 'en'
+
+  const isMenuPage = pathname === `/${locale}/admin/dashboard`
 
   const handleLogout = async () => {
     await signOut({ callbackUrl: `/${locale}/login` })
@@ -23,16 +23,23 @@ export function AdminHeader({ onMenuToggle }: AdminHeaderProps) {
     <header className="sticky top-0 z-30 border-b bg-background">
       <div className="flex h-14 items-center justify-between px-4 md:h-16 md:px-6">
         <div className="flex items-center gap-3">
-          {/* Hamburger menu - mobile only */}
-          <button
-            className="rounded-lg p-1.5 hover:bg-accent md:hidden"
-            onClick={onMenuToggle}
-          >
-            <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          </button>
-          <h2 className="text-base font-semibold md:text-lg">Golden Services</h2>
+          {/* Back button - shown on all pages except the main menu */}
+          {!isMenuPage && (
+            <button
+              className="rounded-lg p-1.5 hover:bg-accent"
+              onClick={() => router.push(`/${locale}/admin/dashboard`)}
+            >
+              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+          )}
+          <div className="flex items-center gap-2">
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+              <span className="text-xs font-bold">GS</span>
+            </div>
+            <h2 className="text-base font-semibold md:text-lg">Golden Services</h2>
+          </div>
         </div>
 
         <div className="flex items-center gap-2 md:gap-4">
@@ -40,8 +47,8 @@ export function AdminHeader({ onMenuToggle }: AdminHeaderProps) {
           {session?.user && (
             <>
               <div className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground md:h-10 md:w-10">
-                  <span className="text-xs font-semibold md:text-sm">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                  <span className="text-xs font-semibold">
                     {getInitials(session.user.name || 'User')}
                   </span>
                 </div>

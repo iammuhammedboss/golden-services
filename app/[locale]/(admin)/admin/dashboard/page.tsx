@@ -1,394 +1,232 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import Link from 'next/link'
+import { Card, CardContent } from '@/components/ui/card'
 import { prisma } from '@/lib/prisma'
 import { formatDate } from '@/lib/utils'
-import { Decimal } from '@prisma/client/runtime/library'
 
-export default async function DashboardPage() {
+const menuTiles = [
+  {
+    name: 'Dashboard',
+    href: 'admin/dashboard/overview',
+    color: 'from-blue-500 to-blue-600',
+    icon: (
+      <svg className="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+      </svg>
+    ),
+    description: 'Overview & stats',
+  },
+  {
+    name: 'Clients',
+    href: 'admin/clients',
+    color: 'from-emerald-500 to-emerald-600',
+    icon: (
+      <svg className="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+      </svg>
+    ),
+    description: 'Customer profiles',
+  },
+  {
+    name: 'Site Visits',
+    href: 'admin/site-visits',
+    color: 'from-violet-500 to-violet-600',
+    icon: (
+      <svg className="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+      </svg>
+    ),
+    description: 'Field inspections',
+  },
+  {
+    name: 'Measurements',
+    href: 'admin/measurements',
+    color: 'from-amber-500 to-amber-600',
+    icon: (
+      <svg className="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" />
+      </svg>
+    ),
+    description: 'Room & item scoping',
+  },
+  {
+    name: 'Quotations',
+    href: 'admin/quotations',
+    color: 'from-orange-500 to-orange-600',
+    icon: (
+      <svg className="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+      </svg>
+    ),
+    description: 'Pricing & proposals',
+  },
+  {
+    name: 'Invoices',
+    href: 'admin/invoices',
+    color: 'from-pink-500 to-pink-600',
+    icon: (
+      <svg className="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2zM10 8.5a.5.5 0 11-1 0 .5.5 0 011 0zm5 5a.5.5 0 11-1 0 .5.5 0 011 0z" />
+      </svg>
+    ),
+    description: 'Billing & payments',
+  },
+  {
+    name: 'Jobs',
+    href: 'admin/jobs',
+    color: 'from-cyan-500 to-cyan-600',
+    icon: (
+      <svg className="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+      </svg>
+    ),
+    description: 'Job orders & dispatch',
+  },
+  {
+    name: 'AMC',
+    href: 'admin/amc',
+    color: 'from-teal-500 to-teal-600',
+    icon: (
+      <svg className="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+      </svg>
+    ),
+    description: 'Maintenance contracts',
+  },
+  {
+    name: 'Schedule',
+    href: 'admin/schedule',
+    color: 'from-indigo-500 to-indigo-600',
+    icon: (
+      <svg className="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+      </svg>
+    ),
+    description: 'Calendar & planning',
+  },
+  {
+    name: 'Masters',
+    href: 'admin/masters',
+    color: 'from-gray-500 to-gray-600',
+    icon: (
+      <svg className="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+      </svg>
+    ),
+    description: 'Settings & data',
+  },
+  {
+    name: 'Reminders',
+    href: 'admin/reminders',
+    color: 'from-rose-500 to-rose-600',
+    icon: (
+      <svg className="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+      </svg>
+    ),
+    description: 'Personal notes',
+  },
+  {
+    name: 'Users',
+    href: 'admin/users',
+    color: 'from-purple-500 to-purple-600',
+    icon: (
+      <svg className="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+      </svg>
+    ),
+    description: 'Team management',
+  },
+]
+
+export default async function DashboardPage({
+  params,
+}: {
+  params: { locale: string }
+}) {
+  const locale = params.locale || 'en'
+
   const now = new Date()
-
-  // Date ranges
   const today = new Date()
   today.setHours(0, 0, 0, 0)
   const tomorrow = new Date(today)
   tomorrow.setDate(tomorrow.getDate() + 1)
-
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
   startOfMonth.setHours(0, 0, 0, 0)
 
-  const next7Days = new Date(today)
-  next7Days.setDate(today.getDate() + 7)
-  next7Days.setHours(23, 59, 59, 999)
-
-  // Fetch statistics
-  const [
-    totalSalesThisMonth,
-    totalSalesToday,
-    leadsThisMonth,
-    jobsDoneToday,
-    recentLeads,
-    upcomingReminders,
-    todaySchedule,
-  ] = await Promise.all([
-    // Total Sales This Month
-    prisma.invoice.aggregate({
-      where: {
-        status: { in: ['PAID', 'PARTIALLY_PAID'] },
-        issueDate: {
-          gte: startOfMonth,
+  const [totalSalesThisMonth, leadsThisMonth, jobsDoneToday, todayScheduleCount] =
+    await Promise.all([
+      prisma.invoice.aggregate({
+        where: {
+          status: { in: ['PAID', 'PARTIALLY_PAID'] },
+          issueDate: { gte: startOfMonth },
+          deletedAt: null,
         },
-        deletedAt: null,
-      },
-      _sum: {
-        total: true,
-      },
-    }),
-    // Total Sales Today
-    prisma.invoice.aggregate({
-      where: {
-        status: { in: ['PAID', 'PARTIALLY_PAID'] },
-        issueDate: {
-          gte: today,
-          lt: tomorrow,
+        _sum: { total: true },
+      }),
+      prisma.lead.count({
+        where: { createdAt: { gte: startOfMonth }, deletedAt: null },
+      }),
+      prisma.jobOrder.count({
+        where: {
+          status: 'COMPLETED',
+          updatedAt: { gte: today, lt: tomorrow },
+          deletedAt: null,
         },
-        deletedAt: null,
-      },
-      _sum: {
-        total: true,
-      },
-    }),
-    // Leads This Month
-    prisma.lead.count({
-      where: {
-        createdAt: {
-          gte: startOfMonth,
+      }),
+      prisma.scheduleEntry.count({
+        where: {
+          startDateTime: { gte: today, lt: tomorrow },
+          deletedAt: null,
         },
-        deletedAt: null,
-      },
-    }),
-    // Jobs Done Today
-    prisma.jobOrder.count({
-      where: {
-        status: 'COMPLETED',
-        updatedAt: {
-          gte: today,
-          lt: tomorrow,
-        },
-        deletedAt: null,
-      },
-    }),
-    // Recent Leads
-    prisma.lead.findMany({
-      take: 5,
-      where: {
-        deletedAt: null,
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-      include: {
-        createdBy: {
-          select: {
-            name: true,
-          },
-        },
-      },
-    }),
-    // Upcoming Reminders (Customer Notes with reminders)
-    prisma.customerNote.findMany({
-      where: {
-        isReminder: true,
-        reminderDate: {
-          gte: today,
-          lte: next7Days,
-        },
-        deletedAt: null,
-      },
-      take: 10,
-      orderBy: {
-        reminderDate: 'asc',
-      },
-      include: {
-        client: {
-          select: {
-            name: true,
-          },
-        },
-      },
-    }),
-    // Today's Schedule
-    prisma.scheduleEntry.findMany({
-      where: {
-        startDateTime: {
-          gte: today,
-          lt: tomorrow,
-        },
-        deletedAt: null,
-      },
-      orderBy: {
-        startDateTime: 'asc',
-      },
-      include: {
-        client: {
-          select: {
-            name: true,
-          },
-        },
-        jobOrder: {
-          select: {
-            jobNumber: true,
-          },
-        },
-        siteVisit: {
-          select: {
-            id: true,
-          },
-        },
-      },
-    }),
-  ])
+      }),
+    ])
 
   const salesThisMonth = totalSalesThisMonth._sum.total
     ? Number(totalSalesThisMonth._sum.total)
     : 0
-  const salesToday = totalSalesToday._sum.total
-    ? Number(totalSalesToday._sum.total)
-    : 0
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Dashboard</h1>
-        <p className="text-muted-foreground">Welcome back! Here's an overview of your business.</p>
+    <div className="mx-auto max-w-3xl space-y-6">
+      {/* Quick Stats Row */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="rounded-xl border bg-gradient-to-br from-blue-50 to-blue-100 p-3 text-center">
+          <p className="text-xs text-muted-foreground">Sales (Month)</p>
+          <p className="mt-0.5 text-lg font-bold text-blue-700">{salesThisMonth.toFixed(0)} OMR</p>
+        </div>
+        <div className="rounded-xl border bg-gradient-to-br from-emerald-50 to-emerald-100 p-3 text-center">
+          <p className="text-xs text-muted-foreground">Leads</p>
+          <p className="mt-0.5 text-lg font-bold text-emerald-700">{leadsThisMonth}</p>
+        </div>
+        <div className="rounded-xl border bg-gradient-to-br from-orange-50 to-orange-100 p-3 text-center">
+          <p className="text-xs text-muted-foreground">Jobs Today</p>
+          <p className="mt-0.5 text-lg font-bold text-orange-700">{jobsDoneToday}</p>
+        </div>
+        <div className="rounded-xl border bg-gradient-to-br from-purple-50 to-purple-100 p-3 text-center">
+          <p className="text-xs text-muted-foreground">Schedule</p>
+          <p className="mt-0.5 text-lg font-bold text-purple-700">{todayScheduleCount}</p>
+        </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid gap-6 md:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Sales</CardTitle>
-            <svg
-              className="h-4 w-4 text-muted-foreground"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+      {/* Menu Tiles */}
+      <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:gap-4">
+        {menuTiles.map((tile) => (
+          <Link
+            key={tile.name}
+            href={`/${locale}/${tile.href}`}
+            className="group flex flex-col items-center rounded-2xl border bg-background p-4 text-center shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5 active:scale-95 md:p-5"
+          >
+            <div
+              className={`flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${tile.color} text-white shadow-sm md:h-14 md:w-14`}
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">OMR {salesThisMonth.toFixed(2)}</div>
-            <p className="text-xs text-muted-foreground">
-              This month • Today: OMR {salesToday.toFixed(2)}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Leads</CardTitle>
-            <svg
-              className="h-4 w-4 text-muted-foreground"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-              />
-            </svg>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{leadsThisMonth}</div>
-            <p className="text-xs text-muted-foreground">This month</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Jobs Done Today</CardTitle>
-            <svg
-              className="h-4 w-4 text-muted-foreground"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{jobsDoneToday}</div>
-            <p className="text-xs text-muted-foreground">{formatDate(today, 'PP')}</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Schedule Today</CardTitle>
-            <svg
-              className="h-4 w-4 text-muted-foreground"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-              />
-            </svg>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{todaySchedule.length}</div>
-            <p className="text-xs text-muted-foreground">Scheduled items</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Main Content Grid: Left side (Recent Leads + Schedule) and Right side (Reminders) */}
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Left Column - Takes 2/3 width */}
-        <div className="space-y-6 lg:col-span-2">
-          {/* Recent Leads */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Recent Leads</CardTitle>
-              <CardDescription>Latest inquiries from potential customers</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {recentLeads.length > 0 ? (
-                <div className="space-y-4">
-                  {recentLeads.map((lead) => (
-                    <div key={lead.id} className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0">
-                      <div className="space-y-1">
-                        <p className="font-medium">{lead.name}</p>
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                          <span>{lead.phone}</span>
-                          {lead.email && <span>{lead.email}</span>}
-                        </div>
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <span className="rounded-full bg-muted px-2 py-0.5">{lead.source}</span>
-                          {lead.serviceInterest && (
-                            <span className="rounded-full bg-muted px-2 py-0.5">{lead.serviceInterest}</span>
-                          )}
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="mb-1">
-                          <span className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
-                            lead.status === 'NEW' ? 'bg-blue-100 text-blue-800' :
-                            lead.status === 'CONTACTED' ? 'bg-purple-100 text-purple-800' :
-                            lead.status === 'WON' ? 'bg-green-100 text-green-800' :
-                            lead.status === 'LOST' ? 'bg-red-100 text-red-800' :
-                            'bg-gray-100 text-gray-800'
-                          }`}>
-                            {lead.status.replace(/_/g, ' ')}
-                          </span>
-                        </div>
-                        <p className="text-xs text-muted-foreground">{formatDate(lead.createdAt, 'PPp')}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-center text-muted-foreground">No recent leads</p>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Today's Schedule */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Today's Schedule</CardTitle>
-              <CardDescription>Scheduled activities for {formatDate(today, 'PP')}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {todaySchedule.length > 0 ? (
-                <div className="space-y-4">
-                  {todaySchedule.map((entry) => (
-                    <div key={entry.id} className="flex items-start justify-between border-b pb-4 last:border-0 last:pb-0">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <p className="font-medium">{entry.type.replace(/_/g, ' ')}</p>
-                          <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${
-                            entry.status === 'COMPLETED' ? 'bg-green-100 text-green-800' :
-                            entry.status === 'IN_PROGRESS' ? 'bg-blue-100 text-blue-800' :
-                            entry.status === 'CANCELLED' ? 'bg-red-100 text-red-800' :
-                            'bg-gray-100 text-gray-800'
-                          }`}>
-                            {entry.status.replace(/_/g, ' ')}
-                          </span>
-                        </div>
-                        <p className="text-sm text-muted-foreground">
-                          {entry.client.name}
-                          {entry.jobOrder && ` • ${entry.jobOrder.jobNumber}`}
-                        </p>
-                        {entry.locationText && (
-                          <p className="text-xs text-muted-foreground">{entry.locationText}</p>
-                        )}
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm font-medium">
-                          {formatDate(entry.startDateTime, 'p')}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          to {formatDate(entry.endDateTime, 'p')}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-center text-muted-foreground">No scheduled activities for today</p>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Right Column - Takes 1/3 width */}
-        <div className="space-y-6">
-          {/* Reminders & Notes */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Reminders & Notes</CardTitle>
-              <CardDescription>Upcoming reminders (next 7 days)</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {upcomingReminders.length > 0 ? (
-                <div className="space-y-3">
-                  {upcomingReminders.map((reminder) => (
-                    <div key={reminder.id} className="space-y-1 border-b pb-3 last:border-0 last:pb-0">
-                      <p className="text-sm font-medium line-clamp-2">{reminder.content}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {reminder.client?.name || 'General'}
-                      </p>
-                      {reminder.reminderDate && (
-                        <p className="text-xs font-medium text-blue-600">
-                          {formatDate(reminder.reminderDate, 'PPp')}
-                        </p>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-center text-sm text-muted-foreground">No upcoming reminders</p>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+              {tile.icon}
+            </div>
+            <span className="mt-2.5 text-xs font-semibold sm:text-sm">{tile.name}</span>
+            <span className="mt-0.5 hidden text-[10px] text-muted-foreground sm:block">
+              {tile.description}
+            </span>
+          </Link>
+        ))}
       </div>
     </div>
   )
