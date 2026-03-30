@@ -1177,6 +1177,7 @@ model User {
   scheduleReminders    ScheduleReminder[]
   jobAdjustments       JobAdjustment[]
   creditApprovedPayments Payment[] @relation("PaymentCreditApproval")
+  reminders            UserReminder[]
 
   @@index([email])
   @@index([deletedAt])
@@ -1269,6 +1270,32 @@ model BankDetailsTemplate {
 
   @@index([deletedAt])
   @@map("bank_details_templates")
+}
+
+// ============================================
+// USER REMINDER MODEL
+// ============================================
+
+model UserReminder {
+  id          String    @id @default(cuid())
+  userId      String
+  title       String
+  description String?
+  reminderDate DateTime
+  reminderTime String?   // HH:mm format
+  isCompleted Boolean   @default(false)
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([reminderDate])
+  @@index([isCompleted])
+  @@index([deletedAt])
+  @@map("user_reminders")
 }
 
 enum ItemType {
