@@ -256,6 +256,10 @@ model Lead {
   email                 String?
   source                ClientSource
   serviceInterest       String?
+  locationText          String?
+  latitude              Float?
+  longitude             Float?
+  googleMapsUrl         String?
   notes                 String?
   status                LeadStatus  @default(NEW)
   isTemporary           Boolean     @default(false)
@@ -632,6 +636,8 @@ model SiteVisit {
   assignedToId     String
   requiredService  String?
   locationText     String?
+  latitude         Float?
+  longitude        Float?
   googleMapsUrl    String?
   siteContactName  String?
   siteContactPhone String?
