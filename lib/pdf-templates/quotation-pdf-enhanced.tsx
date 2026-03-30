@@ -483,6 +483,7 @@ export const QuotationPDFEnhanced = ({ quotation, mode = 'plain-model' }: Quotat
       <View style={styles.headerBanner}>
         <View style={styles.header}>
           <View style={styles.logoSection}>
+            {/* eslint-disable-next-line jsx-a11y/alt-text */}
             <Image src={LOGO_BASE64} style={styles.logo} />
             <View style={styles.companyInfo}>
               <Text style={styles.companyName}>Golden Services</Text>

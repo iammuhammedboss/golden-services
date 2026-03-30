@@ -7,7 +7,6 @@ import type { UserWithRoles } from '@/lib/permissions'
 import { renderToStream } from '@react-pdf/renderer'
 import { QuotationPDF } from '@/lib/pdf-templates/quotation-pdf'
 import { QuotationPDFEnhanced, PDFMode } from '@/lib/pdf-templates/quotation-pdf-enhanced'
-import { getSalesExecutiveId } from '@/lib/sales-executive'
 
 // GET /api/quotations/[id]/download - Download quotation as PDF
 export async function GET(
@@ -34,9 +33,12 @@ export async function GET(
     const { searchParams } = new URL(request.url)
     const mode = (searchParams.get('mode') || 'plain-model') as PDFMode
 
-    // Fetch quotation with all related data including creator
+    // Fetch quotation with all related data including creator and sales executive
     const quotation = await prisma.quotation.findUnique({
-      where: { id: params.id },
+      where: {
+        id: params.id,
+        deletedAt: null,
+      },
       include: {
         client: {
           select: {
@@ -56,7 +58,16 @@ export async function GET(
             name: true,
           },
         },
+        salesExecutive: {
+          select: {
+            code: true,
+            name: true,
+          },
+        },
         items: {
+          where: {
+            deletedAt: null,
+          },
           orderBy: {
             createdAt: 'asc',
           },
@@ -68,11 +79,16 @@ export async function GET(
       return NextResponse.json({ error: 'Quotation not found' }, { status: 404 })
     }
 
-    // Calculate total
-    const total = quotation.items.reduce((sum, item) => sum + Number(item.total), 0)
-
-    // Get sales executive ID from creator name
-    const salesExecutiveId = getSalesExecutiveId(quotation.createdBy?.name)
+    // Calculate totals with proper decimal precision
+    const subtotal = quotation.items.reduce((sum, item) => sum + Number(item.total), 0)
+    const discountAmount = quotation.discountType === 'PERCENTAGE'
+      ? (subtotal * Number(quotation.discountValue || 0)) / 100
+      : Number(quotation.discountValue || 0)
+    const subtotalAfterDiscount = subtotal - discountAmount
+    const vatAmount = quotation.vatEnabled
+      ? (subtotalAfterDiscount * Number(quotation.vatPercentage)) / 100
+      : 0
+    const total = subtotalAfterDiscount + vatAmount
 
     // Prepare data for PDF template
     const quotationData = {
@@ -89,11 +105,21 @@ export async function GET(
         unitPrice: Number(item.unitPrice),
         total: Number(item.total),
       })),
+      subtotal,
+      discountType: quotation.discountType,
+      discountValue: Number(quotation.discountValue || 0),
+      discountAmount,
+      vatEnabled: quotation.vatEnabled,
+      vatPercentage: Number(quotation.vatPercentage),
+      vatAmount,
       total,
       notes: quotation.notes,
+      termsSnapshot: quotation.termsSnapshot,
+      bankDetailsSnapshot: quotation.bankDetailsSnapshot,
       status: quotation.status,
       createdBy: quotation.createdBy,
-      salesExecutiveId,
+      salesExecutive: quotation.salesExecutive,
+      salesExecutiveId: quotation.salesExecutive?.code || null,
     }
 
     // Generate PDF stream using enhanced template
