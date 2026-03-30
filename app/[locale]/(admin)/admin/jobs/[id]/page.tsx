@@ -183,11 +183,19 @@ const addEquipment = () => {
         <div className="flex items-center justify-between">
             <h1 className="text-3xl font-bold">{id === 'new' ? 'New Job' : `Job ${job.jobNumber}`}</h1>
             <div className="flex gap-2">
+                {id !== 'new' && (
+                  <Button
+                    variant="outline"
+                    onClick={() => router.push(`/admin/jobs/${id}/status`)}
+                  >
+                    Status & Payments
+                  </Button>
+                )}
                 <Button onClick={handleSave} disabled={saving}>
                     {saving ? 'Saving...' : 'Save Job'}
                 </Button>
-                <Button 
-                    onClick={handleShare} 
+                <Button
+                    onClick={handleShare}
                     disabled={id === 'new'}
                     variant="outline"
                 >

@@ -247,6 +247,9 @@ export default async function JobsPage({ params }: { params: { locale: string } 
                         <Button variant="ghost" size="sm" asChild>
                           <Link href={`/${params.locale}/admin/jobs/${job.id}`}>View</Link>
                         </Button>
+                        <Button variant="outline" size="sm" asChild>
+                          <Link href={`/${params.locale}/admin/jobs/${job.id}/status`}>Status</Link>
+                        </Button>
                         {job.quotationId && job._count.invoices === 0 && (
                            <Button variant="outline" size="sm" asChild>
                            <Link href={`/${params.locale}/admin/invoices/new?jobId=${job.id}`}>
