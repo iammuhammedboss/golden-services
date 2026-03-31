@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { formatDate, formatCurrency, getInitials, enumToReadable, getStatusColor } from '@/lib/utils'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { useConfirm } from '@/components/confirm-dialog'
 import { Textarea } from '@/components/ui/textarea'
 import {
   Select,
@@ -38,6 +39,7 @@ export default function ClientDetailsPage() {
   const router = useRouter()
   const locale = params.locale as string
   const id = params.id as string
+  const { confirm, ConfirmDialog: ConfirmDialogEl } = useConfirm()
 
   const fetchClient = useCallback(async () => {
     try {
@@ -57,7 +59,13 @@ export default function ClientDetailsPage() {
 
   const handleDelete = async () => {
     if (!client) return
-    if (!confirm(`Delete client "${client.name}"? This cannot be undone.`)) return
+    const ok = await confirm({
+      title: 'Delete Client',
+      description: `Are you sure you want to delete "${client.name}"? This action cannot be undone.`,
+      variant: 'danger',
+      confirmLabel: 'Delete',
+    })
+    if (!ok) return
     try {
       const res = await fetch(`/api/clients/${id}`, { method: 'DELETE' })
       if (res.ok) router.push(`/${locale}/admin/clients`)
@@ -130,6 +138,7 @@ export default function ClientDetailsPage() {
 
   return (
     <div className="mx-auto max-w-2xl space-y-5 pb-8">
+      {ConfirmDialogEl}
       {/* Profile Card */}
       <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
         <div className="flex items-start gap-4">
