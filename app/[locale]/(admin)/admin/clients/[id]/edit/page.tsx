@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import { Button } from '@/components/ui/button'
+import { useRouter, useParams } from 'next/navigation'
+import Link from 'next/link'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
@@ -13,13 +13,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { ArrowLeft, Save } from 'lucide-react'
-import Link from 'next/link'
-import { Badge } from '@/components/ui/badge'
 
-export default function EditClientPage({ params }: { params: { id: string } }) {
+export default function EditClientPage() {
   const router = useRouter()
+  const params = useParams()
+  const locale = params.locale as string
+  const clientId = params.id as string
   const [loading, setLoading] = useState(false)
   const [fetching, setFetching] = useState(true)
   const [formData, setFormData] = useState({
@@ -46,11 +45,10 @@ export default function EditClientPage({ params }: { params: { id: string } }) {
   })
 
   useEffect(() => {
-    const fetchClient = async () => {
-      try {
-        const response = await fetch(`/api/clients/${params.id}`)
-        if (response.ok) {
-          const client = await response.json()
+    fetch(`/api/clients/${clientId}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((client) => {
+        if (client) {
           setFormData({
             name: client.name || '',
             phone: client.phone || '',
@@ -73,353 +71,198 @@ export default function EditClientPage({ params }: { params: { id: string } }) {
             alternateContactPhone: client.alternateContactPhone || '',
             notes: client.notes || '',
           })
-        } else {
-          alert('Failed to fetch client')
         }
-      } catch (error) {
-        console.error('Failed to fetch client:', error)
-        alert('Failed to fetch client')
-      } finally {
-        setFetching(false)
-      }
-    }
+      })
+      .catch(() => alert('Failed to fetch client'))
+      .finally(() => setFetching(false))
+  }, [clientId])
 
-    fetchClient()
-  }, [params.id])
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault()
+    if (!formData.name || !formData.phone) return
     setLoading(true)
-
     try {
-      const response = await fetch(`/api/clients/${params.id}`, {
+      const response = await fetch(`/api/clients/${clientId}`, {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
       })
-
       if (response.ok) {
-        router.push(`/admin/clients/${params.id}`)
+        router.push(`/${locale}/admin/clients/${clientId}`)
       } else {
         const error = await response.json()
         alert(error.error || 'Failed to update client')
       }
-    } catch (error) {
-      console.error('Failed to update client:', error)
+    } catch {
       alert('Failed to update client')
     } finally {
       setLoading(false)
     }
   }
 
+  const set = (field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+    setFormData({ ...formData, [field]: e.target.value })
+
   if (fetching) {
-    return <div className="flex items-center justify-center h-64">Loading...</div>
+    return (
+      <div className="flex h-[60vh] items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    )
   }
 
   return (
-    <div className="space-y-6 pb-16">
+    <div className="mx-auto max-w-2xl pb-24">
       {/* Header */}
-      <div className="flex items-center justify-between sticky top-0 bg-background z-10 py-4">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="sm" asChild>
-            <Link href={`/admin/clients/${params.id}`}>
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back
-            </Link>
-          </Button>
-          <div>
-            <h1 className="text-3xl font-bold">Edit Client</h1>
-            <p className="text-muted-foreground">Update client information</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" asChild disabled={loading}>
-            <Link href={`/admin/clients/${params.id}`}>Cancel</Link>
-          </Button>
-          <Button onClick={handleSubmit} disabled={loading}>
-            <Save className="h-4 w-4 mr-2" />
-            {loading ? 'Saving...' : 'Save Changes'}
-          </Button>
-        </div>
+      <div className="mb-5">
+        <h1 className="text-xl font-bold text-gray-900">Edit Client</h1>
+        <p className="text-xs text-gray-400">Update client information</p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Section 1: Basic Information */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Basic Information</CardTitle>
-            <CardDescription>Essential client details</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="name">
-                  Client Name <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  id="name"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="Enter client name"
-                  required
-                />
-              </div>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Basic Info */}
+        <Section title="Basic Information">
+          <FormField label="Client Name" required>
+            <Input value={formData.name} onChange={set('name')} placeholder="Full name" className="rounded-xl" required />
+          </FormField>
+          <FormField label="Company">
+            <Input value={formData.company} onChange={set('company')} placeholder="Company name (optional)" className="rounded-xl" />
+          </FormField>
+          <div className="grid grid-cols-2 gap-3">
+            <FormField label="Type">
+              <Select value={formData.type} onValueChange={(v: any) => setFormData({ ...formData, type: v })}>
+                <SelectTrigger className="rounded-xl"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="INDIVIDUAL">Individual</SelectItem>
+                  <SelectItem value="CORPORATE">Corporate</SelectItem>
+                </SelectContent>
+              </Select>
+            </FormField>
+            <FormField label="VAT/TRN">
+              <Input value={formData.vatTrn} onChange={set('vatTrn')} placeholder="Tax number" className="rounded-xl" />
+            </FormField>
+          </div>
+        </Section>
 
-              <div className="space-y-2">
-                <Label htmlFor="company">Company (optional)</Label>
-                <Input
-                  id="company"
-                  value={formData.company}
-                  onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-                  placeholder="Company name"
-                />
-              </div>
+        {/* Contact */}
+        <Section title="Contact Details">
+          <FormField label="Phone" required>
+            <Input type="tel" value={formData.phone} onChange={set('phone')} placeholder="+968 XXXX XXXX" className="rounded-xl" required />
+          </FormField>
+          <div className="grid grid-cols-2 gap-3">
+            <FormField label="Alt Phone">
+              <Input type="tel" value={formData.alternatePhone} onChange={set('alternatePhone')} placeholder="+968 XXXX XXXX" className="rounded-xl" />
+            </FormField>
+            <FormField label="WhatsApp">
+              <Input type="tel" value={formData.whatsapp} onChange={set('whatsapp')} placeholder="+968 XXXX XXXX" className="rounded-xl" />
+            </FormField>
+          </div>
+          <FormField label="Email">
+            <Input type="email" value={formData.email} onChange={set('email')} placeholder="email@example.com" className="rounded-xl" />
+          </FormField>
+        </Section>
 
-              <div className="space-y-2">
-                <Label htmlFor="phone">
-                  Phone <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  id="phone"
-                  type="tel"
-                  value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  placeholder="+968 XXXX XXXX"
-                  required
-                />
-              </div>
+        {/* Address */}
+        <Section title="Address">
+          <div className="grid grid-cols-2 gap-3">
+            <FormField label="Area">
+              <Input value={formData.area} onChange={set('area')} placeholder="Area/District" className="rounded-xl" />
+            </FormField>
+            <FormField label="City">
+              <Input value={formData.city} onChange={set('city')} placeholder="City" className="rounded-xl" />
+            </FormField>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <FormField label="Street">
+              <Input value={formData.street} onChange={set('street')} placeholder="Street name" className="rounded-xl" />
+            </FormField>
+            <FormField label="Building">
+              <Input value={formData.building} onChange={set('building')} placeholder="Building/Villa" className="rounded-xl" />
+            </FormField>
+          </div>
+          <FormField label="Location Pin">
+            <Input value={formData.locationPin} onChange={set('locationPin')} placeholder="Google Maps link or coordinates" className="rounded-xl" />
+          </FormField>
+        </Section>
 
-              <div className="space-y-2">
-                <Label htmlFor="alternatePhone">Alternate Phone</Label>
-                <Input
-                  id="alternatePhone"
-                  type="tel"
-                  value={formData.alternatePhone}
-                  onChange={(e) => setFormData({ ...formData, alternatePhone: e.target.value })}
-                  placeholder="+968 XXXX XXXX"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="whatsapp">WhatsApp</Label>
-                <Input
-                  id="whatsapp"
-                  type="tel"
-                  value={formData.whatsapp}
-                  onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
-                  placeholder="+968 XXXX XXXX"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  placeholder="email@example.com"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="type">Client Type</Label>
-                <Select
-                  value={formData.type}
-                  onValueChange={(value: 'INDIVIDUAL' | 'CORPORATE') =>
-                    setFormData({ ...formData, type: value })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="INDIVIDUAL">Individual</SelectItem>
-                    <SelectItem value="CORPORATE">Corporate</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="vatTrn">VAT/TRN (optional)</Label>
-                <Input
-                  id="vatTrn"
-                  value={formData.vatTrn}
-                  onChange={(e) => setFormData({ ...formData, vatTrn: e.target.value })}
-                  placeholder="VAT/TRN number"
-                />
-              </div>
+        {/* Contacts */}
+        <Section title="Contact Persons">
+          <div className="rounded-xl bg-blue-50/50 p-3 space-y-3">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-blue-400">Primary Contact</p>
+            <div className="grid grid-cols-2 gap-3">
+              <FormField label="Name">
+                <Input value={formData.primaryContactName} onChange={set('primaryContactName')} placeholder="Contact name" className="rounded-xl" />
+              </FormField>
+              <FormField label="Phone">
+                <Input type="tel" value={formData.primaryContactPhone} onChange={set('primaryContactPhone')} placeholder="+968 XXXX XXXX" className="rounded-xl" />
+              </FormField>
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Section 2: Address */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Address</CardTitle>
-            <CardDescription>Client location details</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="area">Area</Label>
-                <Input
-                  id="area"
-                  value={formData.area}
-                  onChange={(e) => setFormData({ ...formData, area: e.target.value })}
-                  placeholder="Area/District"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="city">City</Label>
-                <Input
-                  id="city"
-                  value={formData.city}
-                  onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                  placeholder="City"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="street">Street</Label>
-                <Input
-                  id="street"
-                  value={formData.street}
-                  onChange={(e) => setFormData({ ...formData, street: e.target.value })}
-                  placeholder="Street name"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="building">Building/Villa/Apartment</Label>
-                <Input
-                  id="building"
-                  value={formData.building}
-                  onChange={(e) => setFormData({ ...formData, building: e.target.value })}
-                  placeholder="Building/Villa/Apt details"
-                />
-              </div>
-
-              <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="locationPin">Location Pin (optional)</Label>
-                <Input
-                  id="locationPin"
-                  value={formData.locationPin}
-                  onChange={(e) => setFormData({ ...formData, locationPin: e.target.value })}
-                  placeholder="Google Maps link or coordinates"
-                />
-              </div>
+          </div>
+          <div className="rounded-xl bg-gray-50/50 p-3 space-y-3">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Alternate Contact</p>
+            <div className="grid grid-cols-2 gap-3">
+              <FormField label="Name">
+                <Input value={formData.alternateContactName} onChange={set('alternateContactName')} placeholder="Contact name" className="rounded-xl" />
+              </FormField>
+              <FormField label="Phone">
+                <Input type="tel" value={formData.alternateContactPhone} onChange={set('alternateContactPhone')} placeholder="+968 XXXX XXXX" className="rounded-xl" />
+              </FormField>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </Section>
 
-        {/* Section 3: Contacts */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Contacts</CardTitle>
-            <CardDescription>Primary and alternate contact persons</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-4">
-              <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <Badge>Primary Contact</Badge>
-                </div>
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="primaryContactName">Contact Name</Label>
-                    <Input
-                      id="primaryContactName"
-                      value={formData.primaryContactName}
-                      onChange={(e) =>
-                        setFormData({ ...formData, primaryContactName: e.target.value })
-                      }
-                      placeholder="Primary contact name"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="primaryContactPhone">Contact Phone</Label>
-                    <Input
-                      id="primaryContactPhone"
-                      type="tel"
-                      value={formData.primaryContactPhone}
-                      onChange={(e) =>
-                        setFormData({ ...formData, primaryContactPhone: e.target.value })
-                      }
-                      placeholder="+968 XXXX XXXX"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline">Alternate Contact</Badge>
-                </div>
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="alternateContactName">Contact Name</Label>
-                    <Input
-                      id="alternateContactName"
-                      value={formData.alternateContactName}
-                      onChange={(e) =>
-                        setFormData({ ...formData, alternateContactName: e.target.value })
-                      }
-                      placeholder="Alternate contact name"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="alternateContactPhone">Contact Phone</Label>
-                    <Input
-                      id="alternateContactPhone"
-                      type="tel"
-                      value={formData.alternateContactPhone}
-                      onChange={(e) =>
-                        setFormData({ ...formData, alternateContactPhone: e.target.value })
-                      }
-                      placeholder="+968 XXXX XXXX"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Section 4: Notes */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Notes</CardTitle>
-            <CardDescription>Internal notes and comments</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <Label htmlFor="notes">Internal Notes</Label>
-              <Textarea
-                id="notes"
-                value={formData.notes}
-                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                placeholder="Add any internal notes about this client..."
-                rows={4}
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Sticky bottom save bar on mobile */}
-        <div className="fixed bottom-0 left-0 right-0 bg-background border-t p-4 flex items-center justify-end gap-2 md:hidden">
-          <Button type="button" variant="outline" asChild disabled={loading}>
-            <Link href={`/admin/clients/${params.id}`}>Cancel</Link>
-          </Button>
-          <Button type="submit" disabled={loading}>
-            <Save className="h-4 w-4 mr-2" />
-            {loading ? 'Saving...' : 'Save Changes'}
-          </Button>
-        </div>
+        {/* Notes */}
+        <Section title="Notes">
+          <Textarea
+            value={formData.notes}
+            onChange={set('notes')}
+            placeholder="Internal notes about this client..."
+            rows={3}
+            className="rounded-xl text-sm"
+          />
+        </Section>
       </form>
+
+      {/* Sticky Save Bar */}
+      <div className="fixed bottom-0 left-0 right-0 z-20 border-t border-gray-100 bg-white/90 px-4 py-3 backdrop-blur-sm">
+        <div className="mx-auto flex max-w-2xl gap-2">
+          <Link
+            href={`/${locale}/admin/clients/${clientId}`}
+            className="flex-1 rounded-xl border border-gray-200 bg-white py-3 text-center text-sm font-medium text-gray-600 transition-all active:scale-[0.98]"
+          >
+            Cancel
+          </Link>
+          <button
+            onClick={() => handleSubmit()}
+            disabled={loading || !formData.name || !formData.phone}
+            className="flex-[2] rounded-xl bg-gradient-to-r from-primary to-gold-600 py-3 text-sm font-semibold text-white shadow-md shadow-gold-300/30 transition-all active:scale-[0.98] disabled:opacity-50"
+          >
+            {loading ? 'Saving...' : 'Save Changes'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="rounded-2xl border border-gray-100 bg-white shadow-sm">
+      <div className="border-b border-gray-50 px-4 py-3">
+        <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-400">{title}</h3>
+      </div>
+      <div className="space-y-3 p-4">{children}</div>
+    </div>
+  )
+}
+
+function FormField({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
+  return (
+    <div className="space-y-1">
+      <Label className="text-xs font-medium text-gray-500">
+        {label} {required && <span className="text-red-400">*</span>}
+      </Label>
+      {children}
     </div>
   )
 }
