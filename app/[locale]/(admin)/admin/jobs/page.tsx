@@ -1,278 +1,101 @@
 import Link from 'next/link'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { prisma } from '@/lib/prisma'
 import { formatDate, enumToReadable, getStatusColor, formatTime } from '@/lib/utils'
 
 export default async function JobsPage({ params }: { params: { locale: string } }) {
   const jobs = await prisma.jobOrder.findMany({
-    orderBy: {
-      scheduledDate: 'desc',
-    },
+    orderBy: { scheduledDate: 'desc' },
+    where: { deletedAt: null },
     include: {
-      client: {
-        select: {
-          name: true,
-          phone: true,
-        },
-      },
-      assignments: {
-        select: {
-          user: {
-            select: {
-              name: true,
-            },
-          },
-          roleInJob: true,
-        },
-      },
-      statusUpdates: {
-        orderBy: {
-          createdAt: 'desc',
-        },
-        take: 1,
-      },
-      _count: {
-        select: {
-          invoices: true,
-        },
-      },
+      client: { select: { name: true, phone: true } },
+      assignments: { select: { user: { select: { name: true } }, roleInJob: true } },
+      _count: { select: { invoices: true } },
     },
   })
 
   const stats = {
     total: jobs.length,
     scheduled: jobs.filter((j) => j.status === 'SCHEDULED').length,
-    inProgress: jobs.filter((j) => j.status === 'IN_PROGRESS').length,
+    active: jobs.filter((j) => j.status === 'IN_PROGRESS').length,
     completed: jobs.filter((j) => j.status === 'COMPLETED').length,
-    cancelled: jobs.filter((j) => j.status === 'CANCELLED').length,
-    atStore: jobs.filter((j) => {
-      const latestStatus = j.statusUpdates?.[0]?.status;
-      return latestStatus === 'AT_STORE';
-    }).length,
-    atSite: jobs.filter((j) => {
-      const latestStatus = j.statusUpdates?.[0]?.status;
-      return latestStatus === 'ARRIVED_AT_SITE' || latestStatus === 'IN_PROGRESS';
-    }).length,
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Job Orders</h1>
-          <p className="text-muted-foreground">Manage and track job orders</p>
-        </div>
-        <div className="flex gap-2">
-          <Link href={`/${params.locale}/admin/schedule`}>
-            <Button variant="outline">
-              <svg
-                className="mr-2 h-4 w-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                />
-              </svg>
-              Calendar View
-            </Button>
-          </Link>
-          <Link href={`/${params.locale}/admin/jobs/new`}>
-            <Button>
-              <svg
-                className="mr-2 h-4 w-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 4v16m8-8H4"
-                />
-              </svg>
-              New Job
-            </Button>
-          </Link>
-        </div>
+    <div className="mx-auto max-w-2xl space-y-4 pb-24">
+      <div>
+        <h1 className="text-xl font-bold text-gray-900">Jobs</h1>
+        <p className="text-xs text-gray-400">{stats.total} total jobs</p>
       </div>
 
       {/* Stats */}
-      <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-7">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.total}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Scheduled</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{stats.scheduled}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">At Store</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-purple-600">{stats.atStore}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">At Site</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-orange-600">{stats.atSite}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">In Progress</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">{stats.inProgress}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Completed</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">{stats.completed}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Cancelled</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-600">{stats.cancelled}</div>
-          </CardContent>
-        </Card>
+      <div className="grid grid-cols-4 gap-2">
+        {[
+          { label: 'All', value: stats.total, color: 'text-gray-800' },
+          { label: 'Scheduled', value: stats.scheduled, color: 'text-blue-600' },
+          { label: 'Active', value: stats.active, color: 'text-orange-600' },
+          { label: 'Done', value: stats.completed, color: 'text-green-600' },
+        ].map((s) => (
+          <div key={s.label} className="rounded-xl border border-gray-100 bg-white p-2.5 text-center shadow-sm">
+            <p className={`text-lg font-bold ${s.color}`}>{s.value}</p>
+            <p className="text-[9px] font-medium uppercase tracking-wider text-gray-400">{s.label}</p>
+          </div>
+        ))}
       </div>
 
-      {/* Jobs Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>All Job Orders</CardTitle>
-          <CardDescription>A list of all job orders and their current status</CardDescription>
-        </CardHeader>
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Job Number</TableHead>
-                <TableHead>Client</TableHead>
-                <TableHead>Scheduled Date</TableHead>
-                <TableHead>Time</TableHead>
-                <TableHead>Assigned Team</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Created</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {jobs.length > 0 ? (
-                jobs.map((job) => (
-                  <TableRow key={job.id}>
-                    <TableCell className="font-medium">{job.jobNumber}</TableCell>
-                    <TableCell>
-                      <div className="text-sm">
-                        <div>{job.client.name}</div>
-                        <div className="text-muted-foreground">{job.client.phone}</div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="text-sm">{formatDate(job.scheduledDate, 'PP')}</div>
-                    </TableCell>
-                    <TableCell>
-                      {job.scheduledStartTime && job.scheduledEndTime ? (
-                        <div className="text-sm">
-                          <div>{formatTime(job.scheduledStartTime)}</div>
-                          <div className="text-muted-foreground">
-                            to {formatTime(job.scheduledEndTime)}
-                          </div>
-                        </div>
-                      ) : (
-                        <span className="text-sm text-muted-foreground">-</span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {job.assignments.length > 0 ? (
-                        <div className="text-sm">
-                          <div>{job.assignments.length} members</div>
-                          <div className="text-muted-foreground">
-                            {job.assignments
-                              .filter((a) => a.roleInJob === 'SUPERVISOR')
-                              .map((a) => a.user.name)
-                              .join(', ') || 'No supervisor'}
-                          </div>
-                        </div>
-                      ) : (
-                        <span className="text-sm text-muted-foreground">Not assigned</span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={getStatusColor(job.status)}>
-                        {enumToReadable(job.status)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="text-sm">{formatDate(job.createdAt, 'PP')}</div>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end items-center gap-2">
-                        <Button variant="ghost" size="sm" asChild>
-                          <Link href={`/${params.locale}/admin/jobs/${job.id}`}>View</Link>
-                        </Button>
-                        <Button variant="outline" size="sm" asChild>
-                          <Link href={`/${params.locale}/admin/jobs/${job.id}/status`}>Status</Link>
-                        </Button>
-                        {job.quotationId && job._count.invoices === 0 && (
-                           <Button variant="outline" size="sm" asChild>
-                           <Link href={`/${params.locale}/admin/invoices/new?jobId=${job.id}`}>
-                             Create Invoice
-                           </Link>
-                         </Button>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={9} className="text-center text-muted-foreground">
-                    No job orders found
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Job Cards */}
+      <div className="space-y-2">
+        {jobs.length > 0 ? (
+          jobs.map((job) => (
+            <Link
+              key={job.id}
+              href={`/${params.locale}/admin/jobs/${job.id}/status`}
+              className="group flex items-center gap-3 rounded-2xl border border-gray-100 bg-white p-3.5 shadow-sm transition-all hover:shadow-md active:scale-[0.98]"
+            >
+              <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-white shadow-sm ${
+                job.status === 'COMPLETED' ? 'bg-gradient-to-br from-green-500 to-green-600' :
+                job.status === 'IN_PROGRESS' ? 'bg-gradient-to-br from-orange-500 to-orange-600' :
+                job.status === 'CANCELLED' ? 'bg-gradient-to-br from-red-500 to-red-600' :
+                'bg-gradient-to-br from-blue-500 to-blue-600'
+              }`}>
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-semibold text-gray-900">{job.jobNumber}</p>
+                  <span className="text-xs text-gray-400">{job.client.name}</span>
+                </div>
+                <p className="text-xs text-gray-400">
+                  {formatDate(job.scheduledDate, 'PP')}
+                  {job.scheduledStartTime && ` ${formatTime(job.scheduledStartTime)}`}
+                  {job.assignments.length > 0 && ` · ${job.assignments.length} crew`}
+                </p>
+              </div>
+              <div className="flex shrink-0 flex-col items-end gap-1">
+                <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${getStatusColor(job.status)}`}>
+                  {enumToReadable(job.status)}
+                </span>
+                <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${getStatusColor(job.paymentStatus || 'UNPAID')}`}>
+                  {enumToReadable(job.paymentStatus || 'UNPAID')}
+                </span>
+              </div>
+            </Link>
+          ))
+        ) : (
+          <div className="py-12 text-center"><p className="text-sm text-gray-400">No jobs yet</p></div>
+        )}
+      </div>
+
+      {/* FAB */}
+      <Link
+        href={`/${params.locale}/admin/jobs/new`}
+        className="fixed bottom-6 right-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-gold-600 text-white shadow-lg shadow-gold-300/40 transition-all hover:scale-105 active:scale-95"
+      >
+        <svg className="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+        </svg>
+      </Link>
     </div>
   )
 }

@@ -1,326 +1,183 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import { ArrowLeft, MapPin, Edit, Trash2 } from 'lucide-react'
-import { formatDate } from '@/lib/utils'
+import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
+import { formatDate, enumToReadable, getStatusColor } from '@/lib/utils'
+import { useConfirm } from '@/components/confirm-dialog'
 
-type SiteVisit = {
-  id: string
-  scheduledAt: string
-  startedAt: string | null
-  completedAt: string | null
-  status: string
-  locationText: string | null
-  googleMapsUrl: string | null
-  siteContactName: string | null
-  siteContactPhone: string | null
-  notes: string | null
-  remarks: string | null
-  requiredService: string | null
-  client: {
-    id: string
-    name: string
-    phone: string
-    email: string | null
-  }
-  assignedTo: {
-    id: string
-    name: string
-    email: string | null
-  }
-}
+const STATUSES = [
+  { value: 'PENDING', label: 'Pending', color: 'from-yellow-500 to-yellow-600' },
+  { value: 'IN_PROGRESS', label: 'In Progress', color: 'from-blue-500 to-blue-600' },
+  { value: 'COMPLETED', label: 'Completed', color: 'from-green-500 to-green-600' },
+  { value: 'CANCELLED', label: 'Cancelled', color: 'from-red-500 to-red-600' },
+]
 
-export default function SiteVisitDetailPage({ params }: { params: { id: string } }) {
+export default function SiteVisitDetailPage({ params: pageParams }: { params: { id: string } }) {
   const router = useRouter()
-  const [siteVisit, setSiteVisit] = useState<SiteVisit | null>(null)
+  const params = useParams()
+  const locale = params.locale as string
+  const [siteVisit, setSiteVisit] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [updating, setUpdating] = useState(false)
+  const { confirm, ConfirmDialog } = useConfirm()
 
   const fetchSiteVisit = useCallback(async () => {
     try {
-      const response = await fetch(`/api/site-visits/${params.id}`)
-      if (response.ok) {
-        setSiteVisit(await response.json())
-      } else {
-        alert('Failed to load site visit')
-      }
+      const res = await fetch(`/api/site-visits/${pageParams.id}`)
+      if (res.ok) setSiteVisit(await res.json())
     } catch (error) {
       console.error('Failed to fetch site visit:', error)
-      alert('Failed to load site visit')
-    } finally {
-      setLoading(false)
-    }
-  }, [params.id]);
+    } finally { setLoading(false) }
+  }, [pageParams.id])
 
-  useEffect(() => {
-    fetchSiteVisit()
-  }, [fetchSiteVisit])
+  useEffect(() => { fetchSiteVisit() }, [fetchSiteVisit])
 
   const handleStatusChange = async (newStatus: string) => {
-    if (!confirm(`Change status to ${newStatus.replace(/_/g, ' ')}?`)) {
-      return
-    }
-
     setUpdating(true)
     try {
-      const response = await fetch(`/api/site-visits/${params.id}`, {
+      const res = await fetch(`/api/site-visits/${pageParams.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus }),
       })
-
-      if (response.ok) {
-        await fetchSiteVisit()
-      } else {
-        alert('Failed to update status')
-      }
-    } catch (error) {
-      console.error('Failed to update status:', error)
-      alert('Failed to update status')
-    } finally {
-      setUpdating(false)
-    }
+      if (res.ok) await fetchSiteVisit()
+    } catch { }
+    finally { setUpdating(false) }
   }
 
   const handleDelete = async () => {
-    if (!confirm('Are you sure you want to delete this site visit?')) {
-      return
-    }
-
+    const ok = await confirm({ title: 'Delete Site Visit', description: 'This action cannot be undone.', variant: 'danger', confirmLabel: 'Delete' })
+    if (!ok) return
     try {
-      const response = await fetch(`/api/site-visits/${params.id}`, {
-        method: 'DELETE',
-      })
-
-      if (response.ok) {
-        router.push('/admin/site-visits')
-      } else {
-        alert('Failed to delete site visit')
-      }
-    } catch (error) {
-      console.error('Failed to delete site visit:', error)
-      alert('Failed to delete site visit')
-    }
-  }
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'PENDING':
-        return 'bg-yellow-100 text-yellow-800'
-      case 'IN_PROGRESS':
-        return 'bg-blue-100 text-blue-800'
-      case 'COMPLETED':
-        return 'bg-green-100 text-green-800'
-      case 'CANCELLED':
-        return 'bg-red-100 text-red-800'
-      default:
-        return 'bg-gray-100 text-gray-800'
-    }
+      const res = await fetch(`/api/site-visits/${pageParams.id}`, { method: 'DELETE' })
+      if (res.ok) router.push(`/${locale}/admin/site-visits`)
+    } catch { alert('Failed to delete') }
   }
 
   if (loading) {
-    return <div className="flex items-center justify-center h-64">Loading...</div>
+    return <div className="flex h-[60vh] items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" /></div>
   }
-
   if (!siteVisit) {
-    return <div className="flex items-center justify-center h-64">Site visit not found</div>
+    return <div className="py-20 text-center text-sm text-gray-400">Site visit not found</div>
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="sm" asChild>
-            <Link href="/admin/site-visits">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back
-            </Link>
-          </Button>
+    <div className="mx-auto max-w-2xl space-y-5 pb-8">
+      {ConfirmDialog}
+
+      {/* Header Card */}
+      <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+        <div className="flex items-start justify-between">
           <div>
-            <h1 className="text-3xl font-bold">Site Visit Details</h1>
-            <p className="text-muted-foreground">
-              {siteVisit.client.name}
-            </p>
+            <h1 className="text-lg font-bold text-gray-900">{siteVisit.client?.name}</h1>
+            <p className="text-xs text-gray-400">{formatDate(siteVisit.scheduledAt, 'PPpp')}</p>
           </div>
+          <span className={`rounded-full px-2.5 py-1 text-[10px] font-semibold ${getStatusColor(siteVisit.status)}`}>
+            {enumToReadable(siteVisit.status)}
+          </span>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" asChild>
-            <Link href={`/admin/site-visits/${params.id}/edit`}>
-              <Edit className="h-4 w-4 mr-2" />
-              Edit
+
+        {/* Quick Contact */}
+        {siteVisit.client && (
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            <a href={`tel:${siteVisit.client.phone}`} className="flex items-center justify-center gap-1.5 rounded-xl border border-green-200 bg-green-50 py-2 text-xs font-semibold text-green-700 active:scale-95">
+              <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
+              Call Client
+            </a>
+            <Link href={`/${locale}/admin/clients/${siteVisit.client.id}`} className="flex items-center justify-center gap-1.5 rounded-xl border border-blue-200 bg-blue-50 py-2 text-xs font-semibold text-blue-700 active:scale-95">
+              View Profile
             </Link>
-          </Button>
-          <Button variant="destructive" onClick={handleDelete}>
-            <Trash2 className="h-4 w-4 mr-2" />
-            Delete
-          </Button>
+          </div>
+        )}
+      </div>
+
+      {/* Status Buttons */}
+      <div className="rounded-2xl border border-gray-100 bg-white shadow-sm">
+        <div className="border-b border-gray-50 px-4 py-3"><h3 className="text-xs font-semibold uppercase tracking-wider text-gray-400">Status</h3></div>
+        <div className="grid grid-cols-2 gap-2 p-4 sm:grid-cols-4">
+          {STATUSES.map((s) => (
+            <button
+              key={s.value}
+              onClick={() => handleStatusChange(s.value)}
+              disabled={updating || siteVisit.status === s.value}
+              className={`flex items-center justify-center gap-1.5 rounded-xl border px-2 py-2.5 text-xs font-medium transition-all active:scale-95 disabled:opacity-50 ${
+                siteVisit.status === s.value ? 'border-primary bg-primary/10 text-primary ring-1 ring-primary/20' : 'hover:bg-gray-50'
+              }`}
+            >
+              <span className={`h-2 w-2 rounded-full bg-gradient-to-br ${s.color}`} />
+              {s.label}
+            </button>
+          ))}
         </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-3">
-        <Card className="md:col-span-2">
-          <CardHeader>
-            <CardTitle>Visit Information</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Client</p>
-                <p className="font-medium">{siteVisit.client.name}</p>
-                <p className="text-sm text-muted-foreground">{siteVisit.client.phone}</p>
-                {siteVisit.client.email && (
-                  <p className="text-sm text-muted-foreground">{siteVisit.client.email}</p>
-                )}
-              </div>
+      {/* Details */}
+      <InfoSection title="Visit Details">
+        <InfoRow label="Assigned To" value={siteVisit.assignedTo?.name || '-'} />
+        {siteVisit.requiredService && <InfoRow label="Service" value={siteVisit.requiredService} />}
+        {siteVisit.startedAt && <InfoRow label="Started" value={formatDate(siteVisit.startedAt, 'PPpp')} />}
+        {siteVisit.completedAt && <InfoRow label="Completed" value={formatDate(siteVisit.completedAt, 'PPpp')} />}
+      </InfoSection>
 
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Assigned To</p>
-                <p className="font-medium">{siteVisit.assignedTo.name}</p>
-                {siteVisit.assignedTo.email && (
-                  <p className="text-sm text-muted-foreground">{siteVisit.assignedTo.email}</p>
-                )}
-              </div>
-
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Scheduled Date & Time</p>
-                <p className="font-medium">{formatDate(new Date(siteVisit.scheduledAt), 'PPpp')}</p>
-              </div>
-
-              {siteVisit.startedAt && (
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Started At</p>
-                  <p className="font-medium">{formatDate(new Date(siteVisit.startedAt), 'PPpp')}</p>
-                </div>
-              )}
-
-              {siteVisit.completedAt && (
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Completed At</p>
-                  <p className="font-medium">{formatDate(new Date(siteVisit.completedAt), 'PPpp')}</p>
-                </div>
-              )}
-
-              {siteVisit.requiredService && (
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Required Service</p>
-                  <p>{siteVisit.requiredService}</p>
-                </div>
-              )}
+      {(siteVisit.locationText || siteVisit.googleMapsUrl) && (
+        <InfoSection title="Location">
+          {siteVisit.locationText && <InfoRow label="Address" value={siteVisit.locationText} />}
+          {siteVisit.googleMapsUrl && (
+            <div className="flex items-center justify-between px-4 py-3">
+              <span className="text-xs text-gray-400">Map</span>
+              <a href={siteVisit.googleMapsUrl} target="_blank" rel="noopener noreferrer" className="text-xs font-medium text-blue-600">Open in Maps</a>
             </div>
+          )}
+        </InfoSection>
+      )}
 
-            {(siteVisit.locationText || siteVisit.googleMapsUrl) && (
-              <div className="pt-4 border-t">
-                <p className="text-sm font-medium text-muted-foreground mb-2">Location</p>
-                {siteVisit.locationText && (
-                  <p>{siteVisit.locationText}</p>
-                )}
-                {siteVisit.googleMapsUrl && (
-                  <a
-                    href={siteVisit.googleMapsUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 mt-2"
-                  >
-                    <MapPin className="h-4 w-4" />
-                    View on Google Maps
-                  </a>
-                )}
-              </div>
-            )}
+      {(siteVisit.siteContactName || siteVisit.siteContactPhone) && (
+        <InfoSection title="Site Contact">
+          {siteVisit.siteContactName && <InfoRow label="Name" value={siteVisit.siteContactName} />}
+          {siteVisit.siteContactPhone && (
+            <div className="flex items-center justify-between px-4 py-3">
+              <span className="text-xs text-gray-400">Phone</span>
+              <a href={`tel:${siteVisit.siteContactPhone}`} className="text-sm font-medium text-green-600">{siteVisit.siteContactPhone}</a>
+            </div>
+          )}
+        </InfoSection>
+      )}
 
-            {(siteVisit.siteContactName || siteVisit.siteContactPhone) && (
-              <div className="pt-4 border-t">
-                <p className="text-sm font-medium text-muted-foreground mb-2">Site Contact</p>
-                {siteVisit.siteContactName && (
-                  <p className="font-medium">{siteVisit.siteContactName}</p>
-                )}
-                {siteVisit.siteContactPhone && (
-                  <p className="text-muted-foreground">{siteVisit.siteContactPhone}</p>
-                )}
-              </div>
-            )}
+      {(siteVisit.notes || siteVisit.remarks) && (
+        <InfoSection title="Notes">
+          {siteVisit.notes && <div className="px-4 py-3"><p className="whitespace-pre-wrap text-sm text-gray-700">{siteVisit.notes}</p></div>}
+          {siteVisit.remarks && <div className="border-t border-gray-50 px-4 py-3"><p className="whitespace-pre-wrap text-sm text-gray-500">{siteVisit.remarks}</p></div>}
+        </InfoSection>
+      )}
 
-            {siteVisit.notes && (
-              <div className="pt-4 border-t">
-                <p className="text-sm font-medium text-muted-foreground mb-2">Notes</p>
-                <p className="whitespace-pre-wrap">{siteVisit.notes}</p>
-              </div>
-            )}
-
-            {siteVisit.remarks && (
-              <div className="pt-4 border-t">
-                <p className="text-sm font-medium text-muted-foreground mb-2">Remarks</p>
-                <p className="whitespace-pre-wrap">{siteVisit.remarks}</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Status</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground mb-2">Current Status</p>
-                <Badge className={getStatusColor(siteVisit.status)}>
-                  {siteVisit.status.replace(/_/g, ' ')}
-                </Badge>
-              </div>
-
-              <div>
-                <p className="text-sm font-medium text-muted-foreground mb-2">Change Status</p>
-                <Select
-                  value={siteVisit.status}
-                  onValueChange={handleStatusChange}
-                  disabled={updating}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="PENDING">Pending</SelectItem>
-                    <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
-                    <SelectItem value="COMPLETED">Completed</SelectItem>
-                    <SelectItem value="CANCELLED">Cancelled</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Quick Actions</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <Button variant="outline" className="w-full" asChild>
-                <Link href={`/admin/clients/${siteVisit.client.id}`}>
-                  View Client
-                </Link>
-              </Button>
-              <Button variant="outline" className="w-full" asChild>
-                <Link href={`/admin/measurements/new?siteVisitId=${siteVisit.id}`}>
-                  Create Measurement
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
+      {/* Actions */}
+      <div className="grid grid-cols-2 gap-2">
+        <Link href={`/${locale}/admin/measurements/new?siteVisitId=${pageParams.id}`} className="rounded-xl border border-gray-200 bg-white py-3 text-center text-sm font-medium text-gray-700 active:scale-[0.98]">
+          Create Measurement
+        </Link>
+        <button onClick={handleDelete} className="rounded-xl border border-red-200 bg-red-50 py-3 text-sm font-medium text-red-600 active:scale-[0.98]">
+          Delete Visit
+        </button>
       </div>
+    </div>
+  )
+}
+
+function InfoSection({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="rounded-2xl border border-gray-100 bg-white shadow-sm">
+      <div className="border-b border-gray-50 px-4 py-3"><h3 className="text-xs font-semibold uppercase tracking-wider text-gray-400">{title}</h3></div>
+      <div className="divide-y divide-gray-50">{children}</div>
+    </div>
+  )
+}
+
+function InfoRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between px-4 py-3">
+      <span className="text-xs text-gray-400">{label}</span>
+      <span className="text-sm font-medium text-gray-800">{value}</span>
     </div>
   )
 }
