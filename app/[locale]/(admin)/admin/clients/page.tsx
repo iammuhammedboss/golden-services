@@ -3,10 +3,13 @@
 import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 type ClientData = Record<string, any>
 import { formatDate, getInitials, enumToReadable } from '@/lib/utils'
 
 export default function ClientsPage() {
+  const t = useTranslations('Clients')
+  const tc = useTranslations('Common')
   const [clients, setClients] = useState<ClientData[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -52,8 +55,8 @@ export default function ClientsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-gray-900">Clients</h1>
-          <p className="text-xs text-gray-400">{stats.total} total clients</p>
+          <h1 className="text-xl font-bold text-gray-900">{t('title')}</h1>
+          <p className="text-xs text-gray-400">{stats.total} {t('totalClients')}</p>
         </div>
       </div>
 
@@ -66,7 +69,7 @@ export default function ClientsPage() {
           }`}
         >
           <p className="text-lg font-bold text-gray-800">{stats.total}</p>
-          <p className="text-[10px] font-medium uppercase tracking-wider text-gray-400">All</p>
+          <p className="text-[10px] font-medium uppercase tracking-wider text-gray-400">{tc('all')}</p>
         </button>
         <button
           onClick={() => setFilter('INDIVIDUAL')}
@@ -75,7 +78,7 @@ export default function ClientsPage() {
           }`}
         >
           <p className="text-lg font-bold text-blue-600">{stats.individual}</p>
-          <p className="text-[10px] font-medium uppercase tracking-wider text-gray-400">Individual</p>
+          <p className="text-[10px] font-medium uppercase tracking-wider text-gray-400">{t('individual')}</p>
         </button>
         <button
           onClick={() => setFilter('CORPORATE')}
@@ -84,7 +87,7 @@ export default function ClientsPage() {
           }`}
         >
           <p className="text-lg font-bold text-purple-600">{stats.corporate}</p>
-          <p className="text-[10px] font-medium uppercase tracking-wider text-gray-400">Corporate</p>
+          <p className="text-[10px] font-medium uppercase tracking-wider text-gray-400">{t('corporate')}</p>
         </button>
       </div>
 
@@ -95,7 +98,7 @@ export default function ClientsPage() {
         </svg>
         <input
           type="text"
-          placeholder="Search by name, phone, email..."
+          placeholder={t('searchByNamePhone')}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="w-full rounded-xl border border-gray-200 bg-gray-50/50 py-2.5 pl-10 pr-4 text-sm outline-none transition-colors focus:border-primary focus:bg-white focus:ring-2 focus:ring-primary/10"
@@ -172,7 +175,7 @@ export default function ClientsPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
             </svg>
             <p className="mt-2 text-sm text-gray-400">
-              {search ? 'No clients match your search' : 'No clients yet'}
+              {search ? t('noClientsMatch') : t('noClients')}
             </p>
           </div>
         )}

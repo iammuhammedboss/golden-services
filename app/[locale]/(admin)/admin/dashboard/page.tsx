@@ -1,10 +1,11 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { prisma } from '@/lib/prisma'
+import { getTranslations } from 'next-intl/server'
 
 const menuTiles = [
   {
-    name: 'Dashboard',
+    name: 'Dashboard', tKey: 'overview',
     href: 'admin/dashboard/overview',
     color: 'from-blue-500 to-blue-600',
     bg: 'bg-blue-50',
@@ -168,6 +169,21 @@ export default async function DashboardPage({
   params: { locale: string }
 }) {
   const locale = params.locale || 'en'
+  const t = await getTranslations('Dashboard')
+  const tc = await getTranslations('Common')
+
+  const tileNames: Record<string, string> = {
+    'Dashboard': t('overview'), 'Clients': t('clients'), 'Site Visits': t('siteVisits'),
+    'Measurements': t('measurements'), 'Quotations': t('quotations'), 'Invoices': t('invoices'),
+    'Jobs': t('jobs'), 'Payments': t('payments'), 'AMC': t('amc'),
+    'Schedule': t('scheduleTile'), 'Masters': t('masters'), 'Reminders': t('reminders'), 'Users': t('users'),
+  }
+  const tileDescs: Record<string, string> = {
+    'Dashboard': t('overviewDesc'), 'Clients': t('clientsDesc'), 'Site Visits': t('siteVisitsDesc'),
+    'Measurements': t('measurementsDesc'), 'Quotations': t('quotationsDesc'), 'Invoices': t('invoicesDesc'),
+    'Jobs': t('jobsDesc'), 'Payments': t('paymentsDesc'), 'AMC': t('amcDesc'),
+    'Schedule': t('scheduleDesc'), 'Masters': t('mastersDesc'), 'Reminders': t('remindersDesc'), 'Users': t('usersDesc'),
+  }
 
   const now = new Date()
   const today = new Date()
@@ -217,18 +233,18 @@ export default async function DashboardPage({
           <Image src="/logo.png" alt="GS" width={28} height={28} />
         </div>
         <div>
-          <h1 className="text-lg font-bold text-gray-900">Golden Services</h1>
-          <p className="text-xs text-gray-400">Operations Hub</p>
+          <h1 className="text-lg font-bold text-gray-900">{t('title')}</h1>
+          <p className="text-xs text-gray-400">{t('subtitle')}</p>
         </div>
       </div>
 
       {/* Stats Strip */}
       <div className="grid grid-cols-4 gap-2">
         {[
-          { label: 'Sales', value: `${salesThisMonth.toFixed(0)}`, unit: 'OMR', color: 'text-blue-600', dot: 'bg-blue-500' },
-          { label: 'Leads', value: `${leadsThisMonth}`, unit: '', color: 'text-emerald-600', dot: 'bg-emerald-500' },
-          { label: 'Jobs', value: `${jobsDoneToday}`, unit: 'today', color: 'text-orange-600', dot: 'bg-orange-500' },
-          { label: 'Schedule', value: `${todayScheduleCount}`, unit: '', color: 'text-indigo-600', dot: 'bg-indigo-500' },
+          { label: t('sales'), value: `${salesThisMonth.toFixed(0)}`, unit: tc('omr'), color: 'text-blue-600', dot: 'bg-blue-500' },
+          { label: t('leads'), value: `${leadsThisMonth}`, unit: '', color: 'text-emerald-600', dot: 'bg-emerald-500' },
+          { label: t('jobsToday'), value: `${jobsDoneToday}`, unit: '', color: 'text-orange-600', dot: 'bg-orange-500' },
+          { label: t('schedule'), value: `${todayScheduleCount}`, unit: '', color: 'text-indigo-600', dot: 'bg-indigo-500' },
         ].map((stat) => (
           <div
             key={stat.label}
@@ -264,9 +280,9 @@ export default async function DashboardPage({
             </div>
 
             {/* Label */}
-            <span className="mt-2 text-[11px] font-semibold text-gray-700 sm:text-xs">{tile.name}</span>
+            <span className="mt-2 text-[11px] font-semibold text-gray-700 sm:text-xs">{tileNames[tile.name] || tile.name}</span>
             <span className="mt-0.5 hidden text-[10px] leading-tight text-gray-400 sm:block">
-              {tile.description}
+              {tileDescs[tile.name] || tile.description}
             </span>
           </Link>
         ))}
@@ -275,7 +291,7 @@ export default async function DashboardPage({
       {/* Bottom brand line */}
       <div className="pt-2 text-center">
         <p className="text-[10px] tracking-widest text-gray-300 uppercase">
-          Professional Excellence, Every Time
+          {t('tagline')}
         </p>
       </div>
     </div>
