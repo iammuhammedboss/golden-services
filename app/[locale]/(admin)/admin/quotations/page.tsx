@@ -2,8 +2,12 @@ import { prisma } from '@/lib/prisma'
 import { formatDate, formatCurrency, enumToReadable, getStatusColor } from '@/lib/utils'
 import Link from 'next/link'
 
-export default async function QuotationsPage({ params }: { params: { locale: string } }) {
+export default async function QuotationsPage({ params, searchParams }: { params: { locale: string }; searchParams: { clientId?: string } }) {
   const locale = params.locale || 'en'
+  const clientId = searchParams.clientId
+
+  const where: any = { deletedAt: null }
+  if (clientId) where.clientId = clientId
 
   const quotations = await prisma.quotation.findMany({
     orderBy: { createdAt: 'desc' },
@@ -12,8 +16,11 @@ export default async function QuotationsPage({ params }: { params: { locale: str
       createdBy: { select: { name: true } },
       items: { select: { total: true } },
     },
-    where: { deletedAt: null },
+    where,
   })
+
+  // Get client name for header if filtered
+  const filterClient = clientId ? quotations[0]?.client?.name : null
 
   const withTotals = quotations.map((q) => ({
     ...q,
@@ -30,8 +37,15 @@ export default async function QuotationsPage({ params }: { params: { locale: str
   return (
     <div className="mx-auto max-w-2xl space-y-4 pb-24">
       <div>
-        <h1 className="text-xl font-bold text-gray-900">Quotations</h1>
-        <p className="text-xs text-gray-400">{stats.total} total quotations</p>
+        <h1 className="text-xl font-bold text-gray-900">
+          {filterClient ? `${filterClient} — Quotations` : 'Quotations'}
+        </h1>
+        <p className="text-xs text-gray-400">
+          {stats.total} {filterClient ? 'quotations for this client' : 'total quotations'}
+          {clientId && (
+            <> &middot; <a href={`/${locale}/admin/quotations`} className="text-primary underline">View all</a></>
+          )}
+        </p>
       </div>
 
       {/* Stats */}

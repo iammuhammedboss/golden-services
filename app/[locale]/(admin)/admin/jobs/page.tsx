@@ -2,16 +2,22 @@ import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
 import { formatDate, enumToReadable, getStatusColor, formatTime } from '@/lib/utils'
 
-export default async function JobsPage({ params }: { params: { locale: string } }) {
+export default async function JobsPage({ params, searchParams }: { params: { locale: string }; searchParams: { clientId?: string } }) {
+  const clientId = searchParams.clientId
+  const where: any = { deletedAt: null }
+  if (clientId) where.clientId = clientId
+
   const jobs = await prisma.jobOrder.findMany({
     orderBy: { scheduledDate: 'desc' },
-    where: { deletedAt: null },
+    where,
     include: {
       client: { select: { name: true, phone: true } },
       assignments: { select: { user: { select: { name: true } }, roleInJob: true } },
       _count: { select: { invoices: true } },
     },
   })
+
+  const filterClient = clientId ? jobs[0]?.client?.name : null
 
   const stats = {
     total: jobs.length,
@@ -23,8 +29,15 @@ export default async function JobsPage({ params }: { params: { locale: string } 
   return (
     <div className="mx-auto max-w-2xl space-y-4 pb-24">
       <div>
-        <h1 className="text-xl font-bold text-gray-900">Jobs</h1>
-        <p className="text-xs text-gray-400">{stats.total} total jobs</p>
+        <h1 className="text-xl font-bold text-gray-900">
+          {filterClient ? `${filterClient} — Jobs` : 'Jobs'}
+        </h1>
+        <p className="text-xs text-gray-400">
+          {stats.total} {filterClient ? 'jobs for this client' : 'total jobs'}
+          {clientId && (
+            <> &middot; <a href={`/${params.locale}/admin/jobs`} className="text-primary underline">View all</a></>
+          )}
+        </p>
       </div>
 
       {/* Stats */}

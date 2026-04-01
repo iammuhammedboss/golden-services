@@ -6,20 +6,27 @@ import { canViewInvoices, type UserWithRoles } from '@/lib/permissions'
 import { prisma } from '@/lib/prisma'
 import { formatDate, formatCurrency, enumToReadable, getStatusColor } from '@/lib/utils'
 
-export default async function InvoicesPage({ params }: { params: { locale: string } }) {
+export default async function InvoicesPage({ params, searchParams }: { params: { locale: string }; searchParams: { clientId?: string } }) {
   const session = await getServerSession(authOptions)
   if (!session?.user) redirect(`/${params.locale}/login`)
   const user = session.user as UserWithRoles
   if (!canViewInvoices(user)) redirect(`/${params.locale}/admin/dashboard`)
 
+  const clientId = searchParams.clientId
+  const where: any = {}
+  if (clientId) where.clientId = clientId
+
   const invoices = await prisma.invoice.findMany({
     orderBy: { createdAt: 'desc' },
+    where,
     include: {
       client: { select: { name: true, phone: true } },
       jobOrder: { select: { jobNumber: true } },
       createdBy: { select: { name: true } },
     },
   })
+
+  const filterClient = clientId ? invoices[0]?.client?.name : null
 
   const stats = {
     total: invoices.length,
@@ -33,8 +40,15 @@ export default async function InvoicesPage({ params }: { params: { locale: strin
   return (
     <div className="mx-auto max-w-2xl space-y-4 pb-24">
       <div>
-        <h1 className="text-xl font-bold text-gray-900">Invoices</h1>
-        <p className="text-xs text-gray-400">{stats.total} total &middot; Revenue: {formatCurrency(totalRevenue)}</p>
+        <h1 className="text-xl font-bold text-gray-900">
+          {filterClient ? `${filterClient} — Invoices` : 'Invoices'}
+        </h1>
+        <p className="text-xs text-gray-400">
+          {stats.total} {filterClient ? 'invoices for this client' : 'total'} &middot; Revenue: {formatCurrency(totalRevenue)}
+          {clientId && (
+            <> &middot; <a href={`/${params.locale}/admin/invoices`} className="text-primary underline">View all</a></>
+          )}
+        </p>
       </div>
 
       {/* Stats */}
