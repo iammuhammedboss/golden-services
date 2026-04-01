@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useTranslations } from 'next-intl'
 import { useRealtimeEvents } from '@/hooks/use-realtime-events'
 import { Button } from '@/components/ui/button'
 import {
@@ -16,6 +17,7 @@ import { Notification } from '@prisma/client'
 import { formatDate } from '@/lib/utils'
 
 export function NotificationBell() {
+  const tc = useTranslations('Common')
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
 
@@ -69,7 +71,7 @@ export function NotificationBell() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-80">
-        <DropdownMenuLabel>Notifications</DropdownMenuLabel>
+        <DropdownMenuLabel>{tc('notifications')}</DropdownMenuLabel>
         <DropdownMenuSeparator />
         {notifications.length > 0 ? (
           notifications.map((notification) => (
@@ -84,7 +86,7 @@ export function NotificationBell() {
             </DropdownMenuItem>
           ))
         ) : (
-          <DropdownMenuItem>No new notifications</DropdownMenuItem>
+          <DropdownMenuItem>{tc('noNotifications')}</DropdownMenuItem>
         )}
       </DropdownMenuContent>
     </DropdownMenu>

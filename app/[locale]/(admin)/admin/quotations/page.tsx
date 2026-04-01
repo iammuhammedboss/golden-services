@@ -1,8 +1,11 @@
 import { prisma } from '@/lib/prisma'
 import { formatDate, formatCurrency, enumToReadable, getStatusColor } from '@/lib/utils'
 import Link from 'next/link'
+import { getTranslations } from 'next-intl/server'
 
 export default async function QuotationsPage({ params, searchParams }: { params: { locale: string }; searchParams: { clientId?: string } }) {
+  const t = await getTranslations('Quotations')
+  const tc = await getTranslations('Common')
   const locale = params.locale || 'en'
   const clientId = searchParams.clientId
 
@@ -38,12 +41,12 @@ export default async function QuotationsPage({ params, searchParams }: { params:
     <div className="mx-auto max-w-2xl space-y-4 pb-24">
       <div>
         <h1 className="text-xl font-bold text-gray-900">
-          {filterClient ? `${filterClient} — Quotations` : 'Quotations'}
+          {filterClient ? `${filterClient} — ${t('title')}` : t('title')}
         </h1>
         <p className="text-xs text-gray-400">
-          {stats.total} {filterClient ? 'quotations for this client' : 'total quotations'}
+          {stats.total} {filterClient ? t('quotationsFor') : t('totalQuotations')}
           {clientId && (
-            <> &middot; <a href={`/${locale}/admin/quotations`} className="text-primary underline">View all</a></>
+            <> &middot; <a href={`/${locale}/admin/quotations`} className="text-primary underline">{tc('viewAll')}</a></>
           )}
         </p>
       </div>
@@ -51,10 +54,10 @@ export default async function QuotationsPage({ params, searchParams }: { params:
       {/* Stats */}
       <div className="grid grid-cols-4 gap-2">
         {[
-          { label: 'All', value: stats.total, color: 'text-gray-800' },
-          { label: 'Draft', value: stats.draft, color: 'text-gray-500' },
-          { label: 'Sent', value: stats.sent, color: 'text-blue-600' },
-          { label: 'Accepted', value: stats.accepted, color: 'text-green-600' },
+          { label: tc('all'), value: stats.total, color: 'text-gray-800' },
+          { label: t('draft'), value: stats.draft, color: 'text-gray-500' },
+          { label: t('sent'), value: stats.sent, color: 'text-blue-600' },
+          { label: t('accepted'), value: stats.accepted, color: 'text-green-600' },
         ].map((s) => (
           <div key={s.label} className="rounded-xl border border-gray-100 bg-white p-2.5 text-center shadow-sm">
             <p className={`text-lg font-bold ${s.color}`}>{s.value}</p>
@@ -100,7 +103,7 @@ export default async function QuotationsPage({ params, searchParams }: { params:
             </Link>
           ))
         ) : (
-          <div className="py-12 text-center"><p className="text-sm text-gray-400">No quotations yet</p></div>
+          <div className="py-12 text-center"><p className="text-sm text-gray-400">{tc('noData')}</p></div>
         )}
       </div>
 

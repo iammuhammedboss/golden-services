@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
@@ -38,6 +39,7 @@ type UnitMaster = {
 }
 
 export default function UnitsPage() {
+  const tc = useTranslations('Common')
   const [units, setUnits] = useState<UnitMaster[]>([])
   const [loading, setLoading] = useState(true)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
@@ -109,7 +111,7 @@ export default function UnitsPage() {
   }
 
   const handleDelete = async (unitId: string) => {
-    if (!confirm('Are you sure you want to delete this unit?')) {
+    if (!confirm(tc('confirmDelete'))) {
       return
     }
 
@@ -137,36 +139,36 @@ export default function UnitsPage() {
   }
 
   if (loading) {
-    return <div className="flex items-center justify-center h-64">Loading...</div>
+    return <div className="flex items-center justify-center h-64">{tc('loading')}</div>
   }
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Units</h1>
+          <h1 className="text-3xl font-bold">{tc('unit')}s</h1>
           <p className="text-muted-foreground">Manage measurement units</p>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button onClick={() => handleDialogClose()}>
               <Plus className="h-4 w-4 mr-2" />
-              Add Unit
+              {tc('add')} {tc('unit')}
             </Button>
           </DialogTrigger>
           <DialogContent>
             <form onSubmit={handleSubmit}>
               <DialogHeader>
-                <DialogTitle>{editingUnit ? 'Edit Unit' : 'Add New Unit'}</DialogTitle>
+                <DialogTitle>{editingUnit ? `${tc('edit')} ${tc('unit')}` : `${tc('add')} ${tc('unit')}`}</DialogTitle>
                 <DialogDescription>
                   {editingUnit
-                    ? 'Update the unit details below'
-                    : 'Create a new measurement unit'}
+                    ? `${tc('update')} ${tc('unit')}`
+                    : `${tc('create')} ${tc('unit')}`}
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-4 py-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name">Name *</Label>
+                  <Label htmlFor="name">{tc('name')} *</Label>
                   <Input
                     id="name"
                     value={formData.name}
@@ -176,12 +178,12 @@ export default function UnitsPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="description">Description</Label>
+                  <Label htmlFor="description">{tc('description')}</Label>
                   <Textarea
                     id="description"
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    placeholder="Optional description"
+                    placeholder={tc('optional')}
                   />
                 </div>
                 <div className="flex items-center space-x-2">
@@ -190,14 +192,14 @@ export default function UnitsPage() {
                     checked={formData.isActive}
                     onCheckedChange={(checked) => setFormData({ ...formData, isActive: checked as boolean })}
                   />
-                  <Label htmlFor="isActive">Active</Label>
+                  <Label htmlFor="isActive">{tc('active')}</Label>
                 </div>
               </div>
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={handleDialogClose}>
-                  Cancel
+                  {tc('cancel')}
                 </Button>
-                <Button type="submit">{editingUnit ? 'Update' : 'Create'}</Button>
+                <Button type="submit">{editingUnit ? tc('update') : tc('create')}</Button>
               </DialogFooter>
             </form>
           </DialogContent>
@@ -206,19 +208,19 @@ export default function UnitsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>All Units</CardTitle>
-          <CardDescription>Total: {units.length} units</CardDescription>
+          <CardTitle>{tc('all')} {tc('unit')}s</CardTitle>
+          <CardDescription>{tc('total')}: {units.length}</CardDescription>
         </CardHeader>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Description</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Created</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead>{tc('name')}</TableHead>
+                  <TableHead>{tc('description')}</TableHead>
+                  <TableHead>{tc('status')}</TableHead>
+                  <TableHead>{tc('created')}</TableHead>
+                  <TableHead className="text-right">{tc('actions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -235,7 +237,7 @@ export default function UnitsPage() {
                       </TableCell>
                       <TableCell>
                         <Badge variant={unit.isActive ? 'default' : 'secondary'}>
-                          {unit.isActive ? 'Active' : 'Inactive'}
+                          {unit.isActive ? tc('active') : tc('inactive')}
                         </Badge>
                       </TableCell>
                       <TableCell>
@@ -245,7 +247,7 @@ export default function UnitsPage() {
                         <div className="flex items-center justify-end gap-2">
                           <Button variant="ghost" size="sm" onClick={() => handleEdit(unit)}>
                             <Edit className="h-4 w-4 mr-1" />
-                            Edit
+                            {tc('edit')}
                           </Button>
                           <Button
                             variant="ghost"
@@ -254,7 +256,7 @@ export default function UnitsPage() {
                             className="text-red-600 hover:text-red-700"
                           >
                             <Trash2 className="h-4 w-4 mr-1" />
-                            Delete
+                            {tc('delete')}
                           </Button>
                         </div>
                       </TableCell>
@@ -263,7 +265,7 @@ export default function UnitsPage() {
                 ) : (
                   <TableRow>
                     <TableCell colSpan={5} className="text-center text-muted-foreground">
-                      No units found. Click &quot;Add Unit&quot; to create one.
+                      {tc('noData')}
                     </TableCell>
                   </TableRow>
                 )}

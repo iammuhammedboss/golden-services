@@ -23,6 +23,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { InvoiceItem, Client, JobOrder, QuotationItem } from '@prisma/client'
+import { useTranslations } from 'next-intl'
 
 interface JobOrderWithClient extends JobOrder {
   client: {
@@ -37,6 +38,8 @@ function NewInvoiceForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const locale = (params.locale as string) || 'en'
+  const t = useTranslations('NewInvoice')
+  const tc = useTranslations('Common')
 
   const [clients, setClients] = useState<Client[]>([])
   const [jobs, setJobs] = useState<JobOrderWithClient[]>([])
@@ -94,9 +97,9 @@ function NewInvoiceForm() {
       }
     } catch (error) {
       console.error('Error handling job change:', error)
-      alert('Failed to load job details. Please try again.')
+      alert(t('failedLoadJob'))
     }
-  }, []) // Empty dependency array, as it doesn't depend on props or state from this component
+  }, [t])
 
   useEffect(() => {
     const fetchClients = async () => {
@@ -174,12 +177,12 @@ function NewInvoiceForm() {
     e.preventDefault()
 
     if (!formData.clientId) {
-      alert('Please select a client')
+      alert(t('selectClient'))
       return
     }
 
     if (items.length === 0 || items[0].description === '') {
-      alert('Please add at least one item')
+      alert(t('addOneItem'))
       return
     }
 
@@ -202,11 +205,11 @@ function NewInvoiceForm() {
         router.push(`/${locale}/admin/invoices/${invoice.id}`)
       } else {
         const error = await response.json()
-        alert(error.error || 'Failed to create invoice')
+        alert(error.error || t('failedCreate'))
       }
     } catch (error) {
       console.error('Error creating invoice:', error)
-      alert('Failed to create invoice')
+      alert(t('failedCreate'))
     } finally {
       setLoading(false)
     }
@@ -216,36 +219,36 @@ function NewInvoiceForm() {
     <div className="space-y-6">
        <div className="flex items-center justify-between">
          <div>
-           <h1 className="text-3xl font-bold">Create New Invoice</h1>
-           <p className="text-muted-foreground">Generate an invoice for your client</p>
+           <h1 className="text-3xl font-bold">{t('title')}</h1>
+           <p className="text-muted-foreground">{t('subtitle')}</p>
          </div>
          <Button
           variant="outline"
           onClick={() => router.push(`/${locale}/admin/invoices`)}
         >
-          Cancel
+          {tc('cancel')}
         </Button>
        </div>
- 
+
        <form onSubmit={handleSubmit}>
          <div className="grid gap-6">
            <Card>
              <CardHeader>
-               <CardTitle>Invoice Details</CardTitle>
+               <CardTitle>{t('invoiceDetails')}</CardTitle>
              </CardHeader>
              <CardContent className="space-y-4">
                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                  <div className="space-y-2">
-                   <Label htmlFor="jobOrderId">Job (Optional)</Label>
+                   <Label htmlFor="jobOrderId">{t('jobOptional')}</Label>
                    <Select
                     value={formData.jobOrderId}
                     onValueChange={handleJobChange}
                   >
                      <SelectTrigger>
-                       <SelectValue placeholder="Select a job to auto-fill" />
+                       <SelectValue placeholder={t('selectJobPlaceholder')} />
                      </SelectTrigger>
                      <SelectContent>
-                       <SelectItem value="">None</SelectItem>
+                       <SelectItem value="">{t('none')}</SelectItem>
                        {jobs.map((job) => (
                         <SelectItem key={job.id} value={job.id}>
                           {job.jobNumber} - {job.client.name}
@@ -254,9 +257,9 @@ function NewInvoiceForm() {
                      </SelectContent>
                    </Select>
                  </div>
- 
+
                  <div className="space-y-2">
-                   <Label htmlFor="clientId">Client *</Label>
+                   <Label htmlFor="clientId">{t('clientRequired')}</Label>
                    <Select
                     value={formData.clientId}
                     onValueChange={(value) =>
@@ -265,7 +268,7 @@ function NewInvoiceForm() {
                     disabled={!!formData.jobOrderId}
                   >
                      <SelectTrigger>
-                       <SelectValue placeholder="Select client" />
+                       <SelectValue placeholder={t('selectClientPlaceholder')} />
                      </SelectTrigger>
                      <SelectContent>
                        {clients.map((client) => (
@@ -276,9 +279,9 @@ function NewInvoiceForm() {
                      </SelectContent>
                    </Select>
                  </div>
- 
+
                  <div className="space-y-2">
-                   <Label htmlFor="dueDate">Due Date</Label>
+                   <Label htmlFor="dueDate">{t('dueDate')}</Label>
                    <Input
                     id="dueDate"
                     type="date"
@@ -289,9 +292,9 @@ function NewInvoiceForm() {
                   />
                  </div>
                </div>
- 
+
                <div className="space-y-2">
-                 <Label htmlFor="status">Status</Label>
+                 <Label htmlFor="status">{t('status')}</Label>
                  <Select
                   value={formData.status}
                   onValueChange={(value) =>
@@ -302,34 +305,34 @@ function NewInvoiceForm() {
                      <SelectValue />
                    </SelectTrigger>
                    <SelectContent>
-                     <SelectItem value="DRAFT">Draft</SelectItem>
-                     <SelectItem value="SENT">Sent</SelectItem>
-                     <SelectItem value="PAID">Paid</SelectItem>
+                     <SelectItem value="DRAFT">{t('draft')}</SelectItem>
+                     <SelectItem value="SENT">{t('sent')}</SelectItem>
+                     <SelectItem value="PAID">{t('paid')}</SelectItem>
                    </SelectContent>
                  </Select>
                </div>
- 
+
                <div className="space-y-2">
-                 <Label htmlFor="notes">Notes (Optional)</Label>
+                 <Label htmlFor="notes">{t('notesOptional')}</Label>
                  <Textarea
                   id="notes"
                   value={formData.notes}
                   onChange={(e) =>
                     setFormData({ ...formData, notes: e.target.value })
                   }
-                  placeholder="Add any additional notes or payment terms..."
+                  placeholder={t('notesPlaceholder')}
                   rows={3}
                 />
                </div>
              </CardContent>
            </Card>
- 
+
            <Card>
              <CardHeader>
                <div className="flex items-center justify-between">
-                 <CardTitle>Invoice Items</CardTitle>
+                 <CardTitle>{t('invoiceItems')}</CardTitle>
                  <Button type="button" variant="outline" onClick={handleAddItem}>
-                  + Add Item
+                  {t('addItem')}
                 </Button>
                </div>
              </CardHeader>
@@ -337,10 +340,10 @@ function NewInvoiceForm() {
                <Table>
                  <TableHeader>
                    <TableRow>
-                     <TableHead className="w-[40%]">Description</TableHead>
-                     <TableHead className="w-[15%]">Quantity</TableHead>
-                     <TableHead className="w-[20%]">Unit Price</TableHead>
-                     <TableHead className="w-[20%]">Total</TableHead>
+                     <TableHead className="w-[40%]">{t('description')}</TableHead>
+                     <TableHead className="w-[15%]">{t('quantity')}</TableHead>
+                     <TableHead className="w-[20%]">{t('unitPrice')}</TableHead>
+                     <TableHead className="w-[20%]">{t('total')}</TableHead>
                      <TableHead className="w-[5%]"></TableHead>
                    </TableRow>
                  </TableHeader>
@@ -353,7 +356,7 @@ function NewInvoiceForm() {
                           onChange={(e) =>
                             handleItemChange(index, 'description', e.target.value)
                           }
-                          placeholder="Item description"
+                          placeholder={t('itemPlaceholder')}
                         />
                        </TableCell>
                        <TableCell>
@@ -380,7 +383,7 @@ function NewInvoiceForm() {
                        </TableCell>
                        <TableCell>
                          <div className="font-medium">
-                          {item.total.toFixed(3)} OMR
+                          {item.total.toFixed(3)} {tc('omr')}
                         </div>
                        </TableCell>
                        <TableCell>
@@ -399,38 +402,38 @@ function NewInvoiceForm() {
                   ))}
                  </TableBody>
                </Table>
- 
+
                <div className="mt-6 flex justify-end">
                  <div className="w-64 space-y-2">
                    <div className="flex justify-between text-sm">
-                     <span className="text-muted-foreground">Subtotal:</span>
-                     <span className="font-medium">{calculateSubtotal().toFixed(3)} OMR</span>
+                     <span className="text-muted-foreground">{t('subtotal')}</span>
+                     <span className="font-medium">{calculateSubtotal().toFixed(3)} {tc('omr')}</span>
                    </div>
                    <div className="flex justify-between text-sm">
-                     <span className="text-muted-foreground">Tax:</span>
-                     <span className="font-medium">{calculateTax().toFixed(3)} OMR</span>
+                     <span className="text-muted-foreground">{t('tax')}</span>
+                     <span className="font-medium">{calculateTax().toFixed(3)} {tc('omr')}</span>
                    </div>
                    <div className="border-t pt-2 flex justify-between">
-                     <span className="font-semibold">Total:</span>
+                     <span className="font-semibold">{t('total')}:</span>
                      <span className="font-bold text-primary">
-                      {calculateTotal().toFixed(3)} OMR
+                      {calculateTotal().toFixed(3)} {tc('omr')}
                     </span>
                    </div>
                  </div>
                </div>
              </CardContent>
            </Card>
- 
+
            <div className="flex justify-end gap-2">
              <Button
               type="button"
               variant="outline"
               onClick={() => router.push(`/${locale}/admin/invoices`)}
             >
-              Cancel
+              {tc('cancel')}
             </Button>
              <Button type="submit" disabled={loading}>
-              {loading ? 'Creating...' : 'Create Invoice'}
+              {loading ? t('creating') : t('createInvoice')}
             </Button>
            </div>
          </div>
@@ -440,9 +443,14 @@ function NewInvoiceForm() {
 }
 
 
+function LoadingFallback() {
+  const tc = useTranslations('Common')
+  return <div>{tc('loading')}</div>
+}
+
 export default function NewInvoicePage() {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={<LoadingFallback />}>
       <NewInvoiceForm />
     </Suspense>
   )

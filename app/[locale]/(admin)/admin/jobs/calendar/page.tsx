@@ -5,11 +5,13 @@ import { useParams, useRouter } from 'next/navigation'
 import { ScheduleCalendar, ScheduleEvent } from '@/components/schedule-calendar'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { useTranslations } from 'next-intl'
 
 export default function JobsCalendarPage() {
   const params = useParams()
   const router = useRouter()
   const locale = (params.locale as string) || 'en'
+  const t = useTranslations('JobsCalendar')
   const [events, setEvents] = useState<ScheduleEvent[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -50,14 +52,14 @@ export default function JobsCalendarPage() {
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold">Jobs Calendar</h1>
+          <h1 className="text-3xl font-bold">{t('title')}</h1>
           <Button variant="outline" onClick={() => router.push(`/${locale}/admin/jobs`)}>
-            ← Back to List
+            {`\u2190 ${t('backToList')}`}
           </Button>
         </div>
         <Card>
           <CardContent className="p-6">
-            <p className="text-center text-muted-foreground">Loading calendar...</p>
+            <p className="text-center text-muted-foreground">{t('loadingCalendar')}</p>
           </CardContent>
         </Card>
       </div>
@@ -68,12 +70,12 @@ export default function JobsCalendarPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Jobs Calendar</h1>
-          <p className="text-muted-foreground">View and manage job schedules</p>
+          <h1 className="text-3xl font-bold">{t('title')}</h1>
+          <p className="text-muted-foreground">{t('subtitle')}</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => router.push(`/${locale}/admin/jobs`)}>
-            List View
+            {t('listView')}
           </Button>
           <Button onClick={() => router.push(`/${locale}/admin/jobs/new`)}>
             <svg
@@ -89,16 +91,16 @@ export default function JobsCalendarPage() {
                 d="M12 4v16m8-8H4"
               />
             </svg>
-            New Job
+            {t('newJob')}
           </Button>
         </div>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Schedule Calendar</CardTitle>
+          <CardTitle>{t('scheduleCalendar')}</CardTitle>
           <CardDescription>
-            Click on an event to view job details. Use month/week/day views to see different time ranges.
+            {t('scheduleCalendarDesc')}
           </CardDescription>
         </CardHeader>
         <CardContent>

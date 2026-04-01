@@ -1,8 +1,11 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { prisma } from '@/lib/prisma'
 import { formatDate } from '@/lib/utils'
+import { getTranslations } from 'next-intl/server'
 
 export default async function OverviewPage() {
+  const t = await getTranslations('Dashboard')
+  const tc = await getTranslations('Common')
   const now = new Date()
   const today = new Date()
   today.setHours(0, 0, 0, 0)
@@ -86,31 +89,31 @@ export default async function OverviewPage() {
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
-      <h1 className="text-2xl font-bold">Overview</h1>
+      <h1 className="text-2xl font-bold">{t('overview')}</h1>
 
       {/* Stats Cards */}
       <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Sales</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('totalSales')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">OMR {salesThisMonth.toFixed(2)}</div>
-            <p className="text-xs text-muted-foreground">Today: OMR {salesToday.toFixed(2)}</p>
+            <p className="text-xs text-muted-foreground">{t('today')}: OMR {salesToday.toFixed(2)}</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Leads</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('leads')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{leadsThisMonth}</div>
-            <p className="text-xs text-muted-foreground">This month</p>
+            <p className="text-xs text-muted-foreground">{t('thisMonth')}</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Jobs Done</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('jobsDone')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{jobsDoneToday}</div>
@@ -119,11 +122,11 @@ export default async function OverviewPage() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Schedule</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('schedule')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{todaySchedule.length}</div>
-            <p className="text-xs text-muted-foreground">Today</p>
+            <p className="text-xs text-muted-foreground">{t('today')}</p>
           </CardContent>
         </Card>
       </div>
@@ -133,8 +136,8 @@ export default async function OverviewPage() {
           {/* Recent Leads */}
           <Card>
             <CardHeader>
-              <CardTitle>Recent Leads</CardTitle>
-              <CardDescription>Latest inquiries</CardDescription>
+              <CardTitle>{t('recentLeads')}</CardTitle>
+              <CardDescription>{t('latestInquiries')}</CardDescription>
             </CardHeader>
             <CardContent>
               {recentLeads.length > 0 ? (
@@ -159,7 +162,7 @@ export default async function OverviewPage() {
                   ))}
                 </div>
               ) : (
-                <p className="text-center text-muted-foreground">No recent leads</p>
+                <p className="text-center text-muted-foreground">{t('noRecentLeads')}</p>
               )}
             </CardContent>
           </Card>
@@ -167,7 +170,7 @@ export default async function OverviewPage() {
           {/* Today's Schedule */}
           <Card>
             <CardHeader>
-              <CardTitle>Today's Schedule</CardTitle>
+              <CardTitle>{t('todaysSchedule')}</CardTitle>
               <CardDescription>{formatDate(today, 'PP')}</CardDescription>
             </CardHeader>
             <CardContent>
@@ -200,7 +203,7 @@ export default async function OverviewPage() {
                   ))}
                 </div>
               ) : (
-                <p className="text-center text-muted-foreground">No scheduled activities</p>
+                <p className="text-center text-muted-foreground">{t('noScheduledActivities')}</p>
               )}
             </CardContent>
           </Card>
@@ -209,8 +212,8 @@ export default async function OverviewPage() {
         {/* Reminders */}
         <Card>
           <CardHeader>
-            <CardTitle>Reminders</CardTitle>
-            <CardDescription>Next 7 days</CardDescription>
+            <CardTitle>{t('reminders')}</CardTitle>
+            <CardDescription>{t('next7Days')}</CardDescription>
           </CardHeader>
           <CardContent>
             {upcomingReminders.length > 0 ? (
@@ -226,7 +229,7 @@ export default async function OverviewPage() {
                 ))}
               </div>
             ) : (
-              <p className="text-center text-sm text-muted-foreground">No upcoming reminders</p>
+              <p className="text-center text-sm text-muted-foreground">{t('noUpcomingReminders')}</p>
             )}
           </CardContent>
         </Card>

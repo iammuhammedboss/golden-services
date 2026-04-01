@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -9,6 +10,8 @@ import { Textarea } from '@/components/ui/textarea'
 import { formatDate } from '@/lib/utils'
 
 export default function RemindersPage() {
+  const t = useTranslations('Reminders')
+  const tc = useTranslations('Common')
   const [reminders, setReminders] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [showCompleted, setShowCompleted] = useState(false)
@@ -79,9 +82,9 @@ export default function RemindersPage() {
   return (
     <div className="mx-auto max-w-2xl space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">My Reminders</h1>
+        <h1 className="text-2xl font-bold">{t('title')}</h1>
         <Button size="sm" onClick={() => setShowForm(!showForm)}>
-          {showForm ? 'Cancel' : '+ New'}
+          {showForm ? tc('cancel') : t('new')}
         </Button>
       </div>
 
@@ -90,16 +93,16 @@ export default function RemindersPage() {
         <Card>
           <CardContent className="space-y-3 p-4">
             <div>
-              <Label className="text-xs">Title</Label>
+              <Label className="text-xs">{t('formTitle')}</Label>
               <Input
                 value={form.title}
                 onChange={(e) => setForm({ ...form, title: e.target.value })}
-                placeholder="Reminder title..."
+                placeholder={t('titlePlaceholder')}
                 className="mt-1"
               />
             </div>
             <div>
-              <Label className="text-xs">Notes (optional)</Label>
+              <Label className="text-xs">{t('notesOptional')}</Label>
               <Textarea
                 value={form.description}
                 onChange={(e) => setForm({ ...form, description: e.target.value })}
@@ -109,7 +112,7 @@ export default function RemindersPage() {
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <Label className="text-xs">Date</Label>
+                <Label className="text-xs">{t('date')}</Label>
                 <Input
                   type="date"
                   value={form.reminderDate}
@@ -118,7 +121,7 @@ export default function RemindersPage() {
                 />
               </div>
               <div>
-                <Label className="text-xs">Time (optional)</Label>
+                <Label className="text-xs">{t('timeOptional')}</Label>
                 <Input
                   type="time"
                   value={form.reminderTime}
@@ -132,7 +135,7 @@ export default function RemindersPage() {
               onClick={handleCreate}
               disabled={saving || !form.title || !form.reminderDate}
             >
-              {saving ? 'Saving...' : 'Create Reminder'}
+              {saving ? tc('saving') : t('createReminder')}
             </Button>
           </CardContent>
         </Card>
@@ -143,12 +146,12 @@ export default function RemindersPage() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm text-red-600">
-              Overdue ({overdueReminders.length})
+              {t('overdue')} ({overdueReminders.length})
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 p-4 pt-0">
             {overdueReminders.map((r) => (
-              <ReminderItem key={r.id} reminder={r} onComplete={handleComplete} onDelete={handleDelete} />
+              <ReminderItem key={r.id} reminder={r} onComplete={handleComplete} onDelete={handleDelete} t={t} />
             ))}
           </CardContent>
         </Card>
@@ -159,12 +162,12 @@ export default function RemindersPage() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm text-blue-600">
-              Today ({todayReminders.length})
+              {t('today')} ({todayReminders.length})
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 p-4 pt-0">
             {todayReminders.map((r) => (
-              <ReminderItem key={r.id} reminder={r} onComplete={handleComplete} onDelete={handleDelete} />
+              <ReminderItem key={r.id} reminder={r} onComplete={handleComplete} onDelete={handleDelete} t={t} />
             ))}
           </CardContent>
         </Card>
@@ -175,12 +178,12 @@ export default function RemindersPage() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm text-muted-foreground">
-              Upcoming ({upcomingReminders.length})
+              {t('upcoming')} ({upcomingReminders.length})
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 p-4 pt-0">
             {upcomingReminders.map((r) => (
-              <ReminderItem key={r.id} reminder={r} onComplete={handleComplete} onDelete={handleDelete} />
+              <ReminderItem key={r.id} reminder={r} onComplete={handleComplete} onDelete={handleDelete} t={t} />
             ))}
           </CardContent>
         </Card>
@@ -192,7 +195,7 @@ export default function RemindersPage() {
           onClick={() => setShowCompleted(!showCompleted)}
           className="text-sm text-muted-foreground underline"
         >
-          {showCompleted ? 'Hide completed' : 'Show completed'}
+          {showCompleted ? t('hideCompleted') : t('showCompleted')}
         </button>
       </div>
 
@@ -200,7 +203,7 @@ export default function RemindersPage() {
         <Card>
           <CardContent className="space-y-2 p-4">
             {completedReminders.map((r) => (
-              <ReminderItem key={r.id} reminder={r} onComplete={handleComplete} onDelete={handleDelete} />
+              <ReminderItem key={r.id} reminder={r} onComplete={handleComplete} onDelete={handleDelete} t={t} />
             ))}
           </CardContent>
         </Card>
@@ -208,7 +211,7 @@ export default function RemindersPage() {
 
       {!loading && reminders.length === 0 && (
         <p className="py-8 text-center text-sm text-muted-foreground">
-          No reminders. Tap &quot;+ New&quot; to create one.
+          {t('emptyState', { button: t('new') })}
         </p>
       )}
     </div>
@@ -219,10 +222,12 @@ function ReminderItem({
   reminder,
   onComplete,
   onDelete,
+  t,
 }: {
   reminder: any
   onComplete: (id: string) => void
   onDelete: (id: string) => void
+  t: (key: string) => string
 }) {
   const isOverdue = !reminder.isCompleted && new Date(reminder.reminderDate) < new Date()
 
@@ -251,7 +256,7 @@ function ReminderItem({
         )}
         <p className="text-xs text-muted-foreground mt-1">
           {formatDate(reminder.reminderDate)}
-          {reminder.reminderTime && ` at ${reminder.reminderTime}`}
+          {reminder.reminderTime && ` ${t('at')} ${reminder.reminderTime}`}
         </p>
       </div>
       <button

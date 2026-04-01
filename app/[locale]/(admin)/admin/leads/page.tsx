@@ -14,8 +14,12 @@ import { prisma } from '@/lib/prisma'
 import { formatDate, getStatusColor, enumToReadable } from '@/lib/utils'
 import { AddLeadDialog } from '@/components/add-lead-dialog'
 import { LeadActions } from '@/components/lead-actions'
+import { getTranslations } from 'next-intl/server'
 
 export default async function LeadsPage() {
+  const t = await getTranslations('Leads')
+  const tc = await getTranslations('Common')
+
   const leads = await prisma.lead.findMany({
     where: {
       deletedAt: null,
@@ -66,8 +70,8 @@ export default async function LeadsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Leads</h1>
-          <p className="text-muted-foreground">Manage your leads and inquiries</p>
+          <h1 className="text-3xl font-bold">{t('title')}</h1>
+          <p className="text-muted-foreground">{t('subtitle')}</p>
         </div>
         <AddLeadDialog />
       </div>
@@ -76,7 +80,7 @@ export default async function LeadsPage() {
       <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">{t('total')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.total}</div>
@@ -84,7 +88,7 @@ export default async function LeadsPage() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">New</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">{t('new')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-blue-600">{stats.new}</div>
@@ -92,7 +96,7 @@ export default async function LeadsPage() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Contacted</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">{t('contacted')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-purple-600">{stats.contacted}</div>
@@ -100,7 +104,7 @@ export default async function LeadsPage() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Quoted</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">{t('quoted')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-orange-600">{stats.quoted}</div>
@@ -108,7 +112,7 @@ export default async function LeadsPage() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Converted</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">{t('converted')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-teal-600">{stats.converted}</div>
@@ -116,7 +120,7 @@ export default async function LeadsPage() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Won</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">{t('won')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">{stats.won}</div>
@@ -124,7 +128,7 @@ export default async function LeadsPage() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Lost</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">{t('lost')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-600">{stats.lost}</div>
@@ -135,24 +139,24 @@ export default async function LeadsPage() {
       {/* Leads Table */}
       <Card>
         <CardHeader>
-          <CardTitle>All Leads</CardTitle>
-          <CardDescription>A list of all leads and their current status</CardDescription>
+          <CardTitle>{t('allLeads')}</CardTitle>
+          <CardDescription>{t('allLeadsDesc')}</CardDescription>
         </CardHeader>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Contact</TableHead>
-                <TableHead>Source</TableHead>
-                <TableHead>Service Interest</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Site Visits</TableHead>
-                <TableHead>Quotations</TableHead>
-                <TableHead>Created</TableHead>
-                <TableHead>Created By</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead>{t('name')}</TableHead>
+                <TableHead>{t('contact')}</TableHead>
+                <TableHead>{t('source')}</TableHead>
+                <TableHead>{t('serviceInterest')}</TableHead>
+                <TableHead>{t('status')}</TableHead>
+                <TableHead>{t('siteVisits')}</TableHead>
+                <TableHead>{t('quotations')}</TableHead>
+                <TableHead>{t('created')}</TableHead>
+                <TableHead>{t('createdBy')}</TableHead>
+                <TableHead className="text-right">{t('actions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -212,7 +216,7 @@ export default async function LeadsPage() {
               ) : (
                 <TableRow>
                   <TableCell colSpan={10} className="text-center text-muted-foreground">
-                    No leads found
+                    {t('noLeads')}
                   </TableCell>
                 </TableRow>
               )}

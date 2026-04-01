@@ -5,8 +5,11 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import Link from 'next/link'
 import { AddUserDialog } from '@/components/add-user-dialog'
+import { getTranslations } from 'next-intl/server'
 
 export default async function UsersPage({ params }: { params: { locale: string } }) {
+  const t = await getTranslations('Users')
+  const tc = await getTranslations('Common')
   const session = await getServerSession(authOptions)
   if (!session?.user) redirect(`/${params.locale}/login`)
 
@@ -39,8 +42,8 @@ export default async function UsersPage({ params }: { params: { locale: string }
     <div className="mx-auto max-w-2xl space-y-4 pb-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-gray-900">Users</h1>
-          <p className="text-xs text-gray-400">{stats.total} total &middot; {stats.active} active</p>
+          <h1 className="text-xl font-bold text-gray-900">{t('title')}</h1>
+          <p className="text-xs text-gray-400">{stats.total} {t('totalUsers')} &middot; {stats.active} {tc('active').toLowerCase()}</p>
         </div>
         <AddUserDialog />
       </div>
@@ -49,15 +52,15 @@ export default async function UsersPage({ params }: { params: { locale: string }
       <div className="grid grid-cols-3 gap-2">
         <div className="rounded-xl border border-gray-100 bg-white p-2.5 text-center shadow-sm">
           <p className="text-lg font-bold text-gray-800">{stats.total}</p>
-          <p className="text-[9px] font-medium uppercase tracking-wider text-gray-400">Total</p>
+          <p className="text-[9px] font-medium uppercase tracking-wider text-gray-400">{tc('total')}</p>
         </div>
         <div className="rounded-xl border border-green-100 bg-green-50 p-2.5 text-center shadow-sm">
           <p className="text-lg font-bold text-green-600">{stats.active}</p>
-          <p className="text-[9px] font-medium uppercase tracking-wider text-gray-400">Active</p>
+          <p className="text-[9px] font-medium uppercase tracking-wider text-gray-400">{tc('active')}</p>
         </div>
         <div className="rounded-xl border border-gray-100 bg-gray-50 p-2.5 text-center shadow-sm">
           <p className="text-lg font-bold text-gray-400">{stats.inactive}</p>
-          <p className="text-[9px] font-medium uppercase tracking-wider text-gray-400">Inactive</p>
+          <p className="text-[9px] font-medium uppercase tracking-wider text-gray-400">{tc('inactive')}</p>
         </div>
       </div>
 
@@ -77,7 +80,7 @@ export default async function UsersPage({ params }: { params: { locale: string }
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
                 <p className="text-sm font-semibold text-gray-900">{user.name}</p>
-                {!user.isActive && <span className="rounded-full bg-red-50 px-1.5 py-0.5 text-[9px] font-semibold text-red-500">Inactive</span>}
+                {!user.isActive && <span className="rounded-full bg-red-50 px-1.5 py-0.5 text-[9px] font-semibold text-red-500">{tc('inactive')}</span>}
               </div>
               <p className="text-xs text-gray-400">{user.email}</p>
               <div className="mt-1 flex flex-wrap gap-1">

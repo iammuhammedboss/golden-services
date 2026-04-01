@@ -1,8 +1,11 @@
 import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
 import { formatDate, enumToReadable, getStatusColor, formatTime } from '@/lib/utils'
+import { getTranslations } from 'next-intl/server'
 
 export default async function JobsPage({ params, searchParams }: { params: { locale: string }; searchParams: { clientId?: string } }) {
+  const t = await getTranslations('Jobs')
+  const tc = await getTranslations('Common')
   const clientId = searchParams.clientId
   const where: any = { deletedAt: null }
   if (clientId) where.clientId = clientId
@@ -30,12 +33,12 @@ export default async function JobsPage({ params, searchParams }: { params: { loc
     <div className="mx-auto max-w-2xl space-y-4 pb-24">
       <div>
         <h1 className="text-xl font-bold text-gray-900">
-          {filterClient ? `${filterClient} — Jobs` : 'Jobs'}
+          {filterClient ? `${filterClient} — ${t('title')}` : t('title')}
         </h1>
         <p className="text-xs text-gray-400">
-          {stats.total} {filterClient ? 'jobs for this client' : 'total jobs'}
+          {stats.total} {filterClient ? t('jobsForClient') : t('totalJobs')}
           {clientId && (
-            <> &middot; <a href={`/${params.locale}/admin/jobs`} className="text-primary underline">View all</a></>
+            <> &middot; <a href={`/${params.locale}/admin/jobs`} className="text-primary underline">{tc('viewAll')}</a></>
           )}
         </p>
       </div>
@@ -43,10 +46,10 @@ export default async function JobsPage({ params, searchParams }: { params: { loc
       {/* Stats */}
       <div className="grid grid-cols-4 gap-2">
         {[
-          { label: 'All', value: stats.total, color: 'text-gray-800' },
-          { label: 'Scheduled', value: stats.scheduled, color: 'text-blue-600' },
-          { label: 'Active', value: stats.active, color: 'text-orange-600' },
-          { label: 'Done', value: stats.completed, color: 'text-green-600' },
+          { label: tc('all'), value: stats.total, color: 'text-gray-800' },
+          { label: t('scheduled'), value: stats.scheduled, color: 'text-blue-600' },
+          { label: t('inProgress'), value: stats.active, color: 'text-orange-600' },
+          { label: t('completed'), value: stats.completed, color: 'text-green-600' },
         ].map((s) => (
           <div key={s.label} className="rounded-xl border border-gray-100 bg-white p-2.5 text-center shadow-sm">
             <p className={`text-lg font-bold ${s.color}`}>{s.value}</p>
@@ -82,7 +85,7 @@ export default async function JobsPage({ params, searchParams }: { params: { loc
                 <p className="text-xs text-gray-400">
                   {formatDate(job.scheduledDate, 'PP')}
                   {job.scheduledStartTime && ` ${formatTime(job.scheduledStartTime)}`}
-                  {job.assignments.length > 0 && ` · ${job.assignments.length} crew`}
+                  {job.assignments.length > 0 && ` · ${job.assignments.length} ${t('crew')}`}
                 </p>
               </div>
               <div className="flex shrink-0 flex-col items-end gap-1">
@@ -96,7 +99,7 @@ export default async function JobsPage({ params, searchParams }: { params: { loc
             </Link>
           ))
         ) : (
-          <div className="py-12 text-center"><p className="text-sm text-gray-400">No jobs yet</p></div>
+          <div className="py-12 text-center"><p className="text-sm text-gray-400">{tc('noData')}</p></div>
         )}
       </div>
 

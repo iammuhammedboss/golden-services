@@ -1,8 +1,11 @@
 import { prisma } from '@/lib/prisma'
 import { formatDate, formatCurrency, enumToReadable } from '@/lib/utils'
 import Link from 'next/link'
+import { getTranslations } from 'next-intl/server'
 
 export default async function PaymentsPage({ params, searchParams }: { params: { locale: string }; searchParams: { clientId?: string } }) {
+  const t = await getTranslations('Payments')
+  const tc = await getTranslations('Common')
   const locale = params.locale || 'en'
   const clientId = searchParams.clientId
 
@@ -27,12 +30,12 @@ export default async function PaymentsPage({ params, searchParams }: { params: {
     <div className="mx-auto max-w-2xl space-y-4 pb-24">
       <div>
         <h1 className="text-xl font-bold text-gray-900">
-          {filterClient ? `${filterClient} — Payments` : 'Payments'}
+          {filterClient ? `${filterClient} — ${t('title')}` : t('title')}
         </h1>
         <p className="text-xs text-gray-400">
-          {payments.length} {filterClient ? 'payments for this client' : 'total payments'}
+          {payments.length} {filterClient ? t('paymentsFor') : t('totalPayments')}
           {clientId && (
-            <> &middot; <a href={`/${locale}/admin/payments`} className="text-primary underline">View all</a></>
+            <> &middot; <a href={`/${locale}/admin/payments`} className="text-primary underline">{tc('viewAll')}</a></>
           )}
         </p>
       </div>
@@ -41,11 +44,11 @@ export default async function PaymentsPage({ params, searchParams }: { params: {
       <div className="grid grid-cols-2 gap-2">
         <div className="rounded-xl border border-gray-100 bg-white p-3 text-center shadow-sm">
           <p className="text-lg font-bold text-gray-800">{payments.length}</p>
-          <p className="text-[9px] font-medium uppercase tracking-wider text-gray-400">Transactions</p>
+          <p className="text-[9px] font-medium uppercase tracking-wider text-gray-400">{t('transactions')}</p>
         </div>
         <div className="rounded-xl border border-green-100 bg-green-50 p-3 text-center shadow-sm">
           <p className="text-lg font-bold text-green-700">{formatCurrency(totalAmount)}</p>
-          <p className="text-[9px] font-medium uppercase tracking-wider text-gray-400">Total Paid</p>
+          <p className="text-[9px] font-medium uppercase tracking-wider text-gray-400">{t('totalPaid')}</p>
         </div>
       </div>
 
@@ -75,11 +78,11 @@ export default async function PaymentsPage({ params, searchParams }: { params: {
                       <p className="text-xs text-gray-500">{payment.client.name}</p>
                     )}
                     <p className="text-xs text-gray-400">
-                      {payment.invoice?.invoiceNumber && `Inv: ${payment.invoice.invoiceNumber}`}
-                      {payment.jobOrder?.jobNumber && ` · Job: ${payment.jobOrder.jobNumber}`}
+                      {payment.invoice?.invoiceNumber && `${t('inv')}: ${payment.invoice.invoiceNumber}`}
+                      {payment.jobOrder?.jobNumber && ` · ${t('job')}: ${payment.jobOrder.jobNumber}`}
                     </p>
                     {payment.referenceNumber && (
-                      <p className="text-xs text-gray-400">Ref: {payment.referenceNumber}</p>
+                      <p className="text-xs text-gray-400">{t('ref')}: {payment.referenceNumber}</p>
                     )}
                     {payment.notes && (
                       <p className="text-xs text-gray-400">{payment.notes}</p>
@@ -100,7 +103,7 @@ export default async function PaymentsPage({ params, searchParams }: { params: {
             <svg className="mx-auto h-12 w-12 text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
             </svg>
-            <p className="mt-2 text-sm text-gray-400">No payments recorded</p>
+            <p className="mt-2 text-sm text-gray-400">{t('noPayments')}</p>
           </div>
         )}
       </div>

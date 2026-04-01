@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import Link from 'next/link'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -12,6 +13,8 @@ import {
 } from '@/components/ui/select'
 
 export default function QuotationDetailsPage() {
+  const t = useTranslations('Quotations')
+  const tc = useTranslations('Common')
   const [quotation, setQuotation] = useState<any>(null)
   const [clients, setClients] = useState<any[]>([])
   const [measurements, setMeasurements] = useState<any[]>([])
@@ -37,8 +40,8 @@ export default function QuotationDetailsPage() {
       fetch('/api/templates/terms').then(r => r.ok ? r.json() : []),
       fetch('/api/templates/bank-details').then(r => r.ok ? r.json() : []),
       fetch('/api/sales-executives').then(r => r.ok ? r.json() : []),
-    ]).then(([c, m, t, b, s]) => {
-      setClients(c); setMeasurements(m); setTermsTemplates(t); setBankTemplates(b); setSalesExecutives(s)
+    ]).then(([c, m, tp, b, s]) => {
+      setClients(c); setMeasurements(m); setTermsTemplates(tp); setBankTemplates(b); setSalesExecutives(s)
     }).catch(() => {})
   }, [])
 
@@ -65,11 +68,11 @@ export default function QuotationDetailsPage() {
 
   const handleSave = async () => {
     setSaveError('')
-    if (!quotation.clientId) { setSaveError('Please select a client'); return }
-    if (lineItems.length === 0) { setSaveError('Please add at least one line item'); return }
-    if (lineItems.some((i: any) => !i.description?.trim())) { setSaveError('All items must have a description'); return }
+    if (!quotation.clientId) { setSaveError(tc('selectClientError')); return }
+    if (lineItems.length === 0) { setSaveError(tc('addItemError')); return }
+    if (lineItems.some((i: any) => !i.description?.trim())) { setSaveError(tc('itemDescError')); return }
     if (quotation.isAmc && (!quotation.amcFrequency || !quotation.amcDurationMonths || !quotation.amcStartDate)) {
-      setSaveError('AMC contracts require frequency, duration, and start date'); return
+      setSaveError(tc('amcRequiredError')); return
     }
 
     setSaving(true)
@@ -81,8 +84,8 @@ export default function QuotationDetailsPage() {
         body: JSON.stringify({ ...quotation, items: lineItems }),
       })
       if (res.ok) router.push(`/${locale}/admin/quotations`)
-      else { const data = await res.json(); setSaveError(data.error || 'Failed to save') }
-    } catch { setSaveError('Network error') }
+      else { const data = await res.json(); setSaveError(data.error || tc('failedToSave')) }
+    } catch { setSaveError(tc('networkError')) }
     finally { setSaving(false) }
   }
 
@@ -95,13 +98,13 @@ export default function QuotationDetailsPage() {
   }
 
   const handleTermsTemplateChange = (templateId: string) => {
-    const t = termsTemplates.find((x: any) => x.id === templateId)
-    setQuotation({ ...quotation, termsTemplateId: templateId, termsSnapshot: t?.content || '' })
+    const tmpl = termsTemplates.find((x: any) => x.id === templateId)
+    setQuotation({ ...quotation, termsTemplateId: templateId, termsSnapshot: tmpl?.content || '' })
   }
 
   const handleBankTemplateChange = (templateId: string) => {
-    const t = bankTemplates.find((x: any) => x.id === templateId)
-    setQuotation({ ...quotation, bankDetailsTemplateId: templateId, bankDetailsSnapshot: t?.content || '' })
+    const tmpl = bankTemplates.find((x: any) => x.id === templateId)
+    setQuotation({ ...quotation, bankDetailsTemplateId: templateId, bankDetailsSnapshot: tmpl?.content || '' })
   }
 
   const updateItem = (index: number, field: string, value: string) => {
@@ -119,13 +122,13 @@ export default function QuotationDetailsPage() {
   const total = afterDiscount + vat
 
   if (loading) return <div className="flex h-[60vh] items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" /></div>
-  if (!quotation) return <div className="py-20 text-center text-sm text-gray-400">Quotation not found</div>
+  if (!quotation) return <div className="py-20 text-center text-sm text-gray-400">{tc('notFound')}</div>
 
   return (
     <div className="mx-auto max-w-2xl pb-24">
       <div className="mb-5">
-        <h1 className="text-xl font-bold text-gray-900">{id === 'new' ? 'New Quotation' : `Quotation ${quotation.quotationNumber || ''}`}</h1>
-        <p className="text-xs text-gray-400">{id === 'new' ? 'Create a new quotation' : 'Edit quotation details'}</p>
+        <h1 className="text-xl font-bold text-gray-900">{id === 'new' ? t('newQuotation') : t('quotationNumber', { number: quotation.quotationNumber || '' })}</h1>
+        <p className="text-xs text-gray-400">{id === 'new' ? t('createNewQuotation') : t('editQuotation')}</p>
       </div>
 
       {saveError && (
@@ -134,45 +137,45 @@ export default function QuotationDetailsPage() {
 
       <div className="space-y-4">
         {/* Client & Details */}
-        <Section title="Client & Details">
-          <FormField label="Client" required>
+        <Section title={t('clientDetails')}>
+          <FormField label={tc('client')} required>
             <Select value={quotation.clientId || ''} onValueChange={(v) => setQuotation({ ...quotation, clientId: v })}>
-              <SelectTrigger className="rounded-xl"><SelectValue placeholder="Select client..." /></SelectTrigger>
+              <SelectTrigger className="rounded-xl"><SelectValue placeholder={t('selectClient')} /></SelectTrigger>
               <SelectContent>{clients.map((c: any) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
             </Select>
           </FormField>
-          <FormField label="Measurement">
+          <FormField label={t('measurement')}>
             <Select value={quotation.measurementId || '__NONE__'} onValueChange={(v) => setQuotation({ ...quotation, measurementId: v === '__NONE__' ? null : v })}>
-              <SelectTrigger className="rounded-xl"><SelectValue placeholder="Select measurement..." /></SelectTrigger>
+              <SelectTrigger className="rounded-xl"><SelectValue placeholder={t('selectMeasurement')} /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="__NONE__">None</SelectItem>
+                <SelectItem value="__NONE__">{tc('none')}</SelectItem>
                 {measurements.map((m: any) => <SelectItem key={m.id} value={m.id}>{m.title}</SelectItem>)}
               </SelectContent>
             </Select>
           </FormField>
           <div className="grid grid-cols-2 gap-3">
-            <FormField label="Sales Executive">
+            <FormField label={t('salesExecutive')}>
               <Select value={quotation.salesExecutiveId || '__NONE__'} onValueChange={(v) => setQuotation({ ...quotation, salesExecutiveId: v === '__NONE__' ? null : v })}>
-                <SelectTrigger className="rounded-xl"><SelectValue placeholder="None" /></SelectTrigger>
+                <SelectTrigger className="rounded-xl"><SelectValue placeholder={tc('none')} /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="__NONE__">None</SelectItem>
+                  <SelectItem value="__NONE__">{tc('none')}</SelectItem>
                   {salesExecutives.map((s: any) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
                 </SelectContent>
               </Select>
             </FormField>
-            <FormField label="Valid Until">
+            <FormField label={t('validUntil')}>
               <Input type="date" className="rounded-xl" value={quotation.validUntil ? new Date(quotation.validUntil).toISOString().split('T')[0] : ''} onChange={(e) => setQuotation({ ...quotation, validUntil: e.target.value || null })} />
             </FormField>
           </div>
-          <FormField label="Notes">
-            <Textarea className="rounded-xl text-sm" rows={2} value={quotation.notes || ''} onChange={(e) => setQuotation({ ...quotation, notes: e.target.value })} placeholder="Internal notes..." />
+          <FormField label={tc('notes')}>
+            <Textarea className="rounded-xl text-sm" rows={2} value={quotation.notes || ''} onChange={(e) => setQuotation({ ...quotation, notes: e.target.value })} placeholder={tc('internalNotes')} />
           </FormField>
         </Section>
 
         {/* Measurement Items Picker */}
         {selectedMeasurement?.objects?.length > 0 && (
-          <Section title="Measurement Items">
-            <p className="text-xs text-gray-400 mb-2">Tick items to add to quotation</p>
+          <Section title={t('measurementItems')}>
+            <p className="text-xs text-gray-400 mb-2">{t('tickItems')}</p>
             <div className="space-y-2">
               {selectedMeasurement.objects.map((item: any) => (
                 <div key={item.id} className="flex items-center gap-2 rounded-xl border border-gray-100 p-2.5">
@@ -185,30 +188,30 @@ export default function QuotationDetailsPage() {
         )}
 
         {/* Line Items */}
-        <Section title={`Line Items (${lineItems.length})`}>
+        <Section title={`${t('lineItems')} (${lineItems.length})`}>
           {lineItems.map((item: any, i: number) => (
             <div key={i} className="rounded-xl border border-gray-100 bg-gray-50/50 p-3 space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Item {i + 1}</span>
-                <button onClick={() => removeItem(i)} className="text-[10px] font-medium text-red-500 hover:text-red-700">Remove</button>
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">{tc('item')} {i + 1}</span>
+                <button onClick={() => removeItem(i)} className="text-[10px] font-medium text-red-500 hover:text-red-700">{tc('remove')}</button>
               </div>
-              <Input value={item.description} onChange={(e) => updateItem(i, 'description', e.target.value)} placeholder="Description *" className="rounded-xl text-sm" />
+              <Input value={item.description} onChange={(e) => updateItem(i, 'description', e.target.value)} placeholder={t('itemDescription')} className="rounded-xl text-sm" />
               <div className="grid grid-cols-3 gap-2">
                 <div>
-                  <Label className="text-[10px] text-gray-400">Qty</Label>
+                  <Label className="text-[10px] text-gray-400">{tc('qty')}</Label>
                   <Input type="number" value={item.quantity} onChange={(e) => updateItem(i, 'quantity', e.target.value)} className="rounded-xl text-sm mt-0.5" />
                 </div>
                 <div>
-                  <Label className="text-[10px] text-gray-400">Unit</Label>
+                  <Label className="text-[10px] text-gray-400">{tc('unit')}</Label>
                   <Input value={item.unit} onChange={(e) => updateItem(i, 'unit', e.target.value)} className="rounded-xl text-sm mt-0.5" />
                 </div>
                 <div>
-                  <Label className="text-[10px] text-gray-400">Price</Label>
+                  <Label className="text-[10px] text-gray-400">{tc('price')}</Label>
                   <Input type="number" step="0.001" value={item.unitPrice} onChange={(e) => updateItem(i, 'unitPrice', e.target.value)} className="rounded-xl text-sm mt-0.5" />
                 </div>
               </div>
               <p className="text-right text-xs font-semibold text-gray-600">
-                {(parseFloat(item.quantity || '0') * parseFloat(item.unitPrice || '0')).toFixed(3)} OMR
+                {(parseFloat(item.quantity || '0') * parseFloat(item.unitPrice || '0')).toFixed(3)} {tc('omr')}
               </p>
             </div>
           ))}
@@ -216,39 +219,39 @@ export default function QuotationDetailsPage() {
             onClick={() => setLineItems([...lineItems, { description: '', quantity: '1', unit: 'unit', unitPrice: '0', total: '0' }])}
             className="w-full rounded-xl border border-dashed border-gray-300 py-3 text-xs font-medium text-gray-500 hover:bg-gray-50 active:scale-[0.98]"
           >
-            + Add Line Item
+            {t('addLineItem')}
           </button>
         </Section>
 
         {/* AMC */}
-        <Section title="AMC Contract">
+        <Section title={t('amcContract')}>
           <div className="flex items-center gap-2">
             <Checkbox id="isAmc" checked={quotation.isAmc || false} onCheckedChange={(c) => setQuotation({ ...quotation, isAmc: !!c })} />
-            <label htmlFor="isAmc" className="text-sm text-gray-700">This is an Annual Maintenance Contract</label>
+            <label htmlFor="isAmc" className="text-sm text-gray-700">{t('isAmc')}</label>
           </div>
           {quotation.isAmc && (
             <div className="mt-3 space-y-3 rounded-xl border border-amber-200 bg-amber-50/50 p-3">
               <div className="grid grid-cols-3 gap-2">
-                <FormField label="Frequency">
+                <FormField label={tc('frequency')}>
                   <Select value={quotation.amcFrequency || ''} onValueChange={(v) => setQuotation({ ...quotation, amcFrequency: v })}>
-                    <SelectTrigger className="rounded-xl"><SelectValue placeholder="Select..." /></SelectTrigger>
+                    <SelectTrigger className="rounded-xl"><SelectValue placeholder={tc('selectMethod')} /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="WEEKLY">Weekly</SelectItem>
-                      <SelectItem value="BI_WEEKLY">Bi-Weekly</SelectItem>
-                      <SelectItem value="MONTHLY">Monthly</SelectItem>
-                      <SelectItem value="QUARTERLY">Quarterly</SelectItem>
+                      <SelectItem value="WEEKLY">{tc('weekly')}</SelectItem>
+                      <SelectItem value="BI_WEEKLY">{tc('biWeekly')}</SelectItem>
+                      <SelectItem value="MONTHLY">{tc('monthly')}</SelectItem>
+                      <SelectItem value="QUARTERLY">{tc('quarterly')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </FormField>
-                <FormField label="Duration">
+                <FormField label={tc('duration')}>
                   <Select value={quotation.amcDurationMonths?.toString() || ''} onValueChange={(v) => setQuotation({ ...quotation, amcDurationMonths: parseInt(v) })}>
-                    <SelectTrigger className="rounded-xl"><SelectValue placeholder="Months" /></SelectTrigger>
+                    <SelectTrigger className="rounded-xl"><SelectValue placeholder={tc('months')} /></SelectTrigger>
                     <SelectContent>
-                      {[3,6,12,18,24].map(m => <SelectItem key={m} value={m.toString()}>{m} Mo</SelectItem>)}
+                      {[3,6,12,18,24].map(m => <SelectItem key={m} value={m.toString()}>{m} {tc('months')}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </FormField>
-                <FormField label="Start Date">
+                <FormField label={tc('startDate')}>
                   <Input type="date" className="rounded-xl" value={quotation.amcStartDate ? new Date(quotation.amcStartDate).toISOString().split('T')[0] : ''} onChange={(e) => setQuotation({ ...quotation, amcStartDate: e.target.value })} />
                 </FormField>
               </div>
@@ -257,7 +260,7 @@ export default function QuotationDetailsPage() {
                   {(() => {
                     const f: Record<string, number> = { WEEKLY: 52/12, BI_WEEKLY: 26/12, MONTHLY: 1, QUARTERLY: 1/3 }
                     const visits = Math.floor((f[quotation.amcFrequency] || 1) * quotation.amcDurationMonths)
-                    return `~${visits} visits over ${quotation.amcDurationMonths} months${total > 0 ? ` · ${(total / visits).toFixed(3)} OMR/visit` : ''}`
+                    return `~${visits} ${tc('visits')} ${tc('over')} ${quotation.amcDurationMonths} ${tc('months')}${total > 0 ? ` · ${(total / visits).toFixed(3)} ${tc('omr')}${tc('perVisit')}` : ''}`
                   })()}
                 </p>
               )}
@@ -266,29 +269,29 @@ export default function QuotationDetailsPage() {
         </Section>
 
         {/* Pricing */}
-        <Section title="Pricing & Discounts">
+        <Section title={t('pricingDiscounts')}>
           <div className="flex items-center gap-2">
             <Checkbox id="vatEnabled" checked={quotation.vatEnabled} onCheckedChange={(c) => setQuotation({ ...quotation, vatEnabled: !!c })} />
-            <label htmlFor="vatEnabled" className="text-sm text-gray-700">Enable VAT</label>
+            <label htmlFor="vatEnabled" className="text-sm text-gray-700">{tc('enableVAT')}</label>
           </div>
           {quotation.vatEnabled && (
-            <FormField label="VAT %">
+            <FormField label={tc('vatPercentage')}>
               <Input type="number" className="rounded-xl" value={quotation.vatPercentage} onChange={(e) => setQuotation({ ...quotation, vatPercentage: e.target.value })} />
             </FormField>
           )}
           <div className="grid grid-cols-2 gap-3">
-            <FormField label="Discount Type">
+            <FormField label={tc('discountType')}>
               <Select value={quotation.discountType || 'NONE'} onValueChange={(v) => setQuotation({ ...quotation, discountType: v === 'NONE' ? null : v })}>
                 <SelectTrigger className="rounded-xl"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="NONE">None</SelectItem>
-                  <SelectItem value="PERCENTAGE">Percentage</SelectItem>
-                  <SelectItem value="FIXED_AMOUNT">Fixed Amount</SelectItem>
+                  <SelectItem value="NONE">{tc('noDiscount')}</SelectItem>
+                  <SelectItem value="PERCENTAGE">{tc('percentage')}</SelectItem>
+                  <SelectItem value="FIXED_AMOUNT">{tc('fixedAmount')}</SelectItem>
                 </SelectContent>
               </Select>
             </FormField>
             {quotation.discountType && (
-              <FormField label={quotation.discountType === 'PERCENTAGE' ? 'Discount %' : 'Discount Amount'}>
+              <FormField label={quotation.discountType === 'PERCENTAGE' ? tc('discountValue') + ' %' : tc('discountValue')}>
                 <Input type="number" step="0.001" className="rounded-xl" value={quotation.discountValue || ''} onChange={(e) => setQuotation({ ...quotation, discountValue: e.target.value })} />
               </FormField>
             )}
@@ -297,63 +300,63 @@ export default function QuotationDetailsPage() {
           {/* Totals */}
           <div className="mt-3 space-y-1.5 rounded-xl border border-gray-100 bg-gray-50 p-3">
             <div className="flex justify-between text-xs text-gray-500">
-              <span>Subtotal</span><span className="font-medium text-gray-800">{subtotal.toFixed(3)} OMR</span>
+              <span>{tc('subtotal')}</span><span className="font-medium text-gray-800">{subtotal.toFixed(3)} {tc('omr')}</span>
             </div>
             {discount > 0 && (
               <div className="flex justify-between text-xs text-red-500">
-                <span>Discount {quotation.discountType === 'PERCENTAGE' ? `(${quotation.discountValue}%)` : ''}</span>
-                <span>-{discount.toFixed(3)} OMR</span>
+                <span>{tc('discount')} {quotation.discountType === 'PERCENTAGE' ? `(${quotation.discountValue}%)` : ''}</span>
+                <span>-{discount.toFixed(3)} {tc('omr')}</span>
               </div>
             )}
             {vat > 0 && (
               <div className="flex justify-between text-xs text-gray-500">
-                <span>VAT ({quotation.vatPercentage}%)</span><span>{vat.toFixed(3)} OMR</span>
+                <span>{tc('vat')} ({quotation.vatPercentage}%)</span><span>{vat.toFixed(3)} {tc('omr')}</span>
               </div>
             )}
             <div className="flex justify-between border-t border-gray-200 pt-1.5 text-sm font-bold text-gray-900">
-              <span>Total</span><span>{total.toFixed(3)} OMR</span>
+              <span>{tc('grandTotal')}</span><span>{total.toFixed(3)} {tc('omr')}</span>
             </div>
           </div>
         </Section>
 
         {/* Terms */}
-        <Section title="Terms & Conditions">
-          <FormField label="Template">
+        <Section title={t('termsConditions')}>
+          <FormField label={tc('template')}>
             <Select value={quotation.termsTemplateId || '__NONE__'} onValueChange={(v) => v !== '__NONE__' ? handleTermsTemplateChange(v) : setQuotation({ ...quotation, termsTemplateId: '', termsSnapshot: '' })}>
-              <SelectTrigger className="rounded-xl"><SelectValue placeholder="Select template..." /></SelectTrigger>
+              <SelectTrigger className="rounded-xl"><SelectValue placeholder={t('selectTemplate')} /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="__NONE__">None</SelectItem>
-                {termsTemplates.map((t: any) => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
+                <SelectItem value="__NONE__">{tc('none')}</SelectItem>
+                {termsTemplates.map((tmpl: any) => <SelectItem key={tmpl.id} value={tmpl.id}>{tmpl.name}</SelectItem>)}
               </SelectContent>
             </Select>
           </FormField>
-          <Textarea className="rounded-xl text-sm" rows={4} value={quotation.termsSnapshot || ''} onChange={(e) => setQuotation({ ...quotation, termsSnapshot: e.target.value })} placeholder="Terms and conditions..." />
+          <Textarea className="rounded-xl text-sm" rows={4} value={quotation.termsSnapshot || ''} onChange={(e) => setQuotation({ ...quotation, termsSnapshot: e.target.value })} placeholder={tc('termsPlaceholder')} />
         </Section>
 
         {/* Bank Details */}
-        <Section title="Bank Details">
-          <FormField label="Template">
+        <Section title={t('bankDetails')}>
+          <FormField label={tc('template')}>
             <Select value={quotation.bankDetailsTemplateId || '__NONE__'} onValueChange={(v) => v !== '__NONE__' ? handleBankTemplateChange(v) : setQuotation({ ...quotation, bankDetailsTemplateId: '', bankDetailsSnapshot: '' })}>
-              <SelectTrigger className="rounded-xl"><SelectValue placeholder="Select template..." /></SelectTrigger>
+              <SelectTrigger className="rounded-xl"><SelectValue placeholder={t('selectTemplate')} /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="__NONE__">None</SelectItem>
-                {bankTemplates.map((t: any) => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
+                <SelectItem value="__NONE__">{tc('none')}</SelectItem>
+                {bankTemplates.map((tmpl: any) => <SelectItem key={tmpl.id} value={tmpl.id}>{tmpl.name}</SelectItem>)}
               </SelectContent>
             </Select>
           </FormField>
-          <Textarea className="rounded-xl text-sm" rows={4} value={quotation.bankDetailsSnapshot || ''} onChange={(e) => setQuotation({ ...quotation, bankDetailsSnapshot: e.target.value })} placeholder="Bank details..." />
+          <Textarea className="rounded-xl text-sm" rows={4} value={quotation.bankDetailsSnapshot || ''} onChange={(e) => setQuotation({ ...quotation, bankDetailsSnapshot: e.target.value })} placeholder={tc('bankDetailsPlaceholder')} />
         </Section>
       </div>
 
       {/* Sticky Save */}
       <div className="fixed bottom-0 left-0 right-0 z-20 border-t border-gray-100 bg-white/90 px-4 py-3 backdrop-blur-sm">
         <div className="mx-auto flex max-w-2xl items-center gap-2">
-          <Link href={`/${locale}/admin/quotations`} className="flex-1 rounded-xl border border-gray-200 bg-white py-3 text-center text-sm font-medium text-gray-600 active:scale-[0.98]">Cancel</Link>
+          <Link href={`/${locale}/admin/quotations`} className="flex-1 rounded-xl border border-gray-200 bg-white py-3 text-center text-sm font-medium text-gray-600 active:scale-[0.98]">{tc('cancel')}</Link>
           <div className="flex-[2] flex flex-col items-center">
             <button onClick={handleSave} disabled={saving} className="w-full rounded-xl bg-gradient-to-r from-primary to-gold-600 py-3 text-sm font-semibold text-white shadow-md shadow-gold-300/30 active:scale-[0.98] disabled:opacity-50">
-              {saving ? 'Saving...' : id === 'new' ? 'Create Quotation' : 'Save Changes'}
+              {saving ? tc('saving') : id === 'new' ? t('createQuotation') : tc('saveChanges')}
             </button>
-            <span className="mt-0.5 text-[10px] font-bold text-gray-400">{total.toFixed(3)} OMR</span>
+            <span className="mt-0.5 text-[10px] font-bold text-gray-400">{total.toFixed(3)} {tc('omr')}</span>
           </div>
         </div>
       </div>

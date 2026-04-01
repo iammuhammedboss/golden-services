@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
@@ -39,6 +40,7 @@ type RoomTypeMaster = {
 }
 
 export default function RoomTypesPage() {
+  const tc = useTranslations('Common')
   const [roomTypes, setRoomTypes] = useState<RoomTypeMaster[]>([])
   const [loading, setLoading] = useState(true)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
@@ -112,7 +114,7 @@ export default function RoomTypesPage() {
   }
 
   const handleDelete = async (itemId: string) => {
-    if (!confirm('Are you sure you want to delete this room type?')) {
+    if (!confirm(tc('confirmDelete'))) {
       return
     }
 
@@ -140,7 +142,7 @@ export default function RoomTypesPage() {
   }
 
   if (loading) {
-    return <div className="flex items-center justify-center h-64">Loading...</div>
+    return <div className="flex items-center justify-center h-64">{tc('loading')}</div>
   }
 
   return (
@@ -154,22 +156,22 @@ export default function RoomTypesPage() {
           <DialogTrigger asChild>
             <Button onClick={() => handleDialogClose()}>
               <Plus className="h-4 w-4 mr-2" />
-              Add Room Type
+              {tc('add')} Room Type
             </Button>
           </DialogTrigger>
           <DialogContent>
             <form onSubmit={handleSubmit}>
               <DialogHeader>
-                <DialogTitle>{editingItem ? 'Edit Room Type' : 'Add New Room Type'}</DialogTitle>
+                <DialogTitle>{editingItem ? `${tc('edit')} Room Type` : `${tc('add')} Room Type`}</DialogTitle>
                 <DialogDescription>
                   {editingItem
-                    ? 'Update the room type details below'
-                    : 'Create a new room type'}
+                    ? `${tc('update')} Room Type`
+                    : `${tc('create')} Room Type`}
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-4 py-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name">Name *</Label>
+                  <Label htmlFor="name">{tc('name')} *</Label>
                   <Input
                     id="name"
                     value={formData.name}
@@ -179,16 +181,16 @@ export default function RoomTypesPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="description">Description</Label>
+                  <Label htmlFor="description">{tc('description')}</Label>
                   <Textarea
                     id="description"
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    placeholder="Optional description"
+                    placeholder={tc('optional')}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="sortOrder">Sort Order</Label>
+                  <Label htmlFor="sortOrder">{tc('sortOrder')}</Label>
                   <Input
                     id="sortOrder"
                     type="number"
@@ -203,14 +205,14 @@ export default function RoomTypesPage() {
                     checked={formData.isActive}
                     onCheckedChange={(checked) => setFormData({ ...formData, isActive: checked as boolean })}
                   />
-                  <Label htmlFor="isActive">Active</Label>
+                  <Label htmlFor="isActive">{tc('active')}</Label>
                 </div>
               </div>
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={handleDialogClose}>
-                  Cancel
+                  {tc('cancel')}
                 </Button>
-                <Button type="submit">{editingItem ? 'Update' : 'Create'}</Button>
+                <Button type="submit">{editingItem ? tc('update') : tc('create')}</Button>
               </DialogFooter>
             </form>
           </DialogContent>
@@ -219,20 +221,20 @@ export default function RoomTypesPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>All Room Types</CardTitle>
-          <CardDescription>Total: {roomTypes.length} types</CardDescription>
+          <CardTitle>{tc('all')} Room Types</CardTitle>
+          <CardDescription>{tc('total')}: {roomTypes.length}</CardDescription>
         </CardHeader>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Description</TableHead>
-                  <TableHead>Sort Order</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Created</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead>{tc('name')}</TableHead>
+                  <TableHead>{tc('description')}</TableHead>
+                  <TableHead>{tc('sortOrder')}</TableHead>
+                  <TableHead>{tc('status')}</TableHead>
+                  <TableHead>{tc('created')}</TableHead>
+                  <TableHead className="text-right">{tc('actions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -252,7 +254,7 @@ export default function RoomTypesPage() {
                       </TableCell>
                       <TableCell>
                         <Badge variant={item.isActive ? 'default' : 'secondary'}>
-                          {item.isActive ? 'Active' : 'Inactive'}
+                          {item.isActive ? tc('active') : tc('inactive')}
                         </Badge>
                       </TableCell>
                       <TableCell>
@@ -262,7 +264,7 @@ export default function RoomTypesPage() {
                         <div className="flex items-center justify-end gap-2">
                           <Button variant="ghost" size="sm" onClick={() => handleEdit(item)}>
                             <Edit className="h-4 w-4 mr-1" />
-                            Edit
+                            {tc('edit')}
                           </Button>
                           <Button
                             variant="ghost"
@@ -271,7 +273,7 @@ export default function RoomTypesPage() {
                             className="text-red-600 hover:text-red-700"
                           >
                             <Trash2 className="h-4 w-4 mr-1" />
-                            Delete
+                            {tc('delete')}
                           </Button>
                         </div>
                       </TableCell>
@@ -280,7 +282,7 @@ export default function RoomTypesPage() {
                 ) : (
                   <TableRow>
                     <TableCell colSpan={6} className="text-center text-muted-foreground">
-                      No room types found. Click &quot;Add Room Type&quot; to create one.
+                      {tc('noData')}
                     </TableCell>
                   </TableRow>
                 )}

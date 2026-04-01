@@ -13,6 +13,7 @@ import { prisma } from '@/lib/prisma'
 import { formatDate } from '@/lib/utils'
 import Link from 'next/link'
 import { addWeeks } from 'date-fns'
+import { getTranslations } from 'next-intl/server'
 
 function getStatusBadgeVariant(status: string) {
   switch (status) {
@@ -24,17 +25,10 @@ function getStatusBadgeVariant(status: string) {
   }
 }
 
-function getFrequencyLabel(freq: string) {
-  switch (freq) {
-    case 'WEEKLY': return 'Weekly'
-    case 'BI_WEEKLY': return 'Bi-Weekly'
-    case 'MONTHLY': return 'Monthly'
-    case 'QUARTERLY': return 'Quarterly'
-    default: return freq
-  }
-}
-
 export default async function AmcContractsPage() {
+  const t = await getTranslations('AMC')
+  const tc = await getTranslations('Common')
+
   const today = new Date()
   today.setHours(0, 0, 0, 0)
 
@@ -104,35 +98,45 @@ export default async function AmcContractsPage() {
     }
   })
 
+  const getFrequencyLabel = (freq: string) => {
+    switch (freq) {
+      case 'WEEKLY': return t('weekly')
+      case 'BI_WEEKLY': return t('biWeekly')
+      case 'MONTHLY': return t('monthly')
+      case 'QUARTERLY': return t('quarterly')
+      default: return freq
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold md:text-3xl">AMC Contracts</h1>
+        <h1 className="text-2xl font-bold md:text-3xl">{t('title')}</h1>
       </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
         <Card>
           <CardContent className="p-4">
-            <p className="text-sm text-muted-foreground">Active</p>
+            <p className="text-sm text-muted-foreground">{t('active')}</p>
             <p className="text-2xl font-bold text-green-600">{active}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4">
-            <p className="text-sm text-muted-foreground">Paused</p>
+            <p className="text-sm text-muted-foreground">{t('paused')}</p>
             <p className="text-2xl font-bold text-yellow-600">{paused}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4">
-            <p className="text-sm text-muted-foreground">Upcoming (7d)</p>
+            <p className="text-sm text-muted-foreground">{t('upcoming')}</p>
             <p className="text-2xl font-bold text-blue-600">{upcoming}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4">
-            <p className="text-sm text-muted-foreground">Overdue</p>
+            <p className="text-sm text-muted-foreground">{t('overdue')}</p>
             <p className="text-2xl font-bold text-red-600">{overdue}</p>
           </CardContent>
         </Card>
@@ -141,26 +145,26 @@ export default async function AmcContractsPage() {
       {/* Contracts Table */}
       <Card>
         <CardHeader>
-          <CardTitle>All Contracts</CardTitle>
+          <CardTitle>{t('allContracts')}</CardTitle>
         </CardHeader>
         <CardContent>
           {enrichedContracts.length === 0 ? (
             <p className="py-8 text-center text-muted-foreground">
-              No AMC contracts yet. Create one by marking a quotation as AMC and accepting it.
+              {t('noContracts')}
             </p>
           ) : (
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Contract #</TableHead>
-                    <TableHead>Client</TableHead>
-                    <TableHead className="hidden md:table-cell">Frequency</TableHead>
-                    <TableHead className="hidden md:table-cell">Period</TableHead>
-                    <TableHead>Progress</TableHead>
-                    <TableHead className="hidden md:table-cell">Next Visit</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableHead>{t('contractNumber')}</TableHead>
+                    <TableHead>{t('client')}</TableHead>
+                    <TableHead className="hidden md:table-cell">{t('frequency')}</TableHead>
+                    <TableHead className="hidden md:table-cell">{t('period')}</TableHead>
+                    <TableHead>{t('progress')}</TableHead>
+                    <TableHead className="hidden md:table-cell">{t('nextVisit')}</TableHead>
+                    <TableHead>{t('status')}</TableHead>
+                    <TableHead className="text-right">{t('actions')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -198,7 +202,7 @@ export default async function AmcContractsPage() {
                           </span>
                         </div>
                         {contract.overdueCount > 0 && (
-                          <span className="text-xs text-red-500">{contract.overdueCount} overdue</span>
+                          <span className="text-xs text-red-500">{t('overdueCount', { count: contract.overdueCount })}</span>
                         )}
                       </TableCell>
                       <TableCell className="hidden text-sm md:table-cell">
@@ -211,7 +215,7 @@ export default async function AmcContractsPage() {
                       </TableCell>
                       <TableCell className="text-right">
                         <Link href={`amc/${contract.id}`}>
-                          <Button variant="ghost" size="sm">View</Button>
+                          <Button variant="ghost" size="sm">{tc('view')}</Button>
                         </Link>
                       </TableCell>
                     </TableRow>

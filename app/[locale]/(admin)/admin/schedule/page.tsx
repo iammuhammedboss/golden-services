@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useTranslations } from 'next-intl'
 import { Calendar, momentLocalizer, Views, View } from 'react-big-calendar'
 import moment from 'moment'
 import 'react-big-calendar/lib/css/react-big-calendar.css'
@@ -17,6 +18,8 @@ const localizer = momentLocalizer(moment)
 type TView = 'calendar' | 'list'
 
 export default function SchedulePage() {
+  const t = useTranslations('Schedule')
+  const tc = useTranslations('Common')
   const [events, setEvents] = useState<ScheduleEvent[]>([])
   const [calendarView, setCalendarView] = useState<View>(Views.MONTH)
   const [activeView, setActiveView] = useState<TView>('calendar')
@@ -78,21 +81,21 @@ export default function SchedulePage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-gray-900">Schedule</h1>
-          <p className="text-xs text-gray-400">{events.length} entries</p>
+          <h1 className="text-xl font-bold text-gray-900">{t('title')}</h1>
+          <p className="text-xs text-gray-400">{events.length} {t('entries')}</p>
         </div>
         <div className="flex items-center gap-1.5">
           <button
             onClick={() => setActiveView('calendar')}
             className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${activeView === 'calendar' ? 'bg-primary/10 text-primary' : 'text-gray-400 hover:bg-gray-100'}`}
           >
-            Calendar
+            {t('calendar')}
           </button>
           <button
             onClick={() => setActiveView('list')}
             className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${activeView === 'list' ? 'bg-primary/10 text-primary' : 'text-gray-400 hover:bg-gray-100'}`}
           >
-            List
+            {t('list')}
           </button>
           <button
             onClick={() => setSelectedSlot({ start: new Date(), end: moment().add(1, 'hour').toDate() })}
@@ -106,23 +109,23 @@ export default function SchedulePage() {
       {/* Filters */}
       <div className="grid grid-cols-3 gap-2">
         <Select value={filters.employeeId} onValueChange={v => setFilters({ ...filters, employeeId: v })}>
-          <SelectTrigger className="rounded-xl text-xs h-9"><SelectValue placeholder="Employee" /></SelectTrigger>
+          <SelectTrigger className="rounded-xl text-xs h-9"><SelectValue placeholder={t('filterEmployee')} /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Employees</SelectItem>
+            <SelectItem value="all">{t('allEmployees')}</SelectItem>
             {users.map(u => <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>)}
           </SelectContent>
         </Select>
         <Select value={filters.type} onValueChange={v => setFilters({ ...filters, type: v })}>
-          <SelectTrigger className="rounded-xl text-xs h-9"><SelectValue placeholder="Type" /></SelectTrigger>
+          <SelectTrigger className="rounded-xl text-xs h-9"><SelectValue placeholder={t('filterType')} /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Types</SelectItem>
-            {Object.values(ScheduleEntryType).map(t => <SelectItem key={t} value={t}>{t.replace(/_/g, ' ')}</SelectItem>)}
+            <SelectItem value="all">{t('allTypes')}</SelectItem>
+            {Object.values(ScheduleEntryType).map(tp => <SelectItem key={tp} value={tp}>{tp.replace(/_/g, ' ')}</SelectItem>)}
           </SelectContent>
         </Select>
         <Select value={filters.status} onValueChange={v => setFilters({ ...filters, status: v })}>
-          <SelectTrigger className="rounded-xl text-xs h-9"><SelectValue placeholder="Status" /></SelectTrigger>
+          <SelectTrigger className="rounded-xl text-xs h-9"><SelectValue placeholder={t('filterStatus')} /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Statuses</SelectItem>
+            <SelectItem value="all">{t('allStatuses')}</SelectItem>
             {Object.values(ScheduleEntryStatus).map(s => <SelectItem key={s} value={s}>{s.replace(/_/g, ' ')}</SelectItem>)}
           </SelectContent>
         </Select>
