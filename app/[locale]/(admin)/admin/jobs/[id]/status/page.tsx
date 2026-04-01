@@ -110,7 +110,8 @@ export default function JobStatusPaymentPage() {
   const selectedMethod = paymentMethods.find((m: any) => m.name === paymentForm.paymentMethod)
   const quotationTotal = job.quotation?.items?.reduce((s: number, i: any) => s + Number(i.total), 0) || 0
   const jobTotal = quotationTotal || Number(job.amount || 0)
-  const amountDue = Math.max(0, jobTotal - payments.totalPaid)
+  const hasJobTotal = jobTotal > 0
+  const amountDue = hasJobTotal ? Math.max(0, jobTotal - payments.totalPaid) : 0
 
   return (
     <div className="mx-auto max-w-lg space-y-4 pb-8">
@@ -261,9 +262,11 @@ export default function JobStatusPaymentPage() {
                 <div className="rounded-xl border border-amber-200 bg-amber-50 p-3">
                   <div className="flex items-center gap-2">
                     <svg className="h-4 w-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" /></svg>
-                    <span className="text-xs font-semibold text-amber-700">Payment: {amountDue > 0 ? `${formatCurrency(amountDue)} due` : 'Fully paid'}</span>
+                    <span className="text-xs font-semibold text-amber-700">
+                      Payment: {!hasJobTotal ? 'No amount set' : amountDue > 0 ? `${formatCurrency(amountDue)} due` : 'Fully paid'}
+                    </span>
                   </div>
-                  {amountDue > 0 && (
+                  {(amountDue > 0 || !hasJobTotal) && (
                     <button onClick={() => setActiveTab('payment')} className="mt-2 w-full rounded-lg bg-amber-600 py-2 text-xs font-semibold text-white active:scale-[0.98]">
                       Collect Payment
                     </button>
@@ -315,19 +318,21 @@ export default function JobStatusPaymentPage() {
             </div>
             <div className="p-4 space-y-4">
               {/* Summary */}
-              <div className="grid grid-cols-3 gap-2">
+              <div className={`grid gap-2 ${hasJobTotal ? 'grid-cols-3' : 'grid-cols-2'}`}>
                 <div className="rounded-xl border border-gray-100 bg-gray-50 p-2 text-center">
                   <p className="text-[9px] font-medium uppercase tracking-wider text-gray-400">Total</p>
-                  <p className="mt-0.5 text-sm font-bold text-gray-800">{formatCurrency(jobTotal)}</p>
+                  <p className="mt-0.5 text-sm font-bold text-gray-800">{hasJobTotal ? formatCurrency(jobTotal) : 'Not set'}</p>
                 </div>
                 <div className="rounded-xl border border-green-100 bg-green-50 p-2 text-center">
                   <p className="text-[9px] font-medium uppercase tracking-wider text-gray-400">Paid</p>
                   <p className="mt-0.5 text-sm font-bold text-green-700">{formatCurrency(payments.totalPaid)}</p>
                 </div>
-                <div className={`rounded-xl border p-2 text-center ${amountDue > 0 ? 'border-red-100 bg-red-50' : 'border-green-100 bg-green-50'}`}>
-                  <p className="text-[9px] font-medium uppercase tracking-wider text-gray-400">Due</p>
-                  <p className={`mt-0.5 text-sm font-bold ${amountDue > 0 ? 'text-red-700' : 'text-green-700'}`}>{formatCurrency(amountDue)}</p>
-                </div>
+                {hasJobTotal && (
+                  <div className={`rounded-xl border p-2 text-center ${amountDue > 0 ? 'border-red-100 bg-red-50' : 'border-green-100 bg-green-50'}`}>
+                    <p className="text-[9px] font-medium uppercase tracking-wider text-gray-400">Due</p>
+                    <p className={`mt-0.5 text-sm font-bold ${amountDue > 0 ? 'text-red-700' : 'text-green-700'}`}>{formatCurrency(amountDue)}</p>
+                  </div>
+                )}
               </div>
 
               {/* Progress bar */}
@@ -344,7 +349,7 @@ export default function JobStatusPaymentPage() {
               )}
 
               {/* Paid badge or Add Payment */}
-              {amountDue <= 0 ? (
+              {hasJobTotal && amountDue <= 0 ? (
                 <div className="flex items-center justify-center gap-2 rounded-xl bg-green-50 py-3">
                   <svg className="h-4 w-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
                   <span className="text-sm font-semibold text-green-700">Fully Paid</span>
@@ -412,19 +417,21 @@ export default function JobStatusPaymentPage() {
       {activeTab === 'payment' && (
         <div className="space-y-4">
           {/* Summary */}
-          <div className="grid grid-cols-3 gap-2">
+          <div className={`grid gap-2 ${hasJobTotal ? 'grid-cols-3' : 'grid-cols-2'}`}>
             <div className="rounded-xl border border-gray-100 bg-white p-2.5 text-center shadow-sm">
               <p className="text-[10px] font-medium uppercase tracking-wider text-gray-400">Total</p>
-              <p className="mt-0.5 text-sm font-bold text-gray-800">{formatCurrency(jobTotal)}</p>
+              <p className="mt-0.5 text-sm font-bold text-gray-800">{hasJobTotal ? formatCurrency(jobTotal) : 'Not set'}</p>
             </div>
             <div className="rounded-xl border border-green-100 bg-green-50 p-2.5 text-center shadow-sm">
               <p className="text-[10px] font-medium uppercase tracking-wider text-gray-400">Paid</p>
               <p className="mt-0.5 text-sm font-bold text-green-700">{formatCurrency(payments.totalPaid)}</p>
             </div>
-            <div className={`rounded-xl border p-2.5 text-center shadow-sm ${amountDue > 0 ? 'border-red-100 bg-red-50' : 'border-green-100 bg-green-50'}`}>
-              <p className="text-[10px] font-medium uppercase tracking-wider text-gray-400">Due</p>
-              <p className={`mt-0.5 text-sm font-bold ${amountDue > 0 ? 'text-red-700' : 'text-green-700'}`}>{formatCurrency(amountDue)}</p>
-            </div>
+            {hasJobTotal && (
+              <div className={`rounded-xl border p-2.5 text-center shadow-sm ${amountDue > 0 ? 'border-red-100 bg-red-50' : 'border-green-100 bg-green-50'}`}>
+                <p className="text-[10px] font-medium uppercase tracking-wider text-gray-400">Due</p>
+                <p className={`mt-0.5 text-sm font-bold ${amountDue > 0 ? 'text-red-700' : 'text-green-700'}`}>{formatCurrency(amountDue)}</p>
+              </div>
+            )}
           </div>
 
           {/* Add Payment */}

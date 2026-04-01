@@ -46,7 +46,7 @@ export async function POST(
     // Update job status if needed
     const jobStatusMap: Record<string, string> = {
       IN_PROGRESS: 'IN_PROGRESS',
-      COMPLETION_REQUESTED: 'IN_PROGRESS',
+      COMPLETION_REQUESTED: 'COMPLETED',
       VERIFIED: 'COMPLETED',
       CANCELLED: 'CANCELLED',
     }
