@@ -126,9 +126,10 @@ export async function POST(
         },
       },
     })
-    const expectedTotal = jobWithQuote?.quotation?.items.reduce(
+    const quotationTotal = jobWithQuote?.quotation?.items.reduce(
       (sum, item) => sum + Number(item.total), 0
     ) || 0
+    const expectedTotal = quotationTotal || Number(jobWithQuote?.amount || 0)
 
     let newPaymentStatus = 'UNPAID'
     if (totalPaid >= expectedTotal && expectedTotal > 0) {

@@ -109,7 +109,8 @@ export default function JobStatusPaymentPage() {
   const hasStarted = isOnWay || isArrived || isWorking || isDone
   const selectedMethod = paymentMethods.find((m: any) => m.name === paymentForm.paymentMethod)
   const quotationTotal = job.quotation?.items?.reduce((s: number, i: any) => s + Number(i.total), 0) || 0
-  const amountDue = Math.max(0, quotationTotal - payments.totalPaid)
+  const jobTotal = quotationTotal || Number(job.amount || 0)
+  const amountDue = Math.max(0, jobTotal - payments.totalPaid)
 
   return (
     <div className="mx-auto max-w-lg space-y-4 pb-8">
@@ -317,7 +318,7 @@ export default function JobStatusPaymentPage() {
               <div className="grid grid-cols-3 gap-2">
                 <div className="rounded-xl border border-gray-100 bg-gray-50 p-2 text-center">
                   <p className="text-[9px] font-medium uppercase tracking-wider text-gray-400">Total</p>
-                  <p className="mt-0.5 text-sm font-bold text-gray-800">{formatCurrency(quotationTotal)}</p>
+                  <p className="mt-0.5 text-sm font-bold text-gray-800">{formatCurrency(jobTotal)}</p>
                 </div>
                 <div className="rounded-xl border border-green-100 bg-green-50 p-2 text-center">
                   <p className="text-[9px] font-medium uppercase tracking-wider text-gray-400">Paid</p>
@@ -330,14 +331,14 @@ export default function JobStatusPaymentPage() {
               </div>
 
               {/* Progress bar */}
-              {quotationTotal > 0 && (
+              {jobTotal > 0 && (
                 <div>
                   <div className="flex justify-between text-[10px] text-gray-400">
                     <span>Payment progress</span>
-                    <span>{Math.min(100, Math.round((payments.totalPaid / quotationTotal) * 100))}%</span>
+                    <span>{Math.min(100, Math.round((payments.totalPaid / jobTotal) * 100))}%</span>
                   </div>
                   <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-gray-100">
-                    <div className="h-full rounded-full bg-green-500 transition-all" style={{ width: `${Math.min(100, (payments.totalPaid / quotationTotal) * 100)}%` }} />
+                    <div className="h-full rounded-full bg-green-500 transition-all" style={{ width: `${Math.min(100, (payments.totalPaid / jobTotal) * 100)}%` }} />
                   </div>
                 </div>
               )}
@@ -414,7 +415,7 @@ export default function JobStatusPaymentPage() {
           <div className="grid grid-cols-3 gap-2">
             <div className="rounded-xl border border-gray-100 bg-white p-2.5 text-center shadow-sm">
               <p className="text-[10px] font-medium uppercase tracking-wider text-gray-400">Total</p>
-              <p className="mt-0.5 text-sm font-bold text-gray-800">{formatCurrency(quotationTotal)}</p>
+              <p className="mt-0.5 text-sm font-bold text-gray-800">{formatCurrency(jobTotal)}</p>
             </div>
             <div className="rounded-xl border border-green-100 bg-green-50 p-2.5 text-center shadow-sm">
               <p className="text-[10px] font-medium uppercase tracking-wider text-gray-400">Paid</p>

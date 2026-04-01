@@ -83,6 +83,7 @@ export async function POST(request: NextRequest) {
       jobMaterials,   // e.g., [{ materialId: '...', quantity: 2.5 }]
       equipment,   // e.g., [{ equipmentId: '...', quantity: 1 }]
       location,
+      amount,
       isMultiDay,
       endDate,
     } = body
@@ -122,6 +123,7 @@ export async function POST(request: NextRequest) {
         status: status || 'SCHEDULED',
         notes: notes || null,
         location: location || null,
+        amount: amount ? parseFloat(amount) : null,
         isMultiDay: isMultiDay || false,
         endDate: endDate ? new Date(endDate) : null,
         assignments: {

@@ -824,6 +824,7 @@ model JobOrder {
   isMultiDay         Boolean           @default(false)
   endDate            DateTime?         @db.Date
   location           String?
+  amount             Decimal?          @db.Decimal(10, 3)
   notes              String?
   createdAt          DateTime          @default(now())
   updatedAt          DateTime          @updatedAt

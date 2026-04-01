@@ -112,9 +112,14 @@ export default function NewJobPage() {
               </SelectContent>
             </Select>
           </FormField>
-          <FormField label="Location">
-            <Input value={formData.location} onChange={(e) => setFormData({ ...formData, location: e.target.value })} placeholder="Job location" className="rounded-xl" />
-          </FormField>
+          <div className="grid grid-cols-2 gap-3">
+            <FormField label="Location">
+              <Input value={formData.location} onChange={(e) => setFormData({ ...formData, location: e.target.value })} placeholder="Job location" className="rounded-xl" />
+            </FormField>
+            <FormField label="Amount (OMR)">
+              <Input type="number" step="0.001" value={(formData as any).amount || ''} onChange={(e) => setFormData({ ...formData, amount: e.target.value } as any)} placeholder="Optional" className="rounded-xl" />
+            </FormField>
+          </div>
         </Section>
 
         {/* Schedule */}
