@@ -1006,7 +1006,7 @@ model InvoiceItem {
 
 model Payment {
   id              String    @id @default(cuid())
-  invoiceId       String
+  invoiceId       String?
   clientId        String
   jobOrderId      String?
   amount          Decimal   @db.Decimal(10, 3)
@@ -1024,7 +1024,7 @@ model Payment {
   updatedAt       DateTime  @updatedAt
   deletedAt       DateTime?
   deletedById     String?
-  invoice         Invoice   @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  invoice         Invoice?  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
   client          Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
   jobOrder        JobOrder? @relation(fields: [jobOrderId], references: [id])
   recordedBy      User      @relation(fields: [recordedById], references: [id])

@@ -107,8 +107,8 @@ export async function PATCH(
       updateData.paymentDate = new Date(paymentDate)
     if (referenceNumber !== undefined) updateData.referenceNumber = referenceNumber
 
-    // If amount is being updated, validate it
-    if (amount !== undefined) {
+    // If amount is being updated, validate it against invoice (if exists)
+    if (amount !== undefined && existingPayment.invoice) {
       const otherPaymentsTotal = existingPayment.invoice.payments.reduce(
         (sum, payment) => sum + Number(payment.amount),
         0
@@ -140,7 +140,7 @@ export async function PATCH(
         newInvoiceStatus = 'SENT'
       }
 
-      if (newInvoiceStatus !== existingPayment.invoice.status) {
+      if (newInvoiceStatus !== existingPayment.invoice.status && existingPayment.invoiceId) {
         await prisma.invoice.update({
           where: { id: existingPayment.invoiceId },
           data: { status: newInvoiceStatus },
@@ -229,28 +229,30 @@ export async function DELETE(
       },
     })
 
-    // Recalculate invoice status after deleting payment
-    const remainingPaymentsTotal = payment.invoice.payments.reduce(
-      (sum, p) => sum + Number(p.amount),
-      0
-    )
-    const invoiceTotal = Number(payment.invoice.total)
+    // Recalculate invoice status after deleting payment (only if invoice exists)
+    if (payment.invoice && payment.invoiceId) {
+      const remainingPaymentsTotal = payment.invoice.payments.reduce(
+        (sum, p) => sum + Number(p.amount),
+        0
+      )
+      const invoiceTotal = Number(payment.invoice.total)
 
-    let newInvoiceStatus = payment.invoice.status
+      let newInvoiceStatus = payment.invoice.status
 
-    if (remainingPaymentsTotal >= invoiceTotal) {
-      newInvoiceStatus = 'PAID'
-    } else if (remainingPaymentsTotal > 0 && remainingPaymentsTotal < invoiceTotal) {
-      newInvoiceStatus = 'PARTIALLY_PAID'
-    } else {
-      newInvoiceStatus = 'SENT'
-    }
+      if (remainingPaymentsTotal >= invoiceTotal) {
+        newInvoiceStatus = 'PAID'
+      } else if (remainingPaymentsTotal > 0 && remainingPaymentsTotal < invoiceTotal) {
+        newInvoiceStatus = 'PARTIALLY_PAID'
+      } else {
+        newInvoiceStatus = 'SENT'
+      }
 
-    if (newInvoiceStatus !== payment.invoice.status) {
-      await prisma.invoice.update({
-        where: { id: payment.invoiceId },
-        data: { status: newInvoiceStatus },
-      })
+      if (newInvoiceStatus !== payment.invoice.status) {
+        await prisma.invoice.update({
+          where: { id: payment.invoiceId },
+          data: { status: newInvoiceStatus },
+        })
+      }
     }
 
     // Create deleted record snapshot
@@ -259,7 +261,6 @@ export async function DELETE(
     return NextResponse.json({
       message: 'Payment deleted successfully',
       data: deleted,
-      invoiceStatus: newInvoiceStatus,
     })
   } catch (error) {
     console.error('DELETE /api/payments/[id] error:', error)

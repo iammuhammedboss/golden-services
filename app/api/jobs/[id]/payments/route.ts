@@ -72,29 +72,21 @@ export async function POST(
       return NextResponse.json({ error: 'Job not found' }, { status: 404 })
     }
 
-    // Find or use provided invoice
+    // Try to find an invoice for this job (optional)
     let targetInvoiceId = invoiceId
     if (!targetInvoiceId) {
-      // Try to find an existing invoice for this job
       const invoice = await prisma.invoice.findFirst({
         where: { jobOrderId: params.id, deletedAt: null },
         select: { id: true },
       })
-      targetInvoiceId = invoice?.id
-    }
-
-    if (!targetInvoiceId) {
-      return NextResponse.json(
-        { error: 'No invoice found for this job. Create an invoice first.' },
-        { status: 400 }
-      )
+      targetInvoiceId = invoice?.id || null
     }
 
     const isCredit = paymentMethod === 'CREDIT'
 
     const payment = await prisma.payment.create({
       data: {
-        invoiceId: targetInvoiceId,
+        invoiceId: targetInvoiceId || null,
         clientId: job.clientId,
         jobOrderId: params.id,
         amount: new Decimal(amount),
