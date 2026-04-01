@@ -2,47 +2,14 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
+import Link from 'next/link'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { formatDate, formatTime, formatCurrency, enumToReadable, getStatusColor } from '@/lib/utils'
 import { useRealtimeEvents } from '@/hooks/use-realtime-events'
-
-const JOB_STATUSES = [
-  { value: 'SCHEDULED', label: 'Scheduled', color: 'bg-blue-500' },
-  { value: 'IN_PROGRESS', label: 'In Progress', color: 'bg-yellow-500' },
-  { value: 'COMPLETED', label: 'Completed', color: 'bg-green-500' },
-  { value: 'CANCELLED', label: 'Cancelled', color: 'bg-red-500' },
-]
-
-const PROGRESS_STATUSES = [
-  { value: 'AT_STORE', label: 'At Store', color: 'bg-gray-500', icon: '🏪' },
-  { value: 'MATERIALS_TAKEN', label: 'Materials Taken', color: 'bg-yellow-500', icon: '📦' },
-  { value: 'DEPARTED_TO_SITE', label: 'Departed to Site', color: 'bg-blue-500', icon: '🚗' },
-  { value: 'ARRIVED_AT_SITE', label: 'Arrived at Site', color: 'bg-indigo-500', icon: '📍' },
-  { value: 'IN_PROGRESS', label: 'Work in Progress', color: 'bg-orange-500', icon: '🔧' },
-  { value: 'COMPLETION_REQUESTED', label: 'Completion Requested', color: 'bg-green-500', icon: '✅' },
-  { value: 'VERIFIED', label: 'Verified', color: 'bg-emerald-600', icon: '✔️' },
-  { value: 'DEPARTED_SITE', label: 'Departed Site', color: 'bg-purple-500', icon: '🚗' },
-  { value: 'ARRIVED_OFFICE', label: 'Arrived Office', color: 'bg-teal-500', icon: '🏢' },
-]
-
-const PAYMENT_STATUS_COLORS: Record<string, string> = {
-  UNPAID: 'bg-red-100 text-red-800 border-red-200',
-  PARTIALLY_PAID: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-  PAID: 'bg-green-100 text-green-800 border-green-200',
-  OVERDUE: 'bg-red-100 text-red-800 border-red-200',
-}
+import { useConfirm } from '@/components/confirm-dialog'
 
 export default function JobStatusPaymentPage() {
   const [job, setJob] = useState<any>(null)
@@ -53,555 +20,395 @@ export default function JobStatusPaymentPage() {
   const [submitting, setSubmitting] = useState(false)
   const [statusNote, setStatusNote] = useState('')
   const [progressPercent, setProgressPercent] = useState(0)
-  const [activeSection, setActiveSection] = useState<'status' | 'payment'>('status')
-
-  // Payment form
-  const [paymentForm, setPaymentForm] = useState({
-    amount: '',
-    paymentMethod: '',
-    paymentSubOption: '',
-    referenceNumber: '',
-    receiptUrl: '',
-    notes: '',
-  })
+  const [activeTab, setActiveTab] = useState<'status' | 'payment' | 'timeline'>('status')
+  const [showPaymentForm, setShowPaymentForm] = useState(false)
+  const [paymentForm, setPaymentForm] = useState({ amount: '', paymentMethod: '', paymentSubOption: '', referenceNumber: '', notes: '' })
   const [paymentError, setPaymentError] = useState('')
 
   const params = useParams()
   const router = useRouter()
+  const locale = params.locale as string
   const jobId = params.id as string
+  const { confirm, ConfirmDialog } = useConfirm()
 
   const fetchData = useCallback(async () => {
     try {
       const [jobRes, updatesRes, payRes, methodsRes] = await Promise.all([
-        fetch(`/api/jobs/${jobId}`),
-        fetch(`/api/jobs/${jobId}/status-updates`),
-        fetch(`/api/jobs/${jobId}/payments`),
-        fetch('/api/payment-methods'),
+        fetch(`/api/jobs/${jobId}`), fetch(`/api/jobs/${jobId}/status-updates`),
+        fetch(`/api/jobs/${jobId}/payments`), fetch('/api/payment-methods'),
       ])
       if (jobRes.ok) {
-        const jobData = await jobRes.json()
-        setJob(jobData)
-        // Set progress from latest status update
-        if (jobData.statusUpdates?.length > 0) {
-          const latest = jobData.statusUpdates[0]
-          if (latest.progressPercent) setProgressPercent(latest.progressPercent)
-        }
+        const d = await jobRes.json(); setJob(d)
+        if (d.statusUpdates?.[0]?.progressPercent) setProgressPercent(d.statusUpdates[0].progressPercent)
       }
       if (updatesRes.ok) setStatusUpdates(await updatesRes.json())
       if (payRes.ok) setPayments(await payRes.json())
       if (methodsRes.ok) setPaymentMethods(await methodsRes.json())
-    } catch (error) {
-      console.error('Failed to fetch data:', error)
-    } finally {
-      setLoading(false)
-    }
+    } catch { } finally { setLoading(false) }
   }, [jobId])
 
   useEffect(() => { fetchData() }, [fetchData])
 
-  // Real-time updates
   useRealtimeEvents({
-    onJobStatusChanged: useCallback((e: any) => {
-      if (e.jobId === jobId) fetchData()
-    }, [jobId, fetchData]),
-    onJobProgressUpdated: useCallback((e: any) => {
-      if (e.jobId === jobId) fetchData()
-    }, [jobId, fetchData]),
-    onPaymentReceived: useCallback((e: any) => {
-      if (e.jobId === jobId) fetchData()
-    }, [jobId, fetchData]),
+    onJobStatusChanged: useCallback((e: any) => { if (e.jobId === jobId) fetchData() }, [jobId, fetchData]),
+    onJobProgressUpdated: useCallback((e: any) => { if (e.jobId === jobId) fetchData() }, [jobId, fetchData]),
+    onPaymentReceived: useCallback((e: any) => { if (e.jobId === jobId) fetchData() }, [jobId, fetchData]),
   })
 
-  const handleProgressStatusUpdate = async (status: string) => {
+  const postStatus = async (status: string) => {
     setSubmitting(true)
     try {
-      const res = await fetch(`/api/jobs/${jobId}/status-updates`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          status,
-          progressPercent,
-          note: statusNote || undefined,
-        }),
+      await fetch(`/api/jobs/${jobId}/status-updates`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status, progressPercent, note: statusNote || undefined }),
       })
-      if (res.ok) {
-        setStatusNote('')
-        await fetchData()
-      }
-    } catch (error) {
-      console.error('Failed to update status:', error)
-    } finally {
-      setSubmitting(false)
-    }
+      setStatusNote('')
+      await fetchData()
+    } catch { } finally { setSubmitting(false) }
   }
 
-  const handleJobStatusChange = async (newStatus: string) => {
+  const cancelVisit = async () => {
+    const ok = await confirm({ title: 'Cancel Visit', description: 'Cancel this visit? The job will remain open but this trip will be marked as cancelled.', variant: 'danger', confirmLabel: 'Cancel Visit' })
+    if (ok) await postStatus('CANCELLED')
+  }
+
+  const cancelJob = async () => {
+    const ok = await confirm({ title: 'Cancel Job', description: 'Cancel the entire job? This will mark the job as cancelled.', variant: 'danger', confirmLabel: 'Cancel Job' })
+    if (!ok) return
     setSubmitting(true)
     try {
-      const res = await fetch(`/api/jobs/${jobId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...job, status: newStatus }),
-      })
-      if (res.ok) {
-        await fetchData()
-      }
-    } catch (error) {
-      console.error('Failed to update job status:', error)
-    } finally {
-      setSubmitting(false)
-    }
+      await fetch(`/api/jobs/${jobId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...job, status: 'CANCELLED' }) })
+      await fetchData()
+    } catch { } finally { setSubmitting(false) }
   }
 
-  const handlePaymentSubmit = async () => {
+  const handlePayment = async () => {
     setPaymentError('')
-    if (!paymentForm.amount || !paymentForm.paymentMethod) {
-      setPaymentError('Amount and payment method are required')
-      return
-    }
-
+    if (!paymentForm.amount || !paymentForm.paymentMethod) { setPaymentError('Amount and method required'); return }
     setSubmitting(true)
     try {
       const res = await fetch(`/api/jobs/${jobId}/payments`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          amount: parseFloat(paymentForm.amount),
-          paymentMethod: paymentForm.paymentMethod,
-          paymentSubOption: paymentForm.paymentSubOption || undefined,
-          referenceNumber: paymentForm.referenceNumber || undefined,
-          receiptUrl: paymentForm.receiptUrl || undefined,
-          notes: paymentForm.notes || undefined,
-        }),
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount: parseFloat(paymentForm.amount), paymentMethod: paymentForm.paymentMethod, paymentSubOption: paymentForm.paymentSubOption || undefined, referenceNumber: paymentForm.referenceNumber || undefined, notes: paymentForm.notes || undefined }),
       })
-      if (res.ok) {
-        setPaymentForm({ amount: '', paymentMethod: '', paymentSubOption: '', referenceNumber: '', receiptUrl: '', notes: '' })
-        await fetchData()
-      } else {
-        const err = await res.json()
-        setPaymentError(err.error || 'Failed to record payment')
-      }
-    } catch (error) {
-      console.error('Failed to record payment:', error)
-      setPaymentError('Failed to record payment')
-    } finally {
-      setSubmitting(false)
-    }
+      if (res.ok) { setPaymentForm({ amount: '', paymentMethod: '', paymentSubOption: '', referenceNumber: '', notes: '' }); setShowPaymentForm(false); await fetchData() }
+      else { const err = await res.json(); setPaymentError(err.error || 'Failed') }
+    } catch { setPaymentError('Failed') } finally { setSubmitting(false) }
   }
 
-  if (loading) {
-    return (
-      <div className="flex h-[60vh] items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-      </div>
-    )
-  }
+  if (loading) return <div className="flex h-[60vh] items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" /></div>
+  if (!job) return <div className="py-20 text-center text-sm text-gray-400">Job not found</div>
 
-  if (!job) {
-    return <div className="p-8 text-center text-muted-foreground">Job not found</div>
-  }
-
-  const latestProgressStatus = statusUpdates[0]?.status || null
+  const latest = statusUpdates[0]?.status || null
+  const isOnWay = latest === 'DEPARTED_TO_SITE'
+  const isArrived = latest === 'ARRIVED_AT_SITE'
+  const isWorking = latest === 'IN_PROGRESS'
+  const isDone = latest === 'COMPLETION_REQUESTED' || latest === 'VERIFIED'
+  const isCompleted = job.status === 'COMPLETED'
+  const isCancelled = job.status === 'CANCELLED'
+  const hasStarted = isOnWay || isArrived || isWorking || isDone
   const selectedMethod = paymentMethods.find((m: any) => m.name === paymentForm.paymentMethod)
-  const quotationTotal = job.quotation?.items?.reduce(
-    (sum: number, item: any) => sum + Number(item.total), 0
-  ) || 0
+  const quotationTotal = job.quotation?.items?.reduce((s: number, i: any) => s + Number(i.total), 0) || 0
   const amountDue = Math.max(0, quotationTotal - payments.totalPaid)
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold">Job {job.jobNumber}</h1>
-            <Badge className={getStatusColor(job.status)}>{enumToReadable(job.status)}</Badge>
-            <Badge className={PAYMENT_STATUS_COLORS[job.paymentStatus] || 'bg-gray-100'}>
-              {enumToReadable(job.paymentStatus || 'UNPAID')}
-            </Badge>
+    <div className="mx-auto max-w-lg space-y-4 pb-8">
+      {ConfirmDialog}
+
+      {/* Job Header */}
+      <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+        <div className="flex items-start justify-between">
+          <div>
+            <p className="text-[10px] font-mono text-gray-400">{job.jobNumber}</p>
+            <h2 className="text-lg font-bold text-gray-900">{job.client?.name}</h2>
+            <p className="text-xs text-gray-400">{job.location || 'No location'}</p>
           </div>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {job.client?.name} &middot; {formatDate(job.scheduledDate)}
-            {job.scheduledStartTime && <> &middot; {formatTime(job.scheduledStartTime)}</>}
-            {job.location && <> &middot; {job.location}</>}
-          </p>
+          <div className="flex flex-col items-end gap-1">
+            <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${getStatusColor(job.status)}`}>{enumToReadable(job.status)}</span>
+            <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${getStatusColor(job.paymentStatus || 'UNPAID')}`}>{enumToReadable(job.paymentStatus || 'UNPAID')}</span>
+          </div>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => router.push(`/admin/jobs/${jobId}`)}>
-            Edit Job
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => router.push(`/admin/jobs/${jobId}/field`)}>
-            Field View
-          </Button>
+        <div className="mt-2 flex gap-3 text-xs text-gray-400">
+          <span>{formatDate(job.scheduledDate)}</span>
+          {job.scheduledStartTime && <span>{formatTime(job.scheduledStartTime)}</span>}
         </div>
+        {job.assignments?.length > 0 && (
+          <div className="mt-2 flex flex-wrap gap-1">
+            {job.assignments.map((a: any) => (
+              <span key={a.id} className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] text-gray-500">{a.user?.name} ({a.roleInJob})</span>
+            ))}
+          </div>
+        )}
       </div>
 
-      {/* Section Toggle */}
-      <div className="flex rounded-lg border bg-muted p-1">
-        <button
-          onClick={() => setActiveSection('status')}
-          className={`flex-1 rounded-md py-2.5 text-sm font-medium transition-colors ${
-            activeSection === 'status' ? 'bg-background shadow-sm' : 'text-muted-foreground'
-          }`}
-        >
-          Job Status
-        </button>
-        <button
-          onClick={() => setActiveSection('payment')}
-          className={`flex-1 rounded-md py-2.5 text-sm font-medium transition-colors ${
-            activeSection === 'payment' ? 'bg-background shadow-sm' : 'text-muted-foreground'
-          }`}
-        >
-          Payments
-        </button>
+      {/* Tab Nav */}
+      <div className="flex rounded-xl border border-gray-100 bg-gray-50 p-1">
+        {(['status', 'payment', 'timeline'] as const).map((t) => (
+          <button key={t} onClick={() => setActiveTab(t)} className={`flex-1 rounded-lg py-2 text-xs font-semibold transition-all ${activeTab === t ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-400'}`}>
+            {t === 'status' ? 'Status' : t === 'payment' ? 'Payment' : 'Timeline'}
+          </button>
+        ))}
       </div>
 
-      {/* ==================== JOB STATUS SECTION ==================== */}
-      {activeSection === 'status' && (
-        <div className="space-y-6">
-          {/* Quick Job Status Change */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Job Status</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                {JOB_STATUSES.map((s) => (
-                  <button
-                    key={s.value}
-                    onClick={() => handleJobStatusChange(s.value)}
-                    disabled={submitting || job.status === s.value}
-                    className={`flex items-center justify-center gap-2 rounded-lg border px-3 py-3 text-sm font-medium transition-all active:scale-95 disabled:opacity-50 ${
-                      job.status === s.value
-                        ? 'border-primary bg-primary/10 text-primary ring-2 ring-primary/20'
-                        : 'hover:bg-accent'
-                    }`}
-                  >
-                    <span className={`h-2.5 w-2.5 rounded-full ${s.color}`} />
-                    {s.label}
-                  </button>
-                ))}
+      {/* ===== STATUS TAB ===== */}
+      {activeTab === 'status' && !isCompleted && !isCancelled && (
+        <div className="space-y-4">
+          {/* Progressive Action Buttons */}
+          <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm space-y-3">
+            {/* Phase 1: Not started — show On the Way + Start */}
+            {!hasStarted && !isDone && (
+              <div className="grid grid-cols-2 gap-3">
+                <button onClick={() => postStatus('DEPARTED_TO_SITE')} disabled={submitting}
+                  className="flex flex-col items-center gap-2 rounded-2xl border-2 border-blue-200 bg-blue-50 py-5 text-blue-700 transition-all active:scale-95 disabled:opacity-50">
+                  <svg className="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
+                  <span className="text-sm font-bold">On the Way</span>
+                </button>
+                <button onClick={() => postStatus('IN_PROGRESS')} disabled={submitting}
+                  className="flex flex-col items-center gap-2 rounded-2xl border-2 border-green-200 bg-green-50 py-5 text-green-700 transition-all active:scale-95 disabled:opacity-50">
+                  <svg className="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                  <span className="text-sm font-bold">Start Job</span>
+                </button>
               </div>
-            </CardContent>
-          </Card>
+            )}
 
-          {/* Progress Slider */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Progress</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Completion</span>
-                <span className="text-lg font-bold text-primary">{progressPercent}%</span>
-              </div>
-              <input
-                type="range"
-                min="0"
-                max="100"
-                step="5"
-                value={progressPercent}
-                onChange={(e) => setProgressPercent(parseInt(e.target.value))}
-                className="mt-2 w-full accent-primary"
-              />
-              <div className="mt-1 flex justify-between text-xs text-muted-foreground">
-                <span>0%</span>
-                <span>25%</span>
-                <span>50%</span>
-                <span>75%</span>
-                <span>100%</span>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Progress Status Buttons */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Progress Updates</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                {PROGRESS_STATUSES.map((s) => (
-                  <button
-                    key={s.value}
-                    onClick={() => handleProgressStatusUpdate(s.value)}
-                    disabled={submitting}
-                    className={`flex items-center gap-2 rounded-lg border px-3 py-2.5 text-sm font-medium transition-all active:scale-95 ${
-                      latestProgressStatus === s.value
-                        ? 'border-primary bg-primary/10 text-primary'
-                        : 'hover:bg-accent'
-                    }`}
-                  >
-                    <span className={`h-2.5 w-2.5 rounded-full ${s.color}`} />
-                    {s.label}
-                  </button>
-                ))}
-              </div>
-
-              {/* Note */}
-              <div>
-                <Textarea
-                  placeholder="Add a note with this update (optional)..."
-                  value={statusNote}
-                  onChange={(e) => setStatusNote(e.target.value)}
-                  rows={2}
-                  className="text-sm"
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Status Timeline */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Timeline</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {statusUpdates.length === 0 ? (
-                <p className="py-4 text-center text-sm text-muted-foreground">No status updates yet</p>
-              ) : (
-                <div className="space-y-0">
-                  {statusUpdates.map((update: any, idx: number) => {
-                    const statusDef = PROGRESS_STATUSES.find(s => s.value === update.status)
-                    return (
-                      <div key={update.id} className="flex gap-3">
-                        <div className="flex flex-col items-center">
-                          <div className={`h-3 w-3 rounded-full ${statusDef?.color || 'bg-primary'}`} />
-                          {idx < statusUpdates.length - 1 && (
-                            <div className="w-px flex-1 bg-border" />
-                          )}
-                        </div>
-                        <div className="flex-1 pb-4">
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm font-medium">
-                              {statusDef?.label || enumToReadable(update.status)}
-                            </span>
-                            <span className="text-xs text-muted-foreground">
-                              {formatDate(update.createdAt, 'PP')} {formatTime(update.createdAt)}
-                            </span>
-                          </div>
-                          <p className="text-xs text-muted-foreground">
-                            by {update.createdBy?.name}
-                            {update.progressPercent > 0 && ` — ${update.progressPercent}%`}
-                          </p>
-                          {update.note && (
-                            <p className="mt-1 rounded bg-accent/50 px-2 py-1 text-xs">{update.note}</p>
-                          )}
-                        </div>
-                      </div>
-                    )
-                  })}
+            {/* Phase 2: On the Way — show Arrived + Cancel Visit */}
+            {isOnWay && (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 rounded-xl bg-blue-50 px-3 py-2">
+                  <div className="h-2 w-2 animate-pulse rounded-full bg-blue-500" />
+                  <span className="text-xs font-semibold text-blue-700">On the way to site...</span>
                 </div>
-              )}
-            </CardContent>
-          </Card>
+                <div className="grid grid-cols-2 gap-3">
+                  <button onClick={() => postStatus('ARRIVED_AT_SITE')} disabled={submitting}
+                    className="flex flex-col items-center gap-2 rounded-2xl border-2 border-indigo-200 bg-indigo-50 py-5 text-indigo-700 transition-all active:scale-95 disabled:opacity-50">
+                    <svg className="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                    <span className="text-sm font-bold">Arrived</span>
+                  </button>
+                  <button onClick={cancelVisit} disabled={submitting}
+                    className="flex flex-col items-center gap-2 rounded-2xl border-2 border-red-200 bg-red-50 py-5 text-red-600 transition-all active:scale-95 disabled:opacity-50">
+                    <svg className="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" /></svg>
+                    <span className="text-sm font-bold">Cancel Visit</span>
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Phase 3: Arrived — show Start Work + Cancel Visit */}
+            {isArrived && (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 rounded-xl bg-indigo-50 px-3 py-2">
+                  <div className="h-2 w-2 rounded-full bg-indigo-500" />
+                  <span className="text-xs font-semibold text-indigo-700">Arrived at site</span>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <button onClick={() => postStatus('IN_PROGRESS')} disabled={submitting}
+                    className="flex flex-col items-center gap-2 rounded-2xl border-2 border-orange-200 bg-orange-50 py-5 text-orange-700 transition-all active:scale-95 disabled:opacity-50">
+                    <svg className="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    <span className="text-sm font-bold">Start Work</span>
+                  </button>
+                  <button onClick={cancelVisit} disabled={submitting}
+                    className="flex flex-col items-center gap-2 rounded-2xl border-2 border-red-200 bg-red-50 py-5 text-red-600 transition-all active:scale-95 disabled:opacity-50">
+                    <svg className="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" /></svg>
+                    <span className="text-sm font-bold">Cancel Visit</span>
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Phase 4: Working — show progress + finish + cancel visit */}
+            {isWorking && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 rounded-xl bg-orange-50 px-3 py-2">
+                  <div className="h-2 w-2 animate-pulse rounded-full bg-orange-500" />
+                  <span className="text-xs font-semibold text-orange-700">Work in progress...</span>
+                </div>
+
+                {/* Progress */}
+                <div>
+                  <div className="flex justify-between text-xs">
+                    <span className="text-gray-400">Progress</span>
+                    <span className="font-bold text-primary">{progressPercent}%</span>
+                  </div>
+                  <input type="range" min="0" max="100" step="5" value={progressPercent} onChange={(e) => setProgressPercent(parseInt(e.target.value))} className="mt-1 w-full accent-primary" />
+                </div>
+
+                {/* Note */}
+                <Textarea placeholder="Add note (optional)..." value={statusNote} onChange={(e) => setStatusNote(e.target.value)} rows={2} className="rounded-xl text-sm" />
+
+                <button onClick={() => postStatus('COMPLETION_REQUESTED')} disabled={submitting}
+                  className={`w-full rounded-2xl py-4 text-sm font-bold text-white transition-all active:scale-[0.98] disabled:opacity-50 ${
+                    progressPercent === 100 ? 'bg-gradient-to-r from-green-500 to-green-600 shadow-lg shadow-green-200/40' : 'bg-gray-400'
+                  }`}>
+                  {progressPercent < 100 ? `Finish Job (${progressPercent}%)` : 'Finish Job'}
+                </button>
+
+                <button onClick={cancelVisit} disabled={submitting} className="w-full rounded-xl border border-red-200 bg-red-50 py-2.5 text-xs font-medium text-red-600 active:scale-[0.98]">
+                  Cancel Visit
+                </button>
+              </div>
+            )}
+
+            {/* Phase 5: Done / Completion Requested */}
+            {isDone && (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 rounded-xl bg-green-50 px-3 py-2">
+                  <svg className="h-4 w-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                  <span className="text-xs font-semibold text-green-700">Job completed - awaiting verification</span>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <button onClick={() => postStatus('DEPARTED_SITE')} disabled={submitting}
+                    className="rounded-2xl border-2 border-purple-200 bg-purple-50 py-4 text-sm font-bold text-purple-700 active:scale-95 disabled:opacity-50">
+                    Left Site
+                  </button>
+                  <button onClick={() => postStatus('ARRIVED_OFFICE')} disabled={submitting}
+                    className="rounded-2xl border-2 border-teal-200 bg-teal-50 py-4 text-sm font-bold text-teal-700 active:scale-95 disabled:opacity-50">
+                    At Office
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Cancel Job — always available */}
+          {!isCompleted && !isCancelled && (
+            <button onClick={cancelJob} disabled={submitting} className="w-full rounded-xl border border-red-200 bg-white py-2.5 text-xs font-medium text-red-500 active:scale-[0.98]">
+              Cancel Entire Job
+            </button>
+          )}
         </div>
       )}
 
-      {/* ==================== PAYMENT SECTION ==================== */}
-      {activeSection === 'payment' && (
-        <div className="space-y-6">
-          {/* Payment Summary */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Payment Summary</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-3 gap-4 text-center">
-                <div className="rounded-lg border p-3">
-                  <p className="text-xs text-muted-foreground">Total</p>
-                  <p className="mt-1 text-lg font-bold">{formatCurrency(quotationTotal)}</p>
-                </div>
-                <div className="rounded-lg border border-green-200 bg-green-50 p-3">
-                  <p className="text-xs text-muted-foreground">Paid</p>
-                  <p className="mt-1 text-lg font-bold text-green-700">{formatCurrency(payments.totalPaid)}</p>
-                </div>
-                <div className={`rounded-lg border p-3 ${amountDue > 0 ? 'border-red-200 bg-red-50' : 'border-green-200 bg-green-50'}`}>
-                  <p className="text-xs text-muted-foreground">Due</p>
-                  <p className={`mt-1 text-lg font-bold ${amountDue > 0 ? 'text-red-700' : 'text-green-700'}`}>
-                    {formatCurrency(amountDue)}
-                  </p>
-                </div>
+      {/* Completed/Cancelled State */}
+      {activeTab === 'status' && (isCompleted || isCancelled) && (
+        <div className="rounded-2xl border border-gray-100 bg-white p-6 text-center shadow-sm">
+          <div className={`mx-auto flex h-16 w-16 items-center justify-center rounded-full ${isCompleted ? 'bg-green-50' : 'bg-red-50'}`}>
+            {isCompleted ? (
+              <svg className="h-8 w-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+            ) : (
+              <svg className="h-8 w-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+            )}
+          </div>
+          <h3 className="mt-3 text-lg font-bold text-gray-900">{isCompleted ? 'Job Completed' : 'Job Cancelled'}</h3>
+          <p className="mt-1 text-xs text-gray-400">{isCompleted ? 'This job has been finished successfully.' : 'This job has been cancelled.'}</p>
+        </div>
+      )}
+
+      {/* ===== PAYMENT TAB ===== */}
+      {activeTab === 'payment' && (
+        <div className="space-y-4">
+          {/* Summary */}
+          <div className="grid grid-cols-3 gap-2">
+            <div className="rounded-xl border border-gray-100 bg-white p-2.5 text-center shadow-sm">
+              <p className="text-[10px] font-medium uppercase tracking-wider text-gray-400">Total</p>
+              <p className="mt-0.5 text-sm font-bold text-gray-800">{formatCurrency(quotationTotal)}</p>
+            </div>
+            <div className="rounded-xl border border-green-100 bg-green-50 p-2.5 text-center shadow-sm">
+              <p className="text-[10px] font-medium uppercase tracking-wider text-gray-400">Paid</p>
+              <p className="mt-0.5 text-sm font-bold text-green-700">{formatCurrency(payments.totalPaid)}</p>
+            </div>
+            <div className={`rounded-xl border p-2.5 text-center shadow-sm ${amountDue > 0 ? 'border-red-100 bg-red-50' : 'border-green-100 bg-green-50'}`}>
+              <p className="text-[10px] font-medium uppercase tracking-wider text-gray-400">Due</p>
+              <p className={`mt-0.5 text-sm font-bold ${amountDue > 0 ? 'text-red-700' : 'text-green-700'}`}>{formatCurrency(amountDue)}</p>
+            </div>
+          </div>
+
+          {/* Add Payment */}
+          {!showPaymentForm ? (
+            <button onClick={() => setShowPaymentForm(true)} className="w-full rounded-xl bg-gradient-to-r from-primary to-gold-600 py-3 text-sm font-semibold text-white shadow-md shadow-gold-300/30 active:scale-[0.98]">
+              + Record Payment
+            </button>
+          ) : (
+            <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-semibold text-gray-900">Record Payment</h3>
+                <button onClick={() => { setShowPaymentForm(false); setPaymentError('') }} className="text-xs text-gray-400">Cancel</button>
               </div>
-              {/* Progress bar */}
-              {quotationTotal > 0 && (
-                <div className="mt-4">
-                  <div className="flex justify-between text-xs text-muted-foreground">
-                    <span>Payment Progress</span>
-                    <span>{Math.min(100, Math.round((payments.totalPaid / quotationTotal) * 100))}%</span>
-                  </div>
-                  <div className="mt-1 h-2 overflow-hidden rounded-full bg-gray-200">
-                    <div
-                      className="h-full rounded-full bg-green-500 transition-all"
-                      style={{ width: `${Math.min(100, (payments.totalPaid / quotationTotal) * 100)}%` }}
-                    />
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Record Payment Form */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Record Payment</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {paymentError && (
-                <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-                  {paymentError}
-                </div>
-              )}
-
+              {paymentError && <div className="rounded-xl bg-red-50 px-3 py-2 text-xs text-red-600">{paymentError}</div>}
               <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <Label className="text-xs">Amount (OMR) <span className="text-red-500">*</span></Label>
-                  <Input
-                    type="number"
-                    step="0.001"
-                    placeholder={amountDue > 0 ? amountDue.toFixed(3) : '0.000'}
-                    value={paymentForm.amount}
-                    onChange={(e) => setPaymentForm({ ...paymentForm, amount: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs">Payment Method <span className="text-red-500">*</span></Label>
-                  <Select
-                    value={paymentForm.paymentMethod}
-                    onValueChange={(value) => setPaymentForm({ ...paymentForm, paymentMethod: value, paymentSubOption: '' })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select method..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {paymentMethods.map((method: any) => (
-                        <SelectItem key={method.id} value={method.name}>
-                          {method.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
+                <div className="space-y-1"><Label className="text-xs text-gray-500">Amount *</Label><Input type="number" step="0.001" value={paymentForm.amount} onChange={(e) => setPaymentForm({ ...paymentForm, amount: e.target.value })} placeholder="0.000" className="rounded-xl" /></div>
+                <div className="space-y-1"><Label className="text-xs text-gray-500">Method *</Label>
+                  <Select value={paymentForm.paymentMethod} onValueChange={(v) => setPaymentForm({ ...paymentForm, paymentMethod: v, paymentSubOption: '' })}>
+                    <SelectTrigger className="rounded-xl"><SelectValue placeholder="Select..." /></SelectTrigger>
+                    <SelectContent>{paymentMethods.map((m: any) => <SelectItem key={m.id} value={m.name}>{m.name}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
               </div>
-
-              {/* Sub-options for selected payment method */}
               {selectedMethod?.subOptions?.length > 0 && (
-                <div className="space-y-1.5">
-                  <Label className="text-xs">Transfer To</Label>
-                  <Select
-                    value={paymentForm.paymentSubOption}
-                    onValueChange={(value) => setPaymentForm({ ...paymentForm, paymentSubOption: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select sub-option..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {selectedMethod.subOptions.map((sub: any) => (
-                        <SelectItem key={sub.id} value={sub.name}>
-                          {sub.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
+                <div className="space-y-1"><Label className="text-xs text-gray-500">Transfer To</Label>
+                  <Select value={paymentForm.paymentSubOption} onValueChange={(v) => setPaymentForm({ ...paymentForm, paymentSubOption: v })}>
+                    <SelectTrigger className="rounded-xl"><SelectValue placeholder="Select..." /></SelectTrigger>
+                    <SelectContent>{selectedMethod.subOptions.map((s: any) => <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
               )}
-
-              <div className="space-y-1.5">
-                <Label className="text-xs">Reference Number</Label>
-                <Input
-                  placeholder="Transaction reference..."
-                  value={paymentForm.referenceNumber}
-                  onChange={(e) => setPaymentForm({ ...paymentForm, referenceNumber: e.target.value })}
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <Label className="text-xs">Notes</Label>
-                <Textarea
-                  placeholder="Payment notes (optional)..."
-                  value={paymentForm.notes}
-                  onChange={(e) => setPaymentForm({ ...paymentForm, notes: e.target.value })}
-                  rows={2}
-                  className="text-sm"
-                />
-              </div>
-
-              {/* Quick amount buttons */}
               {amountDue > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    onClick={() => setPaymentForm({ ...paymentForm, amount: amountDue.toFixed(3) })}
-                    className="rounded-md border bg-accent px-3 py-1.5 text-xs font-medium hover:bg-accent/80"
-                  >
-                    Full ({formatCurrency(amountDue)})
-                  </button>
-                  {amountDue > 1 && (
-                    <button
-                      onClick={() => setPaymentForm({ ...paymentForm, amount: (amountDue / 2).toFixed(3) })}
-                      className="rounded-md border bg-accent px-3 py-1.5 text-xs font-medium hover:bg-accent/80"
-                    >
-                      Half ({formatCurrency(amountDue / 2)})
-                    </button>
-                  )}
+                <div className="flex gap-2">
+                  <button onClick={() => setPaymentForm({ ...paymentForm, amount: amountDue.toFixed(3) })} className="rounded-lg border bg-gray-50 px-3 py-1 text-[10px] font-medium text-gray-600 active:scale-95">Full ({formatCurrency(amountDue)})</button>
+                  {amountDue > 1 && <button onClick={() => setPaymentForm({ ...paymentForm, amount: (amountDue / 2).toFixed(3) })} className="rounded-lg border bg-gray-50 px-3 py-1 text-[10px] font-medium text-gray-600 active:scale-95">Half</button>}
                 </div>
               )}
-
-              <Button
-                className="w-full"
-                disabled={submitting || !paymentForm.amount || !paymentForm.paymentMethod}
-                onClick={handlePaymentSubmit}
-              >
+              <button onClick={handlePayment} disabled={submitting || !paymentForm.amount || !paymentForm.paymentMethod}
+                className="w-full rounded-xl bg-gradient-to-r from-green-500 to-green-600 py-3 text-sm font-semibold text-white shadow-md active:scale-[0.98] disabled:opacity-50">
                 {submitting ? 'Recording...' : 'Record Payment'}
-              </Button>
-            </CardContent>
-          </Card>
+              </button>
+            </div>
+          )}
 
           {/* Payment History */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Payment History</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {payments.payments.length === 0 ? (
-                <p className="py-4 text-center text-sm text-muted-foreground">No payments recorded yet</p>
-              ) : (
-                <div className="space-y-3">
-                  {payments.payments.map((payment: any) => (
-                    <div
-                      key={payment.id}
-                      className="flex items-start justify-between rounded-lg border p-3"
-                    >
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium">{payment.paymentMethod}</span>
-                          {payment.paymentSubOption && (
-                            <span className="text-xs text-muted-foreground">({payment.paymentSubOption})</span>
-                          )}
-                          {payment.creditStatus === 'PENDING_APPROVAL' && (
-                            <Badge variant="outline" className="text-xs bg-yellow-50 text-yellow-700 border-yellow-200">
-                              Pending Approval
-                            </Badge>
-                          )}
-                        </div>
-                        {payment.referenceNumber && (
-                          <p className="text-xs text-muted-foreground">Ref: {payment.referenceNumber}</p>
-                        )}
-                        {payment.notes && (
-                          <p className="text-xs text-muted-foreground">{payment.notes}</p>
-                        )}
-                        <p className="text-xs text-muted-foreground">
-                          by {payment.recordedBy?.name} &middot; {formatDate(payment.createdAt, 'PP')} {formatTime(payment.createdAt)}
-                        </p>
-                      </div>
-                      <span className="text-sm font-bold text-green-700">
-                        +{formatCurrency(Number(payment.amount))}
-                      </span>
+          {payments.payments.length > 0 && (
+            <div className="space-y-2">
+              {payments.payments.map((p: any) => (
+                <div key={p.id} className="rounded-2xl border border-gray-100 bg-white p-3 shadow-sm">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <span className="text-sm font-medium text-gray-800">{p.paymentMethod}</span>
+                      {p.paymentSubOption && <span className="text-xs text-gray-400"> ({p.paymentSubOption})</span>}
+                      {p.referenceNumber && <p className="text-xs text-gray-400">Ref: {p.referenceNumber}</p>}
+                      <p className="mt-0.5 text-[10px] text-gray-300">{p.recordedBy?.name} &middot; {formatDate(p.createdAt, 'PP')}</p>
                     </div>
-                  ))}
+                    <span className="text-sm font-bold text-green-600">+{formatCurrency(Number(p.amount))}</span>
+                  </div>
                 </div>
-              )}
-            </CardContent>
-          </Card>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ===== TIMELINE TAB ===== */}
+      {activeTab === 'timeline' && (
+        <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+          {statusUpdates.length === 0 ? (
+            <p className="py-8 text-center text-sm text-gray-400">No updates yet</p>
+          ) : (
+            <div className="space-y-0">
+              {statusUpdates.map((u: any, i: number) => (
+                <div key={u.id} className="flex gap-3">
+                  <div className="flex flex-col items-center">
+                    <div className={`h-3 w-3 rounded-full ${
+                      u.status === 'CANCELLED' ? 'bg-red-500' :
+                      u.status === 'COMPLETION_REQUESTED' || u.status === 'VERIFIED' ? 'bg-green-500' :
+                      u.status === 'IN_PROGRESS' ? 'bg-orange-500' :
+                      u.status === 'DEPARTED_TO_SITE' ? 'bg-blue-500' :
+                      u.status === 'ARRIVED_AT_SITE' ? 'bg-indigo-500' :
+                      'bg-gray-400'
+                    }`} />
+                    {i < statusUpdates.length - 1 && <div className="w-px flex-1 bg-gray-100" />}
+                  </div>
+                  <div className="flex-1 pb-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-gray-800">{enumToReadable(u.status)}</span>
+                      <span className="text-[10px] text-gray-300">{formatTime(u.createdAt)}</span>
+                    </div>
+                    <p className="text-xs text-gray-400">
+                      {u.createdBy?.name}{u.progressPercent > 0 && ` — ${u.progressPercent}%`}
+                    </p>
+                    {u.note && <p className="mt-1 rounded-lg bg-gray-50 px-2 py-1 text-xs text-gray-600">{u.note}</p>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>
