@@ -92,6 +92,12 @@
     "active": "نشط",
     "inactive": "غير نشط",
     "status": "الحالة",
+    "pending": "معلق",
+    "inProgress": "قيد التنفيذ",
+    "completed": "مكتمل",
+    "cancelled": "ملغي",
+    "started": "بدأ",
+    "address": "العنوان",
     "amount": "المبلغ",
     "amountOMR": "المبلغ (ر.ع)",
     "date": "التاريخ",
@@ -140,6 +146,7 @@
     "half": "نصف",
     "location": "الموقع",
     "openInMaps": "فتح في الخريطة",
+    "client": "العميل",
     "company": "الشركة",
     "whatsapp": "واتساب",
     "newClient": "جديد",
@@ -308,8 +315,10 @@
     "deleteVisit": "حذف الزيارة",
     "deleteVisitDesc": "لا يمكن التراجع عن هذا الإجراء.",
     "callClient": "الاتصال بالعميل",
+    "notFound": "الزيارة غير موجودة",
     "noVisitsFound": "لا توجد زيارات",
-    "visitFor": "زيارات لهذا العميل"
+    "visitFor": "زيارات لهذا العميل",
+    "viewProfile": "عرض الملف"
   },
   "Quotations": {
     "title": "عروض الأسعار",
@@ -356,7 +365,9 @@
     "paid": "مدفوعة",
     "overdue": "متأخرة",
     "viewEdit": "عرض / تعديل",
-    "invoicesFor": "فواتير لهذا العميل"
+    "invoicesFor": "فواتير لهذا العميل",
+    "deleteInvoice": "حذف الفاتورة",
+    "deleteInvoiceDesc": "حذف الفاتورة \"{number}\"؟ لا يمكن التراجع عن هذا."
   },
   "Payments": {
     "title": "المدفوعات",
@@ -389,7 +400,13 @@
     "bankDetailsDesc": "قوالب تفاصيل البنك",
     "newEmployee": "موظف جديد",
     "editEmployee": "تعديل الموظف",
-    "addEmployee": "إضافة موظف"
+    "addEmployee": "إضافة موظف",
+    "deleteEmployee": "حذف الموظف",
+    "deleteEmployeeDesc": "حذف \"{name}\" ({code})؟",
+    "codeNameRequired": "الرمز والاسم مطلوبان",
+    "codePlaceholder": "مثال: JS",
+    "fullNamePlaceholder": "الاسم الكامل",
+    "noContactInfo": "لا توجد معلومات اتصال"
   },
   "Users": {
     "title": "المستخدمين",

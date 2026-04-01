@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 import { formatDate, formatCurrency, enumToReadable, getStatusColor } from '@/lib/utils'
 import { useConfirm } from '@/components/confirm-dialog'
 
@@ -16,6 +17,8 @@ export default function InvoicesPage() {
   const router = useRouter()
   const locale = params.locale as string
   const clientId = searchParams.get('clientId')
+  const t = useTranslations('Invoices')
+  const tc = useTranslations('Common')
   const { confirm, ConfirmDialog } = useConfirm()
 
   const fetchInvoices = async () => {
@@ -45,10 +48,10 @@ export default function InvoicesPage() {
 
   const handleDelete = async (id: string, number: string) => {
     const ok = await confirm({
-      title: 'Delete Invoice',
-      description: `Delete invoice "${number}"? This cannot be undone.`,
+      title: t('deleteInvoice'),
+      description: t('deleteInvoiceDesc', { number }),
       variant: 'danger',
-      confirmLabel: 'Delete',
+      confirmLabel: tc('delete'),
     })
     if (!ok) return
     try {
@@ -82,12 +85,12 @@ export default function InvoicesPage() {
 
       <div>
         <h1 className="text-xl font-bold text-gray-900">
-          {filterClient ? `${filterClient} — Invoices` : 'Invoices'}
+          {filterClient ? `${filterClient} — ${t('title')}` : t('title')}
         </h1>
         <p className="text-xs text-gray-400">
-          {stats.total} {filterClient ? 'invoices for this client' : 'total'} &middot; Revenue: {formatCurrency(totalRevenue)}
+          {stats.total} {filterClient ? t('invoicesFor') : t('totalInvoices')} &middot; {t('revenue')}: {formatCurrency(totalRevenue)}
           {clientId && (
-            <> &middot; <a href={`/${locale}/admin/invoices`} className="text-primary underline">View all</a></>
+            <> &middot; <a href={`/${locale}/admin/invoices`} className="text-primary underline">{tc('viewAll')}</a></>
           )}
         </p>
       </div>
@@ -95,10 +98,10 @@ export default function InvoicesPage() {
       {/* Stats */}
       <div className="grid grid-cols-4 gap-2">
         {[
-          { label: 'All', value: stats.total, color: 'text-gray-800' },
-          { label: 'Draft', value: stats.draft, color: 'text-gray-500' },
-          { label: 'Sent', value: stats.sent, color: 'text-blue-600' },
-          { label: 'Paid', value: stats.paid, color: 'text-green-600' },
+          { label: tc('all'), value: stats.total, color: 'text-gray-800' },
+          { label: t('draft'), value: stats.draft, color: 'text-gray-500' },
+          { label: t('sent'), value: stats.sent, color: 'text-blue-600' },
+          { label: t('paid'), value: stats.paid, color: 'text-green-600' },
         ].map((s) => (
           <div key={s.label} className="rounded-xl border border-gray-100 bg-white p-2.5 text-center shadow-sm">
             <p className={`text-lg font-bold ${s.color}`}>{s.value}</p>
@@ -129,7 +132,7 @@ export default function InvoicesPage() {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <p className="text-sm font-semibold text-gray-900">{inv.invoiceNumber}</p>
-                    {inv.isProforma && <span className="rounded-full bg-amber-50 px-1.5 py-0.5 text-[9px] font-semibold text-amber-600">Proforma</span>}
+                    {inv.isProforma && <span className="rounded-full bg-amber-50 px-1.5 py-0.5 text-[9px] font-semibold text-amber-600">{t('proforma')}</span>}
                     <span className="text-xs text-gray-400">{inv.client?.name}</span>
                   </div>
                   <p className="text-xs text-gray-400">
@@ -160,23 +163,23 @@ export default function InvoicesPage() {
                 <div className="absolute right-2 top-10 z-20 w-44 rounded-xl border border-gray-100 bg-white py-1 shadow-lg" onClick={() => setActionMenuId(null)}>
                   <Link href={`/${locale}/admin/invoices/${inv.id}`} className="flex w-full items-center gap-2 px-3 py-2 text-xs text-gray-700 hover:bg-gray-50">
                     <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
-                    View / Edit
+                    {t('viewEdit')}
                   </Link>
                   <button onClick={() => handleDuplicate(inv.id)} className="flex w-full items-center gap-2 px-3 py-2 text-xs text-gray-700 hover:bg-gray-50">
                     <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
-                    Duplicate
+                    {tc('duplicate')}
                   </button>
                   <div className="my-1 border-t border-gray-50" />
                   <button onClick={() => handleDelete(inv.id, inv.invoiceNumber)} className="flex w-full items-center gap-2 px-3 py-2 text-xs text-red-600 hover:bg-red-50">
                     <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                    Delete
+                    {tc('delete')}
                   </button>
                 </div>
               )}
             </div>
           ))
         ) : (
-          <div className="py-12 text-center"><p className="text-sm text-gray-400">No invoices yet</p></div>
+          <div className="py-12 text-center"><p className="text-sm text-gray-400">{tc('noData')}</p></div>
         )}
       </div>
 
@@ -190,8 +193,8 @@ export default function InvoicesPage() {
         <div className="fixed inset-0 z-[100] flex items-end justify-center sm:items-center" onClick={() => setShowNewMenu(false)}>
           <div className="fixed inset-0 bg-black/40 backdrop-blur-[2px]" />
           <div className="relative z-10 mx-4 mb-4 w-full max-w-sm animate-fadeIn rounded-2xl border border-gray-100 bg-white p-5 shadow-2xl sm:mb-0" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-center text-base font-bold text-gray-900">New Invoice</h3>
-            <p className="mt-1 text-center text-xs text-gray-400">Choose invoice type</p>
+            <h3 className="text-center text-base font-bold text-gray-900">{t('newInvoice')}</h3>
+            <p className="mt-1 text-center text-xs text-gray-400">{t('chooseType')}</p>
             <div className="mt-4 grid grid-cols-2 gap-3">
               <Link
                 href={`/${locale}/admin/invoices/new?type=proforma`}
@@ -202,8 +205,8 @@ export default function InvoicesPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
                 </div>
-                <span className="text-xs font-semibold text-gray-700">Proforma</span>
-                <span className="text-[10px] text-gray-400">Draft / Quote</span>
+                <span className="text-xs font-semibold text-gray-700">{t('proforma')}</span>
+                <span className="text-[10px] text-gray-400">{t('proformaDesc')}</span>
               </Link>
               <Link
                 href={`/${locale}/admin/invoices/new?type=tax`}
@@ -214,15 +217,15 @@ export default function InvoicesPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z" />
                   </svg>
                 </div>
-                <span className="text-xs font-semibold text-gray-700">Tax Invoice</span>
-                <span className="text-[10px] text-gray-400">Official billing</span>
+                <span className="text-xs font-semibold text-gray-700">{t('taxInvoice')}</span>
+                <span className="text-[10px] text-gray-400">{t('taxInvoiceDesc')}</span>
               </Link>
             </div>
             <button
               onClick={() => setShowNewMenu(false)}
               className="mt-3 w-full rounded-xl border border-gray-200 bg-white py-2.5 text-sm font-medium text-gray-600 active:scale-[0.98]"
             >
-              Cancel
+              {tc('cancel')}
             </button>
           </div>
         </div>

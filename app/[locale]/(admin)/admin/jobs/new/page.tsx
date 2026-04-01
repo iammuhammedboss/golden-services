@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { AddClientDialog } from '@/components/add-client-dialog'
 import { Button } from '@/components/ui/button'
+import { useTranslations } from 'next-intl'
 
 export default function NewJobPage() {
   const params = useParams()
@@ -16,6 +17,8 @@ export default function NewJobPage() {
   const searchParams = useSearchParams()
   const locale = (params.locale as string) || 'en'
   const clientIdParam = searchParams.get('clientId')
+  const t = useTranslations('Jobs')
+  const tc = useTranslations('Common')
 
   const [clients, setClients] = useState<any[]>([])
   const [quotations, setQuotations] = useState<any[]>([])
@@ -85,14 +88,14 @@ export default function NewJobPage() {
   return (
     <div className="mx-auto max-w-2xl pb-24">
       <div className="mb-5">
-        <h1 className="text-xl font-bold text-gray-900">New Job Order</h1>
-        <p className="text-xs text-gray-400">Schedule a new job for your client</p>
+        <h1 className="text-xl font-bold text-gray-900">{t('newJob')}</h1>
+        <p className="text-xs text-gray-400">{t('scheduleJob')}</p>
       </div>
 
       <div className="space-y-4">
         {/* Job Details */}
-        <Section title="Job Details">
-          <FormField label="Client" required>
+        <Section title={t('jobDetails')}>
+          <FormField label={t('client')} required>
             <div className="flex gap-2">
               <Select value={formData.clientId} onValueChange={(v) => setFormData({ ...formData, clientId: v, quotationId: '' })}>
                 <SelectTrigger className="rounded-xl flex-1"><SelectValue placeholder="Select client..." /></SelectTrigger>
@@ -103,7 +106,7 @@ export default function NewJobPage() {
               </AddClientDialog>
             </div>
           </FormField>
-          <FormField label="Quotation">
+          <FormField label={t('quotation')}>
             <Select value={formData.quotationId || '__NONE__'} onValueChange={(v) => setFormData({ ...formData, quotationId: v === '__NONE__' ? '' : v })} disabled={!formData.clientId}>
               <SelectTrigger className="rounded-xl"><SelectValue placeholder="Select quotation..." /></SelectTrigger>
               <SelectContent>
@@ -113,31 +116,31 @@ export default function NewJobPage() {
             </Select>
           </FormField>
           <div className="grid grid-cols-2 gap-3">
-            <FormField label="Location">
+            <FormField label={tc('location')}>
               <Input value={formData.location} onChange={(e) => setFormData({ ...formData, location: e.target.value })} placeholder="Job location" className="rounded-xl" />
             </FormField>
-            <FormField label="Amount (OMR)">
+            <FormField label={tc('amountOMR')}>
               <Input type="number" step="0.001" value={(formData as any).amount || ''} onChange={(e) => setFormData({ ...formData, amount: e.target.value } as any)} placeholder="Optional" className="rounded-xl" />
             </FormField>
           </div>
         </Section>
 
         {/* Schedule */}
-        <Section title="Schedule & Duration">
+        <Section title={t('scheduleDuration')}>
           <div className="grid grid-cols-2 gap-3">
-            <FormField label="Date" required>
+            <FormField label={tc('date')} required>
               <Input type="date" value={formData.scheduledDate} onChange={(e) => setFormData({ ...formData, scheduledDate: e.target.value })} className="rounded-xl" required />
             </FormField>
-            <FormField label="Start Time">
+            <FormField label={tc('startTime')}>
               <Input type="time" value={formData.scheduledStartTime} onChange={(e) => setFormData({ ...formData, scheduledStartTime: e.target.value })} className="rounded-xl" />
             </FormField>
           </div>
           <div>
-            <Label className="text-xs text-gray-500">Expected Duration</Label>
+            <Label className="text-xs text-gray-500">{t('expectedDuration')}</Label>
             <div className="grid grid-cols-3 gap-2 mt-1">
-              <Input type="number" placeholder="Days" value={formData.durationDays || ''} onChange={(e) => setFormData({ ...formData, durationDays: parseInt(e.target.value) || 0 })} className="rounded-xl" />
-              <Input type="number" placeholder="Hours" value={formData.durationHours || ''} onChange={(e) => setFormData({ ...formData, durationHours: parseInt(e.target.value) || 0 })} className="rounded-xl" />
-              <Input type="number" placeholder="Min" value={formData.durationMinutes || ''} onChange={(e) => setFormData({ ...formData, durationMinutes: parseInt(e.target.value) || 0 })} className="rounded-xl" />
+              <Input type="number" placeholder={t('days')} value={formData.durationDays || ''} onChange={(e) => setFormData({ ...formData, durationDays: parseInt(e.target.value) || 0 })} className="rounded-xl" />
+              <Input type="number" placeholder={t('hours')} value={formData.durationHours || ''} onChange={(e) => setFormData({ ...formData, durationHours: parseInt(e.target.value) || 0 })} className="rounded-xl" />
+              <Input type="number" placeholder={t('minutes')} value={formData.durationMinutes || ''} onChange={(e) => setFormData({ ...formData, durationMinutes: parseInt(e.target.value) || 0 })} className="rounded-xl" />
             </div>
           </div>
           {formData.scheduledEndTime && (
@@ -146,7 +149,7 @@ export default function NewJobPage() {
         </Section>
 
         {/* Staff */}
-        <Section title={`Staff (${formData.assignments.length})`}>
+        <Section title={`${t('staff')} (${formData.assignments.length})`}>
           {formData.assignments.map((a, i) => (
             <div key={i} className="flex items-center gap-2 rounded-xl border border-gray-100 bg-gray-50/50 p-2.5">
               <Select value={a.userId} onValueChange={(v) => { const n = [...formData.assignments]; n[i] = { ...n[i], userId: v }; setFormData({ ...formData, assignments: n }) }}>
@@ -156,11 +159,11 @@ export default function NewJobPage() {
               <Select value={a.roleInJob} onValueChange={(v) => { const n = [...formData.assignments]; n[i] = { ...n[i], roleInJob: v }; setFormData({ ...formData, assignments: n }) }}>
                 <SelectTrigger className="rounded-xl w-28"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="SUPERVISOR">Supervisor</SelectItem>
-                  <SelectItem value="CLEANER">Cleaner</SelectItem>
-                  <SelectItem value="TECHNICIAN">Technician</SelectItem>
-                  <SelectItem value="DRIVER">Driver</SelectItem>
-                  <SelectItem value="OTHER">Other</SelectItem>
+                  <SelectItem value="SUPERVISOR">{t('supervisor')}</SelectItem>
+                  <SelectItem value="CLEANER">{t('cleaner')}</SelectItem>
+                  <SelectItem value="TECHNICIAN">{t('technician')}</SelectItem>
+                  <SelectItem value="DRIVER">{t('driver')}</SelectItem>
+                  <SelectItem value="OTHER">{t('other')}</SelectItem>
                 </SelectContent>
               </Select>
               <button onClick={() => { const n = formData.assignments.filter((_, j) => j !== i); setFormData({ ...formData, assignments: n }) }} className="text-red-400 hover:text-red-600">
@@ -170,12 +173,12 @@ export default function NewJobPage() {
           ))}
           <button onClick={() => setFormData({ ...formData, assignments: [...formData.assignments, { userId: '', roleInJob: 'CLEANER' }] })}
             className="w-full rounded-xl border border-dashed border-gray-300 py-2.5 text-xs font-medium text-gray-500 hover:bg-gray-50 active:scale-[0.98]">
-            + Add Staff
+            {t('addStaff')}
           </button>
         </Section>
 
         {/* Materials */}
-        <Section title={`Materials (${formData.jobMaterials.length})`}>
+        <Section title={`${t('materials')} (${formData.jobMaterials.length})`}>
           {formData.jobMaterials.map((m, i) => (
             <div key={i} className="flex items-center gap-2 rounded-xl border border-gray-100 bg-gray-50/50 p-2.5">
               <Select value={m.materialId} onValueChange={(v) => { const n = [...formData.jobMaterials]; n[i] = { ...n[i], materialId: v }; setFormData({ ...formData, jobMaterials: n }) }}>
@@ -190,12 +193,12 @@ export default function NewJobPage() {
           ))}
           <button onClick={() => setFormData({ ...formData, jobMaterials: [...formData.jobMaterials, { materialId: '', quantity: 1 }] })}
             className="w-full rounded-xl border border-dashed border-gray-300 py-2.5 text-xs font-medium text-gray-500 hover:bg-gray-50 active:scale-[0.98]">
-            + Add Material
+            {t('addMaterial')}
           </button>
         </Section>
 
         {/* Equipment */}
-        <Section title={`Equipment (${formData.equipment.length})`}>
+        <Section title={`${t('equipment')} (${formData.equipment.length})`}>
           {formData.equipment.map((eq, i) => (
             <div key={i} className="flex items-center gap-2 rounded-xl border border-gray-100 bg-gray-50/50 p-2.5">
               <Select value={eq.equipmentId} onValueChange={(v) => { const n = [...formData.equipment]; n[i] = { ...n[i], equipmentId: v }; setFormData({ ...formData, equipment: n }) }}>
@@ -210,12 +213,12 @@ export default function NewJobPage() {
           ))}
           <button onClick={() => setFormData({ ...formData, equipment: [...formData.equipment, { equipmentId: '', quantity: 1 }] })}
             className="w-full rounded-xl border border-dashed border-gray-300 py-2.5 text-xs font-medium text-gray-500 hover:bg-gray-50 active:scale-[0.98]">
-            + Add Equipment
+            {t('addEquipment')}
           </button>
         </Section>
 
         {/* Notes */}
-        <Section title="Notes">
+        <Section title={tc('notes')}>
           <Textarea value={formData.notes} onChange={(e) => setFormData({ ...formData, notes: e.target.value })} placeholder="Special instructions..." rows={3} className="rounded-xl text-sm" />
         </Section>
       </div>
@@ -223,10 +226,10 @@ export default function NewJobPage() {
       {/* Sticky Save */}
       <div className="fixed bottom-0 left-0 right-0 z-20 border-t border-gray-100 bg-white/90 px-4 py-3 backdrop-blur-sm">
         <div className="mx-auto flex max-w-2xl gap-2">
-          <Link href={`/${locale}/admin/jobs`} className="flex-1 rounded-xl border border-gray-200 bg-white py-3 text-center text-sm font-medium text-gray-600 active:scale-[0.98]">Cancel</Link>
+          <Link href={`/${locale}/admin/jobs`} className="flex-1 rounded-xl border border-gray-200 bg-white py-3 text-center text-sm font-medium text-gray-600 active:scale-[0.98]">{tc('cancel')}</Link>
           <button onClick={handleSubmit} disabled={loading || !formData.clientId || !formData.scheduledDate}
             className="flex-[2] rounded-xl bg-gradient-to-r from-primary to-gold-600 py-3 text-sm font-semibold text-white shadow-md shadow-gold-300/30 active:scale-[0.98] disabled:opacity-50">
-            {loading ? 'Creating...' : 'Create Job'}
+            {loading ? tc('creating') : t('createJob')}
           </button>
         </div>
       </div>

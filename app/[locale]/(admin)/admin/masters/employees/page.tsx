@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { useParams } from 'next/navigation'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -21,6 +22,8 @@ export default function EmployeesPage() {
   const [actionMenuId, setActionMenuId] = useState<string | null>(null)
   const params = useParams()
   const { confirm, ConfirmDialog } = useConfirm()
+  const t = useTranslations('Masters')
+  const tc = useTranslations('Common')
 
   const fetchEmployees = async () => {
     try {
@@ -42,7 +45,7 @@ export default function EmployeesPage() {
 
   const handleSave = async () => {
     setError('')
-    if (!form.code || !form.name) { setError('Code and name are required'); return }
+    if (!form.code || !form.name) { setError(t('codeNameRequired')); return }
     setSaving(true)
     try {
       const url = editId ? `/api/sales-executives/${editId}` : '/api/sales-executives'
@@ -56,7 +59,7 @@ export default function EmployeesPage() {
 
   const handleDelete = async (emp: Employee) => {
     setActionMenuId(null)
-    const ok = await confirm({ title: 'Delete Employee', description: `Delete "${emp.name}" (${emp.code})?`, variant: 'danger', confirmLabel: 'Delete' })
+    const ok = await confirm({ title: t('deleteEmployee'), description: t('deleteEmployeeDesc', { name: emp.name, code: emp.code }), variant: 'danger', confirmLabel: tc('delete') })
     if (!ok) return
     try {
       await fetch(`/api/sales-executives/${emp.id}`, { method: 'DELETE' })
@@ -87,23 +90,23 @@ export default function EmployeesPage() {
       {ConfirmDialog}
 
       <div>
-        <h1 className="text-xl font-bold text-gray-900">Employees</h1>
-        <p className="text-xs text-gray-400">Sales executives, cleaners, supervisors</p>
+        <h1 className="text-xl font-bold text-gray-900">{t('employees')}</h1>
+        <p className="text-xs text-gray-400">{t('employeesDesc')}</p>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-2">
         <div className="rounded-xl border border-gray-100 bg-white p-2.5 text-center shadow-sm">
           <p className="text-lg font-bold text-gray-800">{employees.length}</p>
-          <p className="text-[9px] font-medium uppercase tracking-wider text-gray-400">Total</p>
+          <p className="text-[9px] font-medium uppercase tracking-wider text-gray-400">{tc('total')}</p>
         </div>
         <div className="rounded-xl border border-green-100 bg-green-50 p-2.5 text-center shadow-sm">
           <p className="text-lg font-bold text-green-600">{employees.filter(e => e.isActive).length}</p>
-          <p className="text-[9px] font-medium uppercase tracking-wider text-gray-400">Active</p>
+          <p className="text-[9px] font-medium uppercase tracking-wider text-gray-400">{tc('active')}</p>
         </div>
         <div className="rounded-xl border border-gray-100 bg-gray-50 p-2.5 text-center shadow-sm">
           <p className="text-lg font-bold text-gray-400">{employees.filter(e => !e.isActive).length}</p>
-          <p className="text-[9px] font-medium uppercase tracking-wider text-gray-400">Inactive</p>
+          <p className="text-[9px] font-medium uppercase tracking-wider text-gray-400">{tc('inactive')}</p>
         </div>
       </div>
 
@@ -111,33 +114,33 @@ export default function EmployeesPage() {
       {showForm && (
         <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-gray-900">{editId ? 'Edit Employee' : 'New Employee'}</h3>
-            <button onClick={resetForm} className="text-xs text-gray-400 hover:text-gray-600">Cancel</button>
+            <h3 className="text-sm font-semibold text-gray-900">{editId ? t('editEmployee') : t('newEmployee')}</h3>
+            <button onClick={resetForm} className="text-xs text-gray-400 hover:text-gray-600">{tc('cancel')}</button>
           </div>
           {error && <div className="rounded-xl bg-red-50 px-3 py-2 text-xs text-red-600">{error}</div>}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <Label className="text-xs text-gray-500">Code <span className="text-red-400">*</span></Label>
-              <Input value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} placeholder="e.g. JS" className="rounded-xl" />
+              <Label className="text-xs text-gray-500">{tc('code')} <span className="text-red-400">*</span></Label>
+              <Input value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} placeholder={t('codePlaceholder')} className="rounded-xl" />
             </div>
             <div className="space-y-1">
-              <Label className="text-xs text-gray-500">Name <span className="text-red-400">*</span></Label>
-              <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Full name" className="rounded-xl" />
+              <Label className="text-xs text-gray-500">{tc('name')} <span className="text-red-400">*</span></Label>
+              <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder={t('fullNamePlaceholder')} className="rounded-xl" />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <Label className="text-xs text-gray-500">Email</Label>
-              <Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="email@..." className="rounded-xl" />
+              <Label className="text-xs text-gray-500">{tc('email')}</Label>
+              <Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder={tc('email')} className="rounded-xl" />
             </div>
             <div className="space-y-1">
-              <Label className="text-xs text-gray-500">Phone</Label>
+              <Label className="text-xs text-gray-500">{tc('phone')}</Label>
               <Input type="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="+968..." className="rounded-xl" />
             </div>
           </div>
           <button onClick={handleSave} disabled={saving || !form.code || !form.name}
             className="w-full rounded-xl bg-gradient-to-r from-primary to-gold-600 py-3 text-sm font-semibold text-white shadow-md active:scale-[0.98] disabled:opacity-50">
-            {saving ? 'Saving...' : editId ? 'Save Changes' : 'Add Employee'}
+            {saving ? tc('saving') : editId ? tc('saveChanges') : t('addEmployee')}
           </button>
         </div>
       )}
@@ -155,10 +158,10 @@ export default function EmployeesPage() {
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
                   <p className="text-sm font-semibold text-gray-900">{emp.name}</p>
-                  {!emp.isActive && <span className="rounded-full bg-gray-100 px-1.5 py-0.5 text-[9px] font-semibold text-gray-400">Inactive</span>}
+                  {!emp.isActive && <span className="rounded-full bg-gray-100 px-1.5 py-0.5 text-[9px] font-semibold text-gray-400">{tc('inactive')}</span>}
                 </div>
                 <p className="text-xs text-gray-400">
-                  {emp.phone || emp.email || 'No contact info'}
+                  {emp.phone || emp.email || t('noContactInfo')}
                 </p>
               </div>
               <button onClick={() => setActionMenuId(actionMenuId === emp.id ? null : emp.id)} className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100">
@@ -178,7 +181,7 @@ export default function EmployeesPage() {
                 </button>
                 <button onClick={() => handleToggleActive(emp)} className="flex w-full items-center gap-2 px-3 py-2 text-xs text-gray-700 hover:bg-gray-50">
                   <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={emp.isActive ? "M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" : "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"} /></svg>
-                  {emp.isActive ? 'Deactivate' : 'Activate'}
+                  {emp.isActive ? t('deactivate') : t('activate')}
                 </button>
                 <div className="my-1 border-t border-gray-50" />
                 <button onClick={() => handleDelete(emp)} className="flex w-full items-center gap-2 px-3 py-2 text-xs text-red-600 hover:bg-red-50">
@@ -190,7 +193,7 @@ export default function EmployeesPage() {
           </div>
         ))}
         {employees.length === 0 && (
-          <div className="py-12 text-center"><p className="text-sm text-gray-400">No employees yet</p></div>
+          <div className="py-12 text-center"><p className="text-sm text-gray-400">{tc('noData')}</p></div>
         )}
       </div>
 

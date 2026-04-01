@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { formatDate, formatTime, formatCurrency, enumToReadable, getStatusColor } from '@/lib/utils'
 import { useRealtimeEvents } from '@/hooks/use-realtime-events'
 import { useConfirm } from '@/components/confirm-dialog'
+import { useTranslations } from 'next-intl'
 
 export default function JobStatusPaymentPage() {
   const [job, setJob] = useState<any>(null)
@@ -30,6 +31,8 @@ export default function JobStatusPaymentPage() {
   const locale = params.locale as string
   const jobId = params.id as string
   const { confirm, ConfirmDialog } = useConfirm()
+  const t = useTranslations('Jobs')
+  const tc = useTranslations('Common')
 
   const fetchData = useCallback(async () => {
     try {
@@ -68,12 +71,12 @@ export default function JobStatusPaymentPage() {
   }
 
   const cancelVisit = async () => {
-    const ok = await confirm({ title: 'Cancel Visit', description: 'Cancel this visit? The job will remain open but this trip will be marked as cancelled.', variant: 'danger', confirmLabel: 'Cancel Visit' })
+    const ok = await confirm({ title: t('cancelVisit'), description: t('cancelVisitDesc'), variant: 'danger', confirmLabel: t('cancelVisit') })
     if (ok) await postStatus('CANCELLED')
   }
 
   const cancelJob = async () => {
-    const ok = await confirm({ title: 'Cancel Job', description: 'Cancel the entire job? This will mark the job as cancelled.', variant: 'danger', confirmLabel: 'Cancel Job' })
+    const ok = await confirm({ title: t('cancelJob'), description: t('cancelJobDesc'), variant: 'danger', confirmLabel: t('cancelJob') })
     if (!ok) return
     setSubmitting(true)
     try {
@@ -145,9 +148,9 @@ export default function JobStatusPaymentPage() {
 
       {/* Tab Nav */}
       <div className="flex rounded-xl border border-gray-100 bg-gray-50 p-1">
-        {(['status', 'payment', 'timeline'] as const).map((t) => (
-          <button key={t} onClick={() => setActiveTab(t)} className={`flex-1 rounded-lg py-2 text-xs font-semibold transition-all ${activeTab === t ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-400'}`}>
-            {t === 'status' ? 'Status' : t === 'payment' ? 'Payment' : 'Timeline'}
+        {(['status', 'payment', 'timeline'] as const).map((tab) => (
+          <button key={tab} onClick={() => setActiveTab(tab)} className={`flex-1 rounded-lg py-2 text-xs font-semibold transition-all ${activeTab === tab ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-400'}`}>
+            {tab === 'status' ? tc('status') : tab === 'payment' ? t('payment') : t('timeline')}
           </button>
         ))}
       </div>
@@ -163,12 +166,12 @@ export default function JobStatusPaymentPage() {
                 <button onClick={() => postStatus('DEPARTED_TO_SITE')} disabled={submitting}
                   className="flex flex-col items-center gap-2 rounded-2xl border-2 border-blue-200 bg-blue-50 py-5 text-blue-700 transition-all active:scale-95 disabled:opacity-50">
                   <svg className="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
-                  <span className="text-sm font-bold">On the Way</span>
+                  <span className="text-sm font-bold">{t('onTheWay')}</span>
                 </button>
                 <button onClick={() => postStatus('IN_PROGRESS')} disabled={submitting}
                   className="flex flex-col items-center gap-2 rounded-2xl border-2 border-green-200 bg-green-50 py-5 text-green-700 transition-all active:scale-95 disabled:opacity-50">
                   <svg className="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                  <span className="text-sm font-bold">Start Job</span>
+                  <span className="text-sm font-bold">{t('startJob')}</span>
                 </button>
               </div>
             )}
@@ -178,18 +181,18 @@ export default function JobStatusPaymentPage() {
               <div className="space-y-3">
                 <div className="flex items-center gap-2 rounded-xl bg-blue-50 px-3 py-2">
                   <div className="h-2 w-2 animate-pulse rounded-full bg-blue-500" />
-                  <span className="text-xs font-semibold text-blue-700">On the way to site...</span>
+                  <span className="text-xs font-semibold text-blue-700">{t('onTheWayToSite')}</span>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <button onClick={() => postStatus('ARRIVED_AT_SITE')} disabled={submitting}
                     className="flex flex-col items-center gap-2 rounded-2xl border-2 border-indigo-200 bg-indigo-50 py-5 text-indigo-700 transition-all active:scale-95 disabled:opacity-50">
                     <svg className="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                    <span className="text-sm font-bold">Arrived</span>
+                    <span className="text-sm font-bold">{t('arrived')}</span>
                   </button>
                   <button onClick={cancelVisit} disabled={submitting}
                     className="flex flex-col items-center gap-2 rounded-2xl border-2 border-red-200 bg-red-50 py-5 text-red-600 transition-all active:scale-95 disabled:opacity-50">
                     <svg className="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" /></svg>
-                    <span className="text-sm font-bold">Cancel Visit</span>
+                    <span className="text-sm font-bold">{t('cancelVisit')}</span>
                   </button>
                 </div>
               </div>
@@ -200,18 +203,18 @@ export default function JobStatusPaymentPage() {
               <div className="space-y-3">
                 <div className="flex items-center gap-2 rounded-xl bg-indigo-50 px-3 py-2">
                   <div className="h-2 w-2 rounded-full bg-indigo-500" />
-                  <span className="text-xs font-semibold text-indigo-700">Arrived at site</span>
+                  <span className="text-xs font-semibold text-indigo-700">{t('arrivedAtSite')}</span>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <button onClick={() => postStatus('IN_PROGRESS')} disabled={submitting}
                     className="flex flex-col items-center gap-2 rounded-2xl border-2 border-orange-200 bg-orange-50 py-5 text-orange-700 transition-all active:scale-95 disabled:opacity-50">
                     <svg className="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                    <span className="text-sm font-bold">Start Work</span>
+                    <span className="text-sm font-bold">{t('startWork')}</span>
                   </button>
                   <button onClick={cancelVisit} disabled={submitting}
                     className="flex flex-col items-center gap-2 rounded-2xl border-2 border-red-200 bg-red-50 py-5 text-red-600 transition-all active:scale-95 disabled:opacity-50">
                     <svg className="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" /></svg>
-                    <span className="text-sm font-bold">Cancel Visit</span>
+                    <span className="text-sm font-bold">{t('cancelVisit')}</span>
                   </button>
                 </div>
               </div>
@@ -222,30 +225,30 @@ export default function JobStatusPaymentPage() {
               <div className="space-y-4">
                 <div className="flex items-center gap-2 rounded-xl bg-orange-50 px-3 py-2">
                   <div className="h-2 w-2 animate-pulse rounded-full bg-orange-500" />
-                  <span className="text-xs font-semibold text-orange-700">Work in progress...</span>
+                  <span className="text-xs font-semibold text-orange-700">{t('workInProgress')}</span>
                 </div>
 
                 {/* Progress */}
                 <div>
                   <div className="flex justify-between text-xs">
-                    <span className="text-gray-400">Progress</span>
+                    <span className="text-gray-400">{t('progress')}</span>
                     <span className="font-bold text-primary">{progressPercent}%</span>
                   </div>
                   <input type="range" min="0" max="100" step="5" value={progressPercent} onChange={(e) => setProgressPercent(parseInt(e.target.value))} className="mt-1 w-full accent-primary" />
                 </div>
 
                 {/* Note */}
-                <Textarea placeholder="Add note (optional)..." value={statusNote} onChange={(e) => setStatusNote(e.target.value)} rows={2} className="rounded-xl text-sm" />
+                <Textarea placeholder={t('addNote')} value={statusNote} onChange={(e) => setStatusNote(e.target.value)} rows={2} className="rounded-xl text-sm" />
 
                 <button onClick={() => postStatus('COMPLETION_REQUESTED')} disabled={submitting}
                   className={`w-full rounded-2xl py-4 text-sm font-bold text-white transition-all active:scale-[0.98] disabled:opacity-50 ${
                     progressPercent === 100 ? 'bg-gradient-to-r from-green-500 to-green-600 shadow-lg shadow-green-200/40' : 'bg-gray-400'
                   }`}>
-                  {progressPercent < 100 ? `Finish Job (${progressPercent}%)` : 'Finish Job'}
+                  {progressPercent < 100 ? `${t('finishJob')} (${progressPercent}%)` : t('finishJob')}
                 </button>
 
                 <button onClick={cancelVisit} disabled={submitting} className="w-full rounded-xl border border-red-200 bg-red-50 py-2.5 text-xs font-medium text-red-600 active:scale-[0.98]">
-                  Cancel Visit
+                  {t('cancelVisit')}
                 </button>
               </div>
             )}
@@ -255,7 +258,7 @@ export default function JobStatusPaymentPage() {
               <div className="space-y-3">
                 <div className="flex items-center gap-2 rounded-xl bg-green-50 px-3 py-2">
                   <svg className="h-4 w-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-                  <span className="text-xs font-semibold text-green-700">Job completed - awaiting verification</span>
+                  <span className="text-xs font-semibold text-green-700">{t('completedAwaiting')}</span>
                 </div>
 
                 {/* Payment prompt — show right after job finishes */}
@@ -263,12 +266,12 @@ export default function JobStatusPaymentPage() {
                   <div className="flex items-center gap-2">
                     <svg className="h-4 w-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" /></svg>
                     <span className="text-xs font-semibold text-amber-700">
-                      Payment: {!hasJobTotal ? 'No amount set' : amountDue > 0 ? `${formatCurrency(amountDue)} due` : 'Fully paid'}
+                      {t('payment')}: {!hasJobTotal ? t('noAmountSet') : amountDue > 0 ? `${formatCurrency(amountDue)} ${tc('due').toLowerCase()}` : tc('fullyPaid')}
                     </span>
                   </div>
                   {(amountDue > 0 || !hasJobTotal) && (
                     <button onClick={() => setActiveTab('payment')} className="mt-2 w-full rounded-lg bg-amber-600 py-2 text-xs font-semibold text-white active:scale-[0.98]">
-                      Collect Payment
+                      {t('collectPayment')}
                     </button>
                   )}
                 </div>
@@ -276,11 +279,11 @@ export default function JobStatusPaymentPage() {
                 <div className="grid grid-cols-2 gap-3">
                   <button onClick={() => postStatus('DEPARTED_SITE')} disabled={submitting}
                     className="rounded-2xl border-2 border-purple-200 bg-purple-50 py-4 text-sm font-bold text-purple-700 active:scale-95 disabled:opacity-50">
-                    Left Site
+                    {t('leftSite')}
                   </button>
                   <button onClick={() => postStatus('ARRIVED_OFFICE')} disabled={submitting}
                     className="rounded-2xl border-2 border-teal-200 bg-teal-50 py-4 text-sm font-bold text-teal-700 active:scale-95 disabled:opacity-50">
-                    At Office
+                    {t('atOffice')}
                   </button>
                 </div>
               </div>
@@ -290,7 +293,7 @@ export default function JobStatusPaymentPage() {
           {/* Cancel Job — always available */}
           {!isCompleted && !isCancelled && (
             <button onClick={cancelJob} disabled={submitting} className="w-full rounded-xl border border-red-200 bg-white py-2.5 text-xs font-medium text-red-500 active:scale-[0.98]">
-              Cancel Entire Job
+              {t('cancelJob')}
             </button>
           )}
         </div>
@@ -308,28 +311,28 @@ export default function JobStatusPaymentPage() {
                 <svg className="h-7 w-7 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
               )}
             </div>
-            <h3 className="mt-2 text-base font-bold text-gray-900">{isCompleted ? 'Job Completed' : 'Job Cancelled'}</h3>
+            <h3 className="mt-2 text-base font-bold text-gray-900">{isCompleted ? t('jobCompleted') : t('jobCancelled')}</h3>
           </div>
 
           {/* Payment Status Card — always visible after job ends */}
           <div className="rounded-2xl border border-gray-100 bg-white shadow-sm">
             <div className="border-b border-gray-50 px-4 py-3">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-400">Payment Status</h3>
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-400">{t('paymentStatus')}</h3>
             </div>
             <div className="p-4 space-y-4">
               {/* Summary */}
               <div className={`grid gap-2 ${hasJobTotal ? 'grid-cols-3' : 'grid-cols-2'}`}>
                 <div className="rounded-xl border border-gray-100 bg-gray-50 p-2 text-center">
-                  <p className="text-[9px] font-medium uppercase tracking-wider text-gray-400">Total</p>
-                  <p className="mt-0.5 text-sm font-bold text-gray-800">{hasJobTotal ? formatCurrency(jobTotal) : 'Not set'}</p>
+                  <p className="text-[9px] font-medium uppercase tracking-wider text-gray-400">{tc('total')}</p>
+                  <p className="mt-0.5 text-sm font-bold text-gray-800">{hasJobTotal ? formatCurrency(jobTotal) : tc('notSet')}</p>
                 </div>
                 <div className="rounded-xl border border-green-100 bg-green-50 p-2 text-center">
-                  <p className="text-[9px] font-medium uppercase tracking-wider text-gray-400">Paid</p>
+                  <p className="text-[9px] font-medium uppercase tracking-wider text-gray-400">{tc('paid')}</p>
                   <p className="mt-0.5 text-sm font-bold text-green-700">{formatCurrency(payments.totalPaid)}</p>
                 </div>
                 {hasJobTotal && (
                   <div className={`rounded-xl border p-2 text-center ${amountDue > 0 ? 'border-red-100 bg-red-50' : 'border-green-100 bg-green-50'}`}>
-                    <p className="text-[9px] font-medium uppercase tracking-wider text-gray-400">Due</p>
+                    <p className="text-[9px] font-medium uppercase tracking-wider text-gray-400">{tc('due')}</p>
                     <p className={`mt-0.5 text-sm font-bold ${amountDue > 0 ? 'text-red-700' : 'text-green-700'}`}>{formatCurrency(amountDue)}</p>
                   </div>
                 )}
@@ -339,7 +342,7 @@ export default function JobStatusPaymentPage() {
               {jobTotal > 0 && (
                 <div>
                   <div className="flex justify-between text-[10px] text-gray-400">
-                    <span>Payment progress</span>
+                    <span>{t('paymentProgress')}</span>
                     <span>{Math.min(100, Math.round((payments.totalPaid / jobTotal) * 100))}%</span>
                   </div>
                   <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-gray-100">
@@ -352,22 +355,22 @@ export default function JobStatusPaymentPage() {
               {hasJobTotal && amountDue <= 0 ? (
                 <div className="flex items-center justify-center gap-2 rounded-xl bg-green-50 py-3">
                   <svg className="h-4 w-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-                  <span className="text-sm font-semibold text-green-700">Fully Paid</span>
+                  <span className="text-sm font-semibold text-green-700">{tc('fullyPaid')}</span>
                 </div>
               ) : !showPaymentForm ? (
                 <button onClick={() => setShowPaymentForm(true)} className="w-full rounded-xl bg-gradient-to-r from-primary to-gold-600 py-3 text-sm font-semibold text-white shadow-md shadow-gold-300/30 active:scale-[0.98]">
-                  + Record Payment
+                  + {tc('recordPayment')}
                 </button>
               ) : (
                 <div className="space-y-3 rounded-xl border border-gray-100 bg-gray-50/50 p-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold text-gray-700">Record Payment</span>
-                    <button onClick={() => { setShowPaymentForm(false); setPaymentError('') }} className="text-[10px] text-gray-400">Cancel</button>
+                    <span className="text-xs font-semibold text-gray-700">{tc('recordPayment')}</span>
+                    <button onClick={() => { setShowPaymentForm(false); setPaymentError('') }} className="text-[10px] text-gray-400">{tc('cancel')}</button>
                   </div>
                   {paymentError && <div className="rounded-lg bg-red-50 px-2 py-1.5 text-[10px] text-red-600">{paymentError}</div>}
                   <div className="grid grid-cols-2 gap-2">
-                    <div className="space-y-0.5"><Label className="text-[10px] text-gray-400">Amount *</Label><Input type="number" step="0.001" value={paymentForm.amount} onChange={(e) => setPaymentForm({ ...paymentForm, amount: e.target.value })} placeholder="0.000" className="rounded-lg h-9 text-sm" /></div>
-                    <div className="space-y-0.5"><Label className="text-[10px] text-gray-400">Method *</Label>
+                    <div className="space-y-0.5"><Label className="text-[10px] text-gray-400">{tc('amount')} *</Label><Input type="number" step="0.001" value={paymentForm.amount} onChange={(e) => setPaymentForm({ ...paymentForm, amount: e.target.value })} placeholder="0.000" className="rounded-lg h-9 text-sm" /></div>
+                    <div className="space-y-0.5"><Label className="text-[10px] text-gray-400">{tc('method')} *</Label>
                       <Select value={paymentForm.paymentMethod} onValueChange={(v) => setPaymentForm({ ...paymentForm, paymentMethod: v, paymentSubOption: '' })}>
                         <SelectTrigger className="rounded-lg h-9 text-sm"><SelectValue placeholder="Select..." /></SelectTrigger>
                         <SelectContent>{paymentMethods.map((m: any) => <SelectItem key={m.id} value={m.name}>{m.name}</SelectItem>)}</SelectContent>
@@ -376,18 +379,18 @@ export default function JobStatusPaymentPage() {
                   </div>
                   {selectedMethod?.subOptions?.length > 0 && (
                     <Select value={paymentForm.paymentSubOption} onValueChange={(v) => setPaymentForm({ ...paymentForm, paymentSubOption: v })}>
-                      <SelectTrigger className="rounded-lg h-9 text-sm"><SelectValue placeholder="Transfer to..." /></SelectTrigger>
+                      <SelectTrigger className="rounded-lg h-9 text-sm"><SelectValue placeholder={tc('transferTo')} /></SelectTrigger>
                       <SelectContent>{selectedMethod.subOptions.map((s: any) => <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>)}</SelectContent>
                     </Select>
                   )}
                   {amountDue > 0 && (
                     <div className="flex gap-1.5">
-                      <button onClick={() => setPaymentForm({ ...paymentForm, amount: amountDue.toFixed(3) })} className="rounded-md border bg-white px-2 py-1 text-[10px] font-medium text-gray-600 active:scale-95">Full ({formatCurrency(amountDue)})</button>
+                      <button onClick={() => setPaymentForm({ ...paymentForm, amount: amountDue.toFixed(3) })} className="rounded-md border bg-white px-2 py-1 text-[10px] font-medium text-gray-600 active:scale-95">{tc('full')} ({formatCurrency(amountDue)})</button>
                     </div>
                   )}
                   <button onClick={handlePayment} disabled={submitting || !paymentForm.amount || !paymentForm.paymentMethod}
                     className="w-full rounded-lg bg-green-600 py-2.5 text-xs font-semibold text-white active:scale-[0.98] disabled:opacity-50">
-                    {submitting ? 'Recording...' : 'Record Payment'}
+                    {submitting ? tc('recording') : tc('recordPayment')}
                   </button>
                 </div>
               )}
@@ -395,7 +398,7 @@ export default function JobStatusPaymentPage() {
               {/* Recent payments */}
               {payments.payments.length > 0 && (
                 <div className="space-y-1.5">
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">History</p>
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">{tc('history')}</p>
                   {payments.payments.map((p: any) => (
                     <div key={p.id} className="flex items-center justify-between rounded-lg bg-gray-50 px-2.5 py-2">
                       <div>
@@ -419,16 +422,16 @@ export default function JobStatusPaymentPage() {
           {/* Summary */}
           <div className={`grid gap-2 ${hasJobTotal ? 'grid-cols-3' : 'grid-cols-2'}`}>
             <div className="rounded-xl border border-gray-100 bg-white p-2.5 text-center shadow-sm">
-              <p className="text-[10px] font-medium uppercase tracking-wider text-gray-400">Total</p>
-              <p className="mt-0.5 text-sm font-bold text-gray-800">{hasJobTotal ? formatCurrency(jobTotal) : 'Not set'}</p>
+              <p className="text-[10px] font-medium uppercase tracking-wider text-gray-400">{tc('total')}</p>
+              <p className="mt-0.5 text-sm font-bold text-gray-800">{hasJobTotal ? formatCurrency(jobTotal) : tc('notSet')}</p>
             </div>
             <div className="rounded-xl border border-green-100 bg-green-50 p-2.5 text-center shadow-sm">
-              <p className="text-[10px] font-medium uppercase tracking-wider text-gray-400">Paid</p>
+              <p className="text-[10px] font-medium uppercase tracking-wider text-gray-400">{tc('paid')}</p>
               <p className="mt-0.5 text-sm font-bold text-green-700">{formatCurrency(payments.totalPaid)}</p>
             </div>
             {hasJobTotal && (
               <div className={`rounded-xl border p-2.5 text-center shadow-sm ${amountDue > 0 ? 'border-red-100 bg-red-50' : 'border-green-100 bg-green-50'}`}>
-                <p className="text-[10px] font-medium uppercase tracking-wider text-gray-400">Due</p>
+                <p className="text-[10px] font-medium uppercase tracking-wider text-gray-400">{tc('due')}</p>
                 <p className={`mt-0.5 text-sm font-bold ${amountDue > 0 ? 'text-red-700' : 'text-green-700'}`}>{formatCurrency(amountDue)}</p>
               </div>
             )}
@@ -437,18 +440,18 @@ export default function JobStatusPaymentPage() {
           {/* Add Payment */}
           {!showPaymentForm ? (
             <button onClick={() => setShowPaymentForm(true)} className="w-full rounded-xl bg-gradient-to-r from-primary to-gold-600 py-3 text-sm font-semibold text-white shadow-md shadow-gold-300/30 active:scale-[0.98]">
-              + Record Payment
+              + {tc('recordPayment')}
             </button>
           ) : (
             <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm space-y-3">
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-gray-900">Record Payment</h3>
-                <button onClick={() => { setShowPaymentForm(false); setPaymentError('') }} className="text-xs text-gray-400">Cancel</button>
+                <h3 className="text-sm font-semibold text-gray-900">{tc('recordPayment')}</h3>
+                <button onClick={() => { setShowPaymentForm(false); setPaymentError('') }} className="text-xs text-gray-400">{tc('cancel')}</button>
               </div>
               {paymentError && <div className="rounded-xl bg-red-50 px-3 py-2 text-xs text-red-600">{paymentError}</div>}
               <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1"><Label className="text-xs text-gray-500">Amount *</Label><Input type="number" step="0.001" value={paymentForm.amount} onChange={(e) => setPaymentForm({ ...paymentForm, amount: e.target.value })} placeholder="0.000" className="rounded-xl" /></div>
-                <div className="space-y-1"><Label className="text-xs text-gray-500">Method *</Label>
+                <div className="space-y-1"><Label className="text-xs text-gray-500">{tc('amount')} *</Label><Input type="number" step="0.001" value={paymentForm.amount} onChange={(e) => setPaymentForm({ ...paymentForm, amount: e.target.value })} placeholder="0.000" className="rounded-xl" /></div>
+                <div className="space-y-1"><Label className="text-xs text-gray-500">{tc('method')} *</Label>
                   <Select value={paymentForm.paymentMethod} onValueChange={(v) => setPaymentForm({ ...paymentForm, paymentMethod: v, paymentSubOption: '' })}>
                     <SelectTrigger className="rounded-xl"><SelectValue placeholder="Select..." /></SelectTrigger>
                     <SelectContent>{paymentMethods.map((m: any) => <SelectItem key={m.id} value={m.name}>{m.name}</SelectItem>)}</SelectContent>
@@ -456,7 +459,7 @@ export default function JobStatusPaymentPage() {
                 </div>
               </div>
               {selectedMethod?.subOptions?.length > 0 && (
-                <div className="space-y-1"><Label className="text-xs text-gray-500">Transfer To</Label>
+                <div className="space-y-1"><Label className="text-xs text-gray-500">{tc('transferTo')}</Label>
                   <Select value={paymentForm.paymentSubOption} onValueChange={(v) => setPaymentForm({ ...paymentForm, paymentSubOption: v })}>
                     <SelectTrigger className="rounded-xl"><SelectValue placeholder="Select..." /></SelectTrigger>
                     <SelectContent>{selectedMethod.subOptions.map((s: any) => <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>)}</SelectContent>
@@ -465,13 +468,13 @@ export default function JobStatusPaymentPage() {
               )}
               {amountDue > 0 && (
                 <div className="flex gap-2">
-                  <button onClick={() => setPaymentForm({ ...paymentForm, amount: amountDue.toFixed(3) })} className="rounded-lg border bg-gray-50 px-3 py-1 text-[10px] font-medium text-gray-600 active:scale-95">Full ({formatCurrency(amountDue)})</button>
-                  {amountDue > 1 && <button onClick={() => setPaymentForm({ ...paymentForm, amount: (amountDue / 2).toFixed(3) })} className="rounded-lg border bg-gray-50 px-3 py-1 text-[10px] font-medium text-gray-600 active:scale-95">Half</button>}
+                  <button onClick={() => setPaymentForm({ ...paymentForm, amount: amountDue.toFixed(3) })} className="rounded-lg border bg-gray-50 px-3 py-1 text-[10px] font-medium text-gray-600 active:scale-95">{tc('full')} ({formatCurrency(amountDue)})</button>
+                  {amountDue > 1 && <button onClick={() => setPaymentForm({ ...paymentForm, amount: (amountDue / 2).toFixed(3) })} className="rounded-lg border bg-gray-50 px-3 py-1 text-[10px] font-medium text-gray-600 active:scale-95">{tc('half')}</button>}
                 </div>
               )}
               <button onClick={handlePayment} disabled={submitting || !paymentForm.amount || !paymentForm.paymentMethod}
                 className="w-full rounded-xl bg-gradient-to-r from-green-500 to-green-600 py-3 text-sm font-semibold text-white shadow-md active:scale-[0.98] disabled:opacity-50">
-                {submitting ? 'Recording...' : 'Record Payment'}
+                {submitting ? tc('recording') : tc('recordPayment')}
               </button>
             </div>
           )}
@@ -501,7 +504,7 @@ export default function JobStatusPaymentPage() {
       {activeTab === 'timeline' && (
         <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
           {statusUpdates.length === 0 ? (
-            <p className="py-8 text-center text-sm text-gray-400">No updates yet</p>
+            <p className="py-8 text-center text-sm text-gray-400">{t('noUpdatesYet')}</p>
           ) : (
             <div className="space-y-0">
               {statusUpdates.map((u: any, i: number) => (

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams, useParams } from 'next/navigation'
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
@@ -14,6 +15,8 @@ export default function NewSiteVisitPage() {
   const locale = params.locale as string
   const searchParams = useSearchParams()
   const clientIdParam = searchParams.get('clientId')
+  const t = useTranslations('SiteVisits')
+  const tc = useTranslations('Common')
 
   const [loading, setLoading] = useState(false)
   const [users, setUsers] = useState<any[]>([])
@@ -74,22 +77,22 @@ export default function NewSiteVisitPage() {
   return (
     <div className="mx-auto max-w-2xl pb-24">
       <div className="mb-5">
-        <h1 className="text-xl font-bold text-gray-900">New Site Visit</h1>
-        <p className="text-xs text-gray-400">Schedule a new site visit</p>
+        <h1 className="text-xl font-bold text-gray-900">{t('newSiteVisit')}</h1>
+        <p className="text-xs text-gray-400">{t('scheduleVisit')}</p>
       </div>
 
       <div className="space-y-4">
         {/* Client Search */}
-        <Section title="Client & Schedule">
+        <Section title={t('clientSchedule')}>
           <div className="space-y-1 relative">
-            <Label className="text-xs text-gray-500">Client <span className="text-red-400">*</span></Label>
+            <Label className="text-xs text-gray-500">{tc('client')} <span className="text-red-400">*</span></Label>
             {selectedClient ? (
               <div className="flex items-center justify-between rounded-xl border border-green-200 bg-green-50 p-2.5">
                 <div>
                   <p className="text-sm font-medium text-gray-800">{selectedClient.name}</p>
                   <p className="text-xs text-gray-500">{selectedClient.phone}</p>
                 </div>
-                <button onClick={() => { setFormData({ ...formData, clientId: '' }); setSearchQuery('') }} className="text-xs text-gray-400 hover:text-gray-600">Change</button>
+                <button onClick={() => { setFormData({ ...formData, clientId: '' }); setSearchQuery('') }} className="text-xs text-gray-400 hover:text-gray-600">{tc('change')}</button>
               </div>
             ) : (
               <>
@@ -112,10 +115,10 @@ export default function NewSiteVisitPage() {
             )}
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <FormField label="Date & Time" required>
+            <FormField label={t('dateTime')} required>
               <Input type="datetime-local" value={formData.scheduledAt} onChange={set('scheduledAt')} className="rounded-xl" required />
             </FormField>
-            <FormField label="Assigned To" required>
+            <FormField label={t('assignedTo')} required>
               <Select value={formData.assignedToId} onValueChange={(v) => setFormData({ ...formData, assignedToId: v })}>
                 <SelectTrigger className="rounded-xl"><SelectValue placeholder="Select..." /></SelectTrigger>
                 <SelectContent>
@@ -124,33 +127,33 @@ export default function NewSiteVisitPage() {
               </Select>
             </FormField>
           </div>
-          <FormField label="Required Service">
+          <FormField label={t('requiredService')}>
             <Input value={formData.requiredService} onChange={set('requiredService')} placeholder="e.g., Deep cleaning, Pest control" className="rounded-xl" />
           </FormField>
         </Section>
 
         {/* Location */}
-        <Section title="Location">
+        <Section title={t('locationDetails')}>
           <div className="grid grid-cols-2 gap-3">
-            <FormField label="Location">
+            <FormField label={tc('location')}>
               <Input value={formData.locationText} onChange={set('locationText')} placeholder="Area, City" className="rounded-xl" />
             </FormField>
-            <FormField label="Maps URL">
+            <FormField label={t('mapsUrl')}>
               <Input type="url" value={formData.googleMapsUrl} onChange={set('googleMapsUrl')} placeholder="Google Maps link" className="rounded-xl" />
             </FormField>
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <FormField label="Site Contact">
+            <FormField label={t('siteContact')}>
               <Input value={formData.siteContactName} onChange={set('siteContactName')} placeholder="Contact name" className="rounded-xl" />
             </FormField>
-            <FormField label="Contact Phone">
+            <FormField label={t('contactPhone')}>
               <Input type="tel" value={formData.siteContactPhone} onChange={set('siteContactPhone')} placeholder="+968 XXXX XXXX" className="rounded-xl" />
             </FormField>
           </div>
         </Section>
 
         {/* Notes */}
-        <Section title="Notes">
+        <Section title={tc('notes')}>
           <Textarea value={formData.notes} onChange={set('notes')} placeholder="Internal notes..." rows={3} className="rounded-xl text-sm" />
           <Textarea value={formData.remarks} onChange={set('remarks')} placeholder="Additional remarks..." rows={2} className="rounded-xl text-sm" />
         </Section>
@@ -159,10 +162,10 @@ export default function NewSiteVisitPage() {
       {/* Sticky Save */}
       <div className="fixed bottom-0 left-0 right-0 z-20 border-t border-gray-100 bg-white/90 px-4 py-3 backdrop-blur-sm">
         <div className="mx-auto flex max-w-2xl gap-2">
-          <Link href={`/${locale}/admin/site-visits`} className="flex-1 rounded-xl border border-gray-200 bg-white py-3 text-center text-sm font-medium text-gray-600 active:scale-[0.98]">Cancel</Link>
+          <Link href={`/${locale}/admin/site-visits`} className="flex-1 rounded-xl border border-gray-200 bg-white py-3 text-center text-sm font-medium text-gray-600 active:scale-[0.98]">{tc('cancel')}</Link>
           <button onClick={handleSubmit} disabled={loading || !formData.clientId || !formData.scheduledAt || !formData.assignedToId}
             className="flex-[2] rounded-xl bg-gradient-to-r from-primary to-gold-600 py-3 text-sm font-semibold text-white shadow-md shadow-gold-300/30 active:scale-[0.98] disabled:opacity-50">
-            {loading ? 'Creating...' : 'Create Site Visit'}
+            {loading ? tc('creating') : t('createSiteVisit')}
           </button>
         </div>
       </div>

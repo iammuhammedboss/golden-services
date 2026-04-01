@@ -3,20 +3,23 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 import { formatDate, enumToReadable, getStatusColor } from '@/lib/utils'
 import { useConfirm } from '@/components/confirm-dialog'
 
 const STATUSES = [
-  { value: 'PENDING', label: 'Pending', color: 'from-yellow-500 to-yellow-600' },
-  { value: 'IN_PROGRESS', label: 'In Progress', color: 'from-blue-500 to-blue-600' },
-  { value: 'COMPLETED', label: 'Completed', color: 'from-green-500 to-green-600' },
-  { value: 'CANCELLED', label: 'Cancelled', color: 'from-red-500 to-red-600' },
+  { value: 'PENDING', label: 'pending', color: 'from-yellow-500 to-yellow-600' },
+  { value: 'IN_PROGRESS', label: 'inProgress', color: 'from-blue-500 to-blue-600' },
+  { value: 'COMPLETED', label: 'completed', color: 'from-green-500 to-green-600' },
+  { value: 'CANCELLED', label: 'cancelled', color: 'from-red-500 to-red-600' },
 ]
 
 export default function SiteVisitDetailPage({ params: pageParams }: { params: { id: string } }) {
   const router = useRouter()
   const params = useParams()
   const locale = params.locale as string
+  const t = useTranslations('SiteVisits')
+  const tc = useTranslations('Common')
   const [siteVisit, setSiteVisit] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [updating, setUpdating] = useState(false)
@@ -47,7 +50,7 @@ export default function SiteVisitDetailPage({ params: pageParams }: { params: { 
   }
 
   const handleDelete = async () => {
-    const ok = await confirm({ title: 'Delete Site Visit', description: 'This action cannot be undone.', variant: 'danger', confirmLabel: 'Delete' })
+    const ok = await confirm({ title: t('deleteVisit'), description: t('deleteVisitDesc'), variant: 'danger', confirmLabel: tc('delete') })
     if (!ok) return
     try {
       const res = await fetch(`/api/site-visits/${pageParams.id}`, { method: 'DELETE' })
@@ -59,7 +62,7 @@ export default function SiteVisitDetailPage({ params: pageParams }: { params: { 
     return <div className="flex h-[60vh] items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" /></div>
   }
   if (!siteVisit) {
-    return <div className="py-20 text-center text-sm text-gray-400">Site visit not found</div>
+    return <div className="py-20 text-center text-sm text-gray-400">{t('notFound')}</div>
   }
 
   return (
@@ -83,10 +86,10 @@ export default function SiteVisitDetailPage({ params: pageParams }: { params: { 
           <div className="mt-3 grid grid-cols-2 gap-2">
             <a href={`tel:${siteVisit.client.phone}`} className="flex items-center justify-center gap-1.5 rounded-xl border border-green-200 bg-green-50 py-2 text-xs font-semibold text-green-700 active:scale-95">
               <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
-              Call Client
+              {t('callClient')}
             </a>
             <Link href={`/${locale}/admin/clients/${siteVisit.client.id}`} className="flex items-center justify-center gap-1.5 rounded-xl border border-blue-200 bg-blue-50 py-2 text-xs font-semibold text-blue-700 active:scale-95">
-              View Profile
+              {t('viewProfile')}
             </Link>
           </div>
         )}
@@ -94,7 +97,7 @@ export default function SiteVisitDetailPage({ params: pageParams }: { params: { 
 
       {/* Status Buttons */}
       <div className="rounded-2xl border border-gray-100 bg-white shadow-sm">
-        <div className="border-b border-gray-50 px-4 py-3"><h3 className="text-xs font-semibold uppercase tracking-wider text-gray-400">Status</h3></div>
+        <div className="border-b border-gray-50 px-4 py-3"><h3 className="text-xs font-semibold uppercase tracking-wider text-gray-400">{tc('status')}</h3></div>
         <div className="grid grid-cols-2 gap-2 p-4 sm:grid-cols-4">
           {STATUSES.map((s) => (
             <button
@@ -106,38 +109,38 @@ export default function SiteVisitDetailPage({ params: pageParams }: { params: { 
               }`}
             >
               <span className={`h-2 w-2 rounded-full bg-gradient-to-br ${s.color}`} />
-              {s.label}
+              {tc(s.label)}
             </button>
           ))}
         </div>
       </div>
 
       {/* Details */}
-      <InfoSection title="Visit Details">
-        <InfoRow label="Assigned To" value={siteVisit.assignedTo?.name || '-'} />
-        {siteVisit.requiredService && <InfoRow label="Service" value={siteVisit.requiredService} />}
-        {siteVisit.startedAt && <InfoRow label="Started" value={formatDate(siteVisit.startedAt, 'PPpp')} />}
-        {siteVisit.completedAt && <InfoRow label="Completed" value={formatDate(siteVisit.completedAt, 'PPpp')} />}
+      <InfoSection title={t('visitDetails')}>
+        <InfoRow label={t('assignedTo')} value={siteVisit.assignedTo?.name || '-'} />
+        {siteVisit.requiredService && <InfoRow label={t('requiredService')} value={siteVisit.requiredService} />}
+        {siteVisit.startedAt && <InfoRow label={tc('started')} value={formatDate(siteVisit.startedAt, 'PPpp')} />}
+        {siteVisit.completedAt && <InfoRow label={tc('completed')} value={formatDate(siteVisit.completedAt, 'PPpp')} />}
       </InfoSection>
 
       {(siteVisit.locationText || siteVisit.googleMapsUrl) && (
-        <InfoSection title="Location">
-          {siteVisit.locationText && <InfoRow label="Address" value={siteVisit.locationText} />}
+        <InfoSection title={t('locationDetails')}>
+          {siteVisit.locationText && <InfoRow label={tc('address')} value={siteVisit.locationText} />}
           {siteVisit.googleMapsUrl && (
             <div className="flex items-center justify-between px-4 py-3">
-              <span className="text-xs text-gray-400">Map</span>
-              <a href={siteVisit.googleMapsUrl} target="_blank" rel="noopener noreferrer" className="text-xs font-medium text-blue-600">Open in Maps</a>
+              <span className="text-xs text-gray-400">{tc('location')}</span>
+              <a href={siteVisit.googleMapsUrl} target="_blank" rel="noopener noreferrer" className="text-xs font-medium text-blue-600">{tc('openInMaps')}</a>
             </div>
           )}
         </InfoSection>
       )}
 
       {(siteVisit.siteContactName || siteVisit.siteContactPhone) && (
-        <InfoSection title="Site Contact">
-          {siteVisit.siteContactName && <InfoRow label="Name" value={siteVisit.siteContactName} />}
+        <InfoSection title={t('siteContact')}>
+          {siteVisit.siteContactName && <InfoRow label={tc('name')} value={siteVisit.siteContactName} />}
           {siteVisit.siteContactPhone && (
             <div className="flex items-center justify-between px-4 py-3">
-              <span className="text-xs text-gray-400">Phone</span>
+              <span className="text-xs text-gray-400">{tc('phone')}</span>
               <a href={`tel:${siteVisit.siteContactPhone}`} className="text-sm font-medium text-green-600">{siteVisit.siteContactPhone}</a>
             </div>
           )}
@@ -145,7 +148,7 @@ export default function SiteVisitDetailPage({ params: pageParams }: { params: { 
       )}
 
       {(siteVisit.notes || siteVisit.remarks) && (
-        <InfoSection title="Notes">
+        <InfoSection title={tc('notes')}>
           {siteVisit.notes && <div className="px-4 py-3"><p className="whitespace-pre-wrap text-sm text-gray-700">{siteVisit.notes}</p></div>}
           {siteVisit.remarks && <div className="border-t border-gray-50 px-4 py-3"><p className="whitespace-pre-wrap text-sm text-gray-500">{siteVisit.remarks}</p></div>}
         </InfoSection>
@@ -154,10 +157,10 @@ export default function SiteVisitDetailPage({ params: pageParams }: { params: { 
       {/* Actions */}
       <div className="grid grid-cols-2 gap-2">
         <Link href={`/${locale}/admin/measurements/new?siteVisitId=${pageParams.id}`} className="rounded-xl border border-gray-200 bg-white py-3 text-center text-sm font-medium text-gray-700 active:scale-[0.98]">
-          Create Measurement
+          {t('createMeasurement')}
         </Link>
         <button onClick={handleDelete} className="rounded-xl border border-red-200 bg-red-50 py-3 text-sm font-medium text-red-600 active:scale-[0.98]">
-          Delete Visit
+          {t('deleteVisit')}
         </button>
       </div>
     </div>

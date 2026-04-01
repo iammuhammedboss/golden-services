@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import Link from 'next/link'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -15,6 +16,8 @@ import {
 } from '@/components/ui/select'
 
 export default function EditClientPage() {
+  const t = useTranslations('Clients')
+  const tc = useTranslations('Common')
   const router = useRouter()
   const params = useParams()
   const locale = params.locale as string
@@ -115,21 +118,21 @@ export default function EditClientPage() {
     <div className="mx-auto max-w-2xl pb-24">
       {/* Header */}
       <div className="mb-5">
-        <h1 className="text-xl font-bold text-gray-900">Edit Client</h1>
-        <p className="text-xs text-gray-400">Update client information</p>
+        <h1 className="text-xl font-bold text-gray-900">{t('editClient')}</h1>
+        <p className="text-xs text-gray-400">{t('updateInfo')}</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Basic Info */}
-        <Section title="Basic Information">
-          <FormField label="Client Name" required>
+        <Section title={t('basicInfo')}>
+          <FormField label={t('clientName')} required>
             <Input value={formData.name} onChange={set('name')} placeholder="Full name" className="rounded-xl" required />
           </FormField>
-          <FormField label="Company">
+          <FormField label={tc('company')}>
             <Input value={formData.company} onChange={set('company')} placeholder="Company name (optional)" className="rounded-xl" />
           </FormField>
           <div className="grid grid-cols-2 gap-3">
-            <FormField label="Type">
+            <FormField label={tc('type')}>
               <Select value={formData.type} onValueChange={(v: any) => setFormData({ ...formData, type: v })}>
                 <SelectTrigger className="rounded-xl"><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -138,73 +141,73 @@ export default function EditClientPage() {
                 </SelectContent>
               </Select>
             </FormField>
-            <FormField label="VAT/TRN">
+            <FormField label={t('vatTrn')}>
               <Input value={formData.vatTrn} onChange={set('vatTrn')} placeholder="Tax number" className="rounded-xl" />
             </FormField>
           </div>
         </Section>
 
         {/* Contact */}
-        <Section title="Contact Details">
-          <FormField label="Phone" required>
+        <Section title={t('contactDetails')}>
+          <FormField label={tc('phone')} required>
             <Input type="tel" value={formData.phone} onChange={set('phone')} placeholder="+968 XXXX XXXX" className="rounded-xl" required />
           </FormField>
           <div className="grid grid-cols-2 gap-3">
-            <FormField label="Alt Phone">
+            <FormField label={tc('altPhone')}>
               <Input type="tel" value={formData.alternatePhone} onChange={set('alternatePhone')} placeholder="+968 XXXX XXXX" className="rounded-xl" />
             </FormField>
-            <FormField label="WhatsApp">
+            <FormField label={tc('whatsapp')}>
               <Input type="tel" value={formData.whatsapp} onChange={set('whatsapp')} placeholder="+968 XXXX XXXX" className="rounded-xl" />
             </FormField>
           </div>
-          <FormField label="Email">
+          <FormField label={tc('email')}>
             <Input type="email" value={formData.email} onChange={set('email')} placeholder="email@example.com" className="rounded-xl" />
           </FormField>
         </Section>
 
         {/* Address */}
-        <Section title="Address">
+        <Section title={t('address')}>
           <div className="grid grid-cols-2 gap-3">
-            <FormField label="Area">
+            <FormField label={t('area')}>
               <Input value={formData.area} onChange={set('area')} placeholder="Area/District" className="rounded-xl" />
             </FormField>
-            <FormField label="City">
+            <FormField label={t('city')}>
               <Input value={formData.city} onChange={set('city')} placeholder="City" className="rounded-xl" />
             </FormField>
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <FormField label="Street">
+            <FormField label={t('street')}>
               <Input value={formData.street} onChange={set('street')} placeholder="Street name" className="rounded-xl" />
             </FormField>
-            <FormField label="Building">
+            <FormField label={t('building')}>
               <Input value={formData.building} onChange={set('building')} placeholder="Building/Villa" className="rounded-xl" />
             </FormField>
           </div>
-          <FormField label="Location Pin">
+          <FormField label={t('locationPin')}>
             <Input value={formData.locationPin} onChange={set('locationPin')} placeholder="Google Maps link or coordinates" className="rounded-xl" />
           </FormField>
         </Section>
 
         {/* Contacts */}
-        <Section title="Contact Persons">
+        <Section title={t('contactPersons')}>
           <div className="rounded-xl bg-blue-50/50 p-3 space-y-3">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-blue-400">Primary Contact</p>
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-blue-400">{t('primaryContact')}</p>
             <div className="grid grid-cols-2 gap-3">
-              <FormField label="Name">
+              <FormField label={tc('name')}>
                 <Input value={formData.primaryContactName} onChange={set('primaryContactName')} placeholder="Contact name" className="rounded-xl" />
               </FormField>
-              <FormField label="Phone">
+              <FormField label={tc('phone')}>
                 <Input type="tel" value={formData.primaryContactPhone} onChange={set('primaryContactPhone')} placeholder="+968 XXXX XXXX" className="rounded-xl" />
               </FormField>
             </div>
           </div>
           <div className="rounded-xl bg-gray-50/50 p-3 space-y-3">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Alternate Contact</p>
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">{t('alternateContact')}</p>
             <div className="grid grid-cols-2 gap-3">
-              <FormField label="Name">
+              <FormField label={tc('name')}>
                 <Input value={formData.alternateContactName} onChange={set('alternateContactName')} placeholder="Contact name" className="rounded-xl" />
               </FormField>
-              <FormField label="Phone">
+              <FormField label={tc('phone')}>
                 <Input type="tel" value={formData.alternateContactPhone} onChange={set('alternateContactPhone')} placeholder="+968 XXXX XXXX" className="rounded-xl" />
               </FormField>
             </div>
@@ -212,7 +215,7 @@ export default function EditClientPage() {
         </Section>
 
         {/* Notes */}
-        <Section title="Notes">
+        <Section title={tc('notes')}>
           <Textarea
             value={formData.notes}
             onChange={set('notes')}
@@ -230,14 +233,14 @@ export default function EditClientPage() {
             href={`/${locale}/admin/clients/${clientId}`}
             className="flex-1 rounded-xl border border-gray-200 bg-white py-3 text-center text-sm font-medium text-gray-600 transition-all active:scale-[0.98]"
           >
-            Cancel
+            {tc('cancel')}
           </Link>
           <button
             onClick={() => handleSubmit()}
             disabled={loading || !formData.name || !formData.phone}
             className="flex-[2] rounded-xl bg-gradient-to-r from-primary to-gold-600 py-3 text-sm font-semibold text-white shadow-md shadow-gold-300/30 transition-all active:scale-[0.98] disabled:opacity-50"
           >
-            {loading ? 'Saving...' : 'Save Changes'}
+            {loading ? tc('saving') : t('saveChanges')}
           </button>
         </div>
       </div>

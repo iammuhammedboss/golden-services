@@ -45,21 +45,27 @@ export default function FieldJobPage() {
   const [activeTab, setActiveTab] = useState<'feed' | 'photos' | 'checklist' | 'adjust'>('feed')
   const [submitting, setSubmitting] = useState(false)
   const [adjForm, setAdjForm] = useState({ type: 'ADDITION', description: '', quantity: '1', unitPrice: '', reason: '' })
+  const [payments, setPayments] = useState<any>({ payments: [], totalPaid: 0 })
+  const [paymentMethods, setPaymentMethods] = useState<any[]>([])
+  const [showPaymentModal, setShowPaymentModal] = useState(false)
+  const [paymentForm, setPaymentForm] = useState({ amount: '', paymentMethod: '', paymentSubOption: '', receiptUrl: '', notes: '' })
   const params = useParams()
   const jobId = params.id as string
 
   const fetchJob = useCallback(async () => {
     try {
-      const [jobRes, updatesRes, photosRes, adjRes] = await Promise.all([
+      const [jobRes, updatesRes, photosRes, adjRes, payRes] = await Promise.all([
         fetch(`/api/jobs/${jobId}`),
         fetch(`/api/jobs/${jobId}/status-updates`),
         fetch(`/api/jobs/${jobId}/photos`),
         fetch(`/api/jobs/${jobId}/adjustments`),
+        fetch(`/api/jobs/${jobId}/payments`),
       ])
       if (jobRes.ok) setJob(await jobRes.json())
       if (updatesRes.ok) setStatusUpdates(await updatesRes.json())
       if (photosRes.ok) setPhotos(await photosRes.json())
       if (adjRes.ok) setAdjustments(await adjRes.json())
+      if (payRes.ok) setPayments(await payRes.json())
     } catch (error) {
       console.error('Failed to fetch job:', error)
     } finally {
@@ -68,6 +74,11 @@ export default function FieldJobPage() {
   }, [jobId])
 
   useEffect(() => { fetchJob() }, [fetchJob])
+
+  // Fetch payment methods
+  useEffect(() => {
+    fetch('/api/payment-methods').then(r => r.ok ? r.json() : []).then(setPaymentMethods).catch(() => {})
+  }, [])
 
   // Real-time updates for this job
   useRealtimeEvents({
@@ -184,9 +195,18 @@ export default function FieldJobPage() {
               <h2 className="text-lg font-bold">{job.client?.name}</h2>
               <p className="text-sm text-muted-foreground">{job.location || 'No location'}</p>
             </div>
-            <Badge variant={job.status === 'COMPLETED' ? 'outline' : 'default'}>
-              {job.status}
-            </Badge>
+            <div className="flex flex-col items-end gap-1">
+              <Badge variant={job.status === 'COMPLETED' ? 'outline' : 'default'}>
+                {job.status}
+              </Badge>
+              <Badge variant={
+                job.paymentStatus === 'PAID' ? 'outline' :
+                job.paymentStatus === 'PARTIALLY_PAID' ? 'secondary' :
+                'destructive'
+              } className="text-xs">
+                {job.paymentStatus?.replace('_', ' ') || 'UNPAID'}
+              </Badge>
+            </div>
           </div>
           <div className="mt-3 flex gap-4 text-sm text-muted-foreground">
             <span>{formatDate(job.scheduledDate)}</span>

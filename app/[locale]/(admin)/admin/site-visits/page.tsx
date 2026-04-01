@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 import { formatDate, getStatusColor, enumToReadable } from '@/lib/utils'
 
 export default function SiteVisitsPage() {
@@ -11,6 +12,8 @@ export default function SiteVisitsPage() {
   const [filter, setFilter] = useState('ALL')
   const params = useParams()
   const locale = params.locale as string
+  const t = useTranslations('SiteVisits')
+  const tc = useTranslations('Common')
 
   useEffect(() => {
     fetch('/api/site-visits')
@@ -36,8 +39,8 @@ export default function SiteVisitsPage() {
   return (
     <div className="mx-auto max-w-2xl space-y-4 pb-24">
       <div>
-        <h1 className="text-xl font-bold text-gray-900">Site Visits</h1>
-        <p className="text-xs text-gray-400">{counts.ALL} total visits</p>
+        <h1 className="text-xl font-bold text-gray-900">{t('title')}</h1>
+        <p className="text-xs text-gray-400">{counts.ALL} {t('totalVisits')}</p>
       </div>
 
       {/* Filter Strip */}
@@ -95,7 +98,7 @@ export default function SiteVisitsPage() {
           ))
         ) : (
           <div className="py-12 text-center">
-            <p className="text-sm text-gray-400">No site visits found</p>
+            <p className="text-sm text-gray-400">{t('noVisitsFound')}</p>
           </div>
         )}
       </div>

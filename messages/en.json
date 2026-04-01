@@ -92,6 +92,12 @@
     "active": "Active",
     "inactive": "Inactive",
     "status": "Status",
+    "pending": "Pending",
+    "inProgress": "In Progress",
+    "completed": "Completed",
+    "cancelled": "Cancelled",
+    "started": "Started",
+    "address": "Address",
     "amount": "Amount",
     "amountOMR": "Amount (OMR)",
     "date": "Date",
@@ -140,6 +146,7 @@
     "half": "Half",
     "location": "Location",
     "openInMaps": "Open in Maps",
+    "client": "Client",
     "company": "Company",
     "whatsapp": "WhatsApp",
     "newClient": "New",
@@ -308,8 +315,10 @@
     "deleteVisit": "Delete Visit",
     "deleteVisitDesc": "This action cannot be undone.",
     "callClient": "Call Client",
+    "notFound": "Site visit not found",
     "noVisitsFound": "No site visits found",
-    "visitFor": "visits for this client"
+    "visitFor": "visits for this client",
+    "viewProfile": "View Profile"
   },
   "Quotations": {
     "title": "Quotations",
@@ -356,7 +365,9 @@
     "paid": "Paid",
     "overdue": "Overdue",
     "viewEdit": "View / Edit",
-    "invoicesFor": "invoices for this client"
+    "invoicesFor": "invoices for this client",
+    "deleteInvoice": "Delete Invoice",
+    "deleteInvoiceDesc": "Delete invoice \"{number}\"? This cannot be undone."
   },
   "Payments": {
     "title": "Payments",
@@ -389,7 +400,13 @@
     "bankDetailsDesc": "Bank detail templates",
     "newEmployee": "New Employee",
     "editEmployee": "Edit Employee",
-    "addEmployee": "Add Employee"
+    "addEmployee": "Add Employee",
+    "deleteEmployee": "Delete Employee",
+    "deleteEmployeeDesc": "Delete \"{name}\" ({code})?",
+    "codeNameRequired": "Code and name are required",
+    "codePlaceholder": "e.g. JS",
+    "fullNamePlaceholder": "Full name",
+    "noContactInfo": "No contact info"
   },
   "Users": {
     "title": "Users",
