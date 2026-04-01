@@ -53,8 +53,9 @@ export default function CreateClientPage() {
         body: JSON.stringify(formData),
       })
       if (response.ok) {
-        const client = await response.json()
-        router.push(`/${locale}/admin/clients/${client.id}`)
+        const data = await response.json()
+        const newClient = data.client || data
+        router.push(`/${locale}/admin/clients/${newClient.id}`)
       } else {
         const error = await response.json()
         alert(error.error || 'Failed to create client')
