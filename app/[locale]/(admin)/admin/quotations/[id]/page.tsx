@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -25,8 +25,10 @@ export default function QuotationDetailsPage() {
   const [saveError, setSaveError] = useState('')
   const params = useParams()
   const router = useRouter()
+  const searchParams = useSearchParams()
   const locale = params.locale as string
   const id = params.id as string
+  const clientIdParam = searchParams.get('clientId')
 
   useEffect(() => {
     Promise.all([
@@ -43,7 +45,7 @@ export default function QuotationDetailsPage() {
   useEffect(() => {
     if (id === 'new') {
       setQuotation({
-        id: 'new', clientId: '', items: [], vatEnabled: false, vatPercentage: 5,
+        id: 'new', clientId: clientIdParam || '', items: [], vatEnabled: false, vatPercentage: 5,
         discountType: null, discountValue: null, termsTemplateId: '', termsSnapshot: '',
         bankDetailsTemplateId: '', bankDetailsSnapshot: '', isAmc: false, amcFrequency: null,
         amcDurationMonths: null, amcStartDate: null, notes: '',

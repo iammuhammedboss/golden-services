@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -21,7 +21,9 @@ import { AddClientDialog } from '@/components/add-client-dialog'
 export default function NewJobPage() {
   const params = useParams()
   const router = useRouter()
+  const searchParams = useSearchParams()
   const locale = (params.locale as string) || 'en'
+  const clientIdParam = searchParams.get('clientId')
 
   const [clients, setClients] = useState<Client[]>([])
 const [quotations, setQuotations] = useState<QuotationWithClient[]>([]);
@@ -31,7 +33,7 @@ const [quotations, setQuotations] = useState<QuotationWithClient[]>([]);
   const [loading, setLoading] = useState(false)
 
   const [formData, setFormData] = useState({
-    clientId: '',
+    clientId: clientIdParam || '',
     quotationId: '',
     scheduledDate: '',
     scheduledStartTime: '',

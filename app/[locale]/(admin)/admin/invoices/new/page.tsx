@@ -131,6 +131,11 @@ function NewInvoiceForm() {
       if (jobIdFromUrl && fetchedJobs?.find((j: JobOrderWithClient) => j.id === jobIdFromUrl)) {
         handleJobChange(jobIdFromUrl)
       }
+      // Auto-fill client from URL param
+      const clientIdFromUrl = searchParams.get('clientId')
+      if (clientIdFromUrl) {
+        setFormData(prev => ({ ...prev, clientId: clientIdFromUrl }))
+      }
     })
   }, [searchParams, handleJobChange])
 
