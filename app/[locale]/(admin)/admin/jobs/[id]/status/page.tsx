@@ -255,6 +255,20 @@ export default function JobStatusPaymentPage() {
                   <svg className="h-4 w-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
                   <span className="text-xs font-semibold text-green-700">Job completed - awaiting verification</span>
                 </div>
+
+                {/* Payment prompt — show right after job finishes */}
+                <div className="rounded-xl border border-amber-200 bg-amber-50 p-3">
+                  <div className="flex items-center gap-2">
+                    <svg className="h-4 w-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" /></svg>
+                    <span className="text-xs font-semibold text-amber-700">Payment: {amountDue > 0 ? `${formatCurrency(amountDue)} due` : 'Fully paid'}</span>
+                  </div>
+                  {amountDue > 0 && (
+                    <button onClick={() => setActiveTab('payment')} className="mt-2 w-full rounded-lg bg-amber-600 py-2 text-xs font-semibold text-white active:scale-[0.98]">
+                      Collect Payment
+                    </button>
+                  )}
+                </div>
+
                 <div className="grid grid-cols-2 gap-3">
                   <button onClick={() => postStatus('DEPARTED_SITE')} disabled={submitting}
                     className="rounded-2xl border-2 border-purple-200 bg-purple-50 py-4 text-sm font-bold text-purple-700 active:scale-95 disabled:opacity-50">
@@ -278,18 +292,118 @@ export default function JobStatusPaymentPage() {
         </div>
       )}
 
-      {/* Completed/Cancelled State */}
+      {/* Completed/Cancelled State — show status + payment inline */}
       {activeTab === 'status' && (isCompleted || isCancelled) && (
-        <div className="rounded-2xl border border-gray-100 bg-white p-6 text-center shadow-sm">
-          <div className={`mx-auto flex h-16 w-16 items-center justify-center rounded-full ${isCompleted ? 'bg-green-50' : 'bg-red-50'}`}>
-            {isCompleted ? (
-              <svg className="h-8 w-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-            ) : (
-              <svg className="h-8 w-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-            )}
+        <div className="space-y-4">
+          {/* Status banner */}
+          <div className="rounded-2xl border border-gray-100 bg-white p-5 text-center shadow-sm">
+            <div className={`mx-auto flex h-14 w-14 items-center justify-center rounded-full ${isCompleted ? 'bg-green-50' : 'bg-red-50'}`}>
+              {isCompleted ? (
+                <svg className="h-7 w-7 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+              ) : (
+                <svg className="h-7 w-7 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              )}
+            </div>
+            <h3 className="mt-2 text-base font-bold text-gray-900">{isCompleted ? 'Job Completed' : 'Job Cancelled'}</h3>
           </div>
-          <h3 className="mt-3 text-lg font-bold text-gray-900">{isCompleted ? 'Job Completed' : 'Job Cancelled'}</h3>
-          <p className="mt-1 text-xs text-gray-400">{isCompleted ? 'This job has been finished successfully.' : 'This job has been cancelled.'}</p>
+
+          {/* Payment Status Card — always visible after job ends */}
+          <div className="rounded-2xl border border-gray-100 bg-white shadow-sm">
+            <div className="border-b border-gray-50 px-4 py-3">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-400">Payment Status</h3>
+            </div>
+            <div className="p-4 space-y-4">
+              {/* Summary */}
+              <div className="grid grid-cols-3 gap-2">
+                <div className="rounded-xl border border-gray-100 bg-gray-50 p-2 text-center">
+                  <p className="text-[9px] font-medium uppercase tracking-wider text-gray-400">Total</p>
+                  <p className="mt-0.5 text-sm font-bold text-gray-800">{formatCurrency(quotationTotal)}</p>
+                </div>
+                <div className="rounded-xl border border-green-100 bg-green-50 p-2 text-center">
+                  <p className="text-[9px] font-medium uppercase tracking-wider text-gray-400">Paid</p>
+                  <p className="mt-0.5 text-sm font-bold text-green-700">{formatCurrency(payments.totalPaid)}</p>
+                </div>
+                <div className={`rounded-xl border p-2 text-center ${amountDue > 0 ? 'border-red-100 bg-red-50' : 'border-green-100 bg-green-50'}`}>
+                  <p className="text-[9px] font-medium uppercase tracking-wider text-gray-400">Due</p>
+                  <p className={`mt-0.5 text-sm font-bold ${amountDue > 0 ? 'text-red-700' : 'text-green-700'}`}>{formatCurrency(amountDue)}</p>
+                </div>
+              </div>
+
+              {/* Progress bar */}
+              {quotationTotal > 0 && (
+                <div>
+                  <div className="flex justify-between text-[10px] text-gray-400">
+                    <span>Payment progress</span>
+                    <span>{Math.min(100, Math.round((payments.totalPaid / quotationTotal) * 100))}%</span>
+                  </div>
+                  <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-gray-100">
+                    <div className="h-full rounded-full bg-green-500 transition-all" style={{ width: `${Math.min(100, (payments.totalPaid / quotationTotal) * 100)}%` }} />
+                  </div>
+                </div>
+              )}
+
+              {/* Paid badge or Add Payment */}
+              {amountDue <= 0 ? (
+                <div className="flex items-center justify-center gap-2 rounded-xl bg-green-50 py-3">
+                  <svg className="h-4 w-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                  <span className="text-sm font-semibold text-green-700">Fully Paid</span>
+                </div>
+              ) : !showPaymentForm ? (
+                <button onClick={() => setShowPaymentForm(true)} className="w-full rounded-xl bg-gradient-to-r from-primary to-gold-600 py-3 text-sm font-semibold text-white shadow-md shadow-gold-300/30 active:scale-[0.98]">
+                  + Record Payment
+                </button>
+              ) : (
+                <div className="space-y-3 rounded-xl border border-gray-100 bg-gray-50/50 p-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-gray-700">Record Payment</span>
+                    <button onClick={() => { setShowPaymentForm(false); setPaymentError('') }} className="text-[10px] text-gray-400">Cancel</button>
+                  </div>
+                  {paymentError && <div className="rounded-lg bg-red-50 px-2 py-1.5 text-[10px] text-red-600">{paymentError}</div>}
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-0.5"><Label className="text-[10px] text-gray-400">Amount *</Label><Input type="number" step="0.001" value={paymentForm.amount} onChange={(e) => setPaymentForm({ ...paymentForm, amount: e.target.value })} placeholder="0.000" className="rounded-lg h-9 text-sm" /></div>
+                    <div className="space-y-0.5"><Label className="text-[10px] text-gray-400">Method *</Label>
+                      <Select value={paymentForm.paymentMethod} onValueChange={(v) => setPaymentForm({ ...paymentForm, paymentMethod: v, paymentSubOption: '' })}>
+                        <SelectTrigger className="rounded-lg h-9 text-sm"><SelectValue placeholder="Select..." /></SelectTrigger>
+                        <SelectContent>{paymentMethods.map((m: any) => <SelectItem key={m.id} value={m.name}>{m.name}</SelectItem>)}</SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  {selectedMethod?.subOptions?.length > 0 && (
+                    <Select value={paymentForm.paymentSubOption} onValueChange={(v) => setPaymentForm({ ...paymentForm, paymentSubOption: v })}>
+                      <SelectTrigger className="rounded-lg h-9 text-sm"><SelectValue placeholder="Transfer to..." /></SelectTrigger>
+                      <SelectContent>{selectedMethod.subOptions.map((s: any) => <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>)}</SelectContent>
+                    </Select>
+                  )}
+                  {amountDue > 0 && (
+                    <div className="flex gap-1.5">
+                      <button onClick={() => setPaymentForm({ ...paymentForm, amount: amountDue.toFixed(3) })} className="rounded-md border bg-white px-2 py-1 text-[10px] font-medium text-gray-600 active:scale-95">Full ({formatCurrency(amountDue)})</button>
+                    </div>
+                  )}
+                  <button onClick={handlePayment} disabled={submitting || !paymentForm.amount || !paymentForm.paymentMethod}
+                    className="w-full rounded-lg bg-green-600 py-2.5 text-xs font-semibold text-white active:scale-[0.98] disabled:opacity-50">
+                    {submitting ? 'Recording...' : 'Record Payment'}
+                  </button>
+                </div>
+              )}
+
+              {/* Recent payments */}
+              {payments.payments.length > 0 && (
+                <div className="space-y-1.5">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">History</p>
+                  {payments.payments.map((p: any) => (
+                    <div key={p.id} className="flex items-center justify-between rounded-lg bg-gray-50 px-2.5 py-2">
+                      <div>
+                        <span className="text-xs font-medium text-gray-700">{p.paymentMethod}</span>
+                        {p.paymentSubOption && <span className="text-[10px] text-gray-400"> ({p.paymentSubOption})</span>}
+                        <p className="text-[10px] text-gray-300">{p.recordedBy?.name} &middot; {formatDate(p.createdAt, 'PP')}</p>
+                      </div>
+                      <span className="text-xs font-bold text-green-600">+{formatCurrency(Number(p.amount))}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       )}
 
