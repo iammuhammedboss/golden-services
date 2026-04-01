@@ -2,21 +2,13 @@
 
 import { useState, useEffect } from 'react'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
-import { Button } from '@/components/ui/button'
+import Link from 'next/link'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Client, User, MaterialMaster, EquipmentMaster } from '@prisma/client'
-import { QuotationWithClient } from '@/types/schedule'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { AddClientDialog } from '@/components/add-client-dialog'
+import { Button } from '@/components/ui/button'
 
 export default function NewJobPage() {
   const params = useParams()
@@ -25,11 +17,11 @@ export default function NewJobPage() {
   const locale = (params.locale as string) || 'en'
   const clientIdParam = searchParams.get('clientId')
 
-  const [clients, setClients] = useState<Client[]>([])
-const [quotations, setQuotations] = useState<QuotationWithClient[]>([]);
-  const [users, setUsers] = useState<User[]>([])
-  const [materials, setMaterials] = useState<MaterialMaster[]>([])
-  const [equipment, setEquipment] = useState<EquipmentMaster[]>([]);
+  const [clients, setClients] = useState<any[]>([])
+  const [quotations, setQuotations] = useState<any[]>([])
+  const [users, setUsers] = useState<any[]>([])
+  const [materials, setMaterials] = useState<any[]>([])
+  const [equipment, setEquipment] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
 
   const [formData, setFormData] = useState({
@@ -41,8 +33,6 @@ const [quotations, setQuotations] = useState<QuotationWithClient[]>([]);
     status: 'SCHEDULED',
     notes: '',
     location: '',
-    isMultiDay: false,
-    endDate: '',
     durationDays: 0,
     durationHours: 0,
     durationMinutes: 0,
@@ -52,534 +42,207 @@ const [quotations, setQuotations] = useState<QuotationWithClient[]>([]);
   })
 
   useEffect(() => {
-    fetchClients()
-    fetchUsers()
-    fetchMaterials()
-    fetchEquipment()
+    Promise.all([
+      fetch('/api/clients').then(r => r.ok ? r.json() : []),
+      fetch('/api/users').then(r => r.ok ? r.json() : []),
+      fetch('/api/masters/materials').then(r => r.ok ? r.json() : []),
+      fetch('/api/masters/equipment').then(r => r.ok ? r.json() : []),
+    ]).then(([c, u, m, e]) => { setClients(c); setUsers(u); setMaterials(m); setEquipment(e) }).catch(() => {})
   }, [])
 
   useEffect(() => {
     if (formData.clientId) {
-      fetchQuotations(formData.clientId)
-    } else {
-      setQuotations([])
-    }
+      fetch(`/api/quotations?clientId=${formData.clientId}`).then(r => r.ok ? r.json() : []).then(d => setQuotations(Array.isArray(d) ? d : d.quotations || [])).catch(() => {})
+    } else { setQuotations([]) }
   }, [formData.clientId])
 
-  const fetchClients = async () => {
-    try {
-      const response = await fetch('/api/clients')
-      if (response.ok) {
-        const data = await response.json()
-        setClients(data)
-      }
-    } catch (error) {
-      console.error('Error fetching clients:', error)
-    }
-  }
-
-  const fetchUsers = async () => {
-    try {
-      const response = await fetch('/api/users')
-      if (response.ok) {
-        const data = await response.json()
-        setUsers(data)
-      }
-    } catch (error) {
-      console.error('Error fetching users:', error)
-    }
-  }
-
-  const fetchMaterials = async () => {
-    try {
-      const response = await fetch('/api/masters/materials')
-      if (response.ok) {
-        const data = await response.json()
-        setMaterials(data)
-      }
-    } catch (error) {
-      console.error('Error fetching materials:', error)
-    }
-  }
-
-  const fetchEquipment = async () => {
-    try {
-      const response = await fetch('/api/masters/equipment')
-      if (response.ok) {
-        const data = await response.json()
-        setEquipment(data)
-      }
-    } catch (error) {
-      console.error('Error fetching equipment:', error)
-    }
-  }
-
+  // Auto-calculate end time
   useEffect(() => {
     if (formData.scheduledDate && formData.scheduledStartTime) {
-      const startDateTime = new Date(`${formData.scheduledDate}T${formData.scheduledStartTime}`);
-      const durationMillis =
-        (formData.durationDays * 24 * 60 * 60 +
-          formData.durationHours * 60 * 60 +
-          formData.durationMinutes * 60) *
-        1000;
-      
-      if (durationMillis > 0) {
-        const endDateTime = new Date(startDateTime.getTime() + durationMillis);
-        
-        setFormData(prevData => ({
-          ...prevData,
-          scheduledEndTime: endDateTime.toTimeString().slice(0, 5),
-          endDate: endDateTime.toISOString().slice(0, 10),
-          isMultiDay: endDateTime.getDate() !== startDateTime.getDate(),
-        }));
+      const start = new Date(`${formData.scheduledDate}T${formData.scheduledStartTime}`)
+      const ms = (formData.durationDays * 86400 + formData.durationHours * 3600 + formData.durationMinutes * 60) * 1000
+      if (ms > 0) {
+        const end = new Date(start.getTime() + ms)
+        setFormData(prev => ({ ...prev, scheduledEndTime: end.toTimeString().slice(0, 5) }))
       }
     }
-  }, [
-    formData.scheduledDate,
-    formData.scheduledStartTime,
-    formData.durationDays,
-    formData.durationHours,
-    formData.durationMinutes,
-  ]);
+  }, [formData.scheduledDate, formData.scheduledStartTime, formData.durationDays, formData.durationHours, formData.durationMinutes])
 
-  const fetchQuotations = async (clientId: string) => {
-    try {
-      const response = await fetch(`/api/quotations?clientId=${clientId}`)
-      if (response.ok) {
-        const data = await response.json()
-        setQuotations(data)
-      }
-    } catch (error) {
-      console.error('Error fetching quotations:', error)
-    }
-  }
-
-  const handleAssignmentChange = (index: number, field: string, value: string) => {
-    const newAssignments = [...formData.assignments];
-    newAssignments[index] = { ...newAssignments[index], [field]: value };
-    setFormData({ ...formData, assignments: newAssignments });
-  };
-
-  const addAssignment = () => {
-    setFormData({
-      ...formData,
-      assignments: [...formData.assignments, { userId: '', roleInJob: 'TECHNICIAN' }],
-    });
-  };
-
-  const removeAssignment = (index: number) => {
-    const newAssignments = formData.assignments.filter((_, i) => i !== index);
-    setFormData({ ...formData, assignments: newAssignments });
-  };
-
-  const handleMaterialChange = (index: number, field: string, value: string | number) => {
-    const newMaterials = [...formData.jobMaterials];
-    newMaterials[index] = { ...newMaterials[index], [field]: value };
-    setFormData({ ...formData, jobMaterials: newMaterials });
-  };
-
-  const addMaterial = () => {
-    setFormData({
-      ...formData,
-      jobMaterials: [...formData.jobMaterials, { materialId: '', quantity: 1 }],
-    });
-  };
-
-  const removeMaterial = (index: number) => {
-    const newMaterials = formData.jobMaterials.filter((_, i) => i !== index);
-    setFormData({ ...formData, jobMaterials: newMaterials });
-  };
-
-  const handleEquipmentChange = (index: number, field: string, value: string | number) => {
-    const newEquipment = [...formData.equipment];
-    newEquipment[index] = { ...newEquipment[index], [field]: value };
-    setFormData({ ...formData, equipment: newEquipment });
-  };
-
-  const addEquipment = () => {
-    setFormData({
-      ...formData,
-      equipment: [...formData.equipment, { equipmentId: '', quantity: 1 }],
-    });
-  };
-
-  const removeEquipment = (index: number) => {
-    const newEquipment = formData.equipment.filter((_, i) => i !== index);
-    setFormData({ ...formData, equipment: newEquipment });
-  };
-
-  const onClientCreated = () => {
-    fetchClients();
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-
-    if (!formData.clientId || !formData.scheduledDate) {
-      alert('Please fill in all required fields')
-      return
-    }
-
+  const handleSubmit = async () => {
+    if (!formData.clientId || !formData.scheduledDate) return
     setLoading(true)
-
     try {
-      const response = await fetch('/api/jobs', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...formData,
-          quotationId: formData.quotationId || null,
-          assignments: formData.assignments,
-          jobMaterials: formData.jobMaterials,
-          equipment: formData.equipment,
-        }),
+      const res = await fetch('/api/jobs', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...formData, quotationId: formData.quotationId || null }),
       })
-
-      if (response.ok) {
-        const job = await response.json()
-        router.push(`/${locale}/admin/jobs/${job.id}`)
-      } else {
-        const error = await response.json()
-        alert(error.error || 'Failed to create job order')
-      }
-    } catch (error) {
-      console.error('Error creating job order:', error)
-      alert('Failed to create job order')
-    } finally {
-      setLoading(false)
-    }
+      if (res.ok) { const job = await res.json(); router.push(`/${locale}/admin/jobs/${job.id}/status`) }
+      else { const err = await res.json(); alert(err.error || 'Failed to create job') }
+    } catch { alert('Failed to create job') }
+    finally { setLoading(false) }
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Create New Job Order</h1>
-          <p className="text-muted-foreground">Schedule a new job for your client</p>
-        </div>
-        <Button
-          variant="outline"
-          onClick={() => router.push(`/${locale}/admin/jobs`)}
-        >
-          Cancel
-        </Button>
+    <div className="mx-auto max-w-2xl pb-24">
+      <div className="mb-5">
+        <h1 className="text-xl font-bold text-gray-900">New Job Order</h1>
+        <p className="text-xs text-gray-400">Schedule a new job for your client</p>
       </div>
 
-      <form onSubmit={handleSubmit}>
-        <div className="grid gap-6">
-          {/* Job Details */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Job Details</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="clientId">Client *</Label>
-                  <div className="flex items-center gap-2">
-                    <Select
-                      value={formData.clientId}
-                      onValueChange={(value) => {
-                        setFormData({
-                          ...formData,
-                          clientId: value,
-                          quotationId: '',
-                        })
-                      }}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select client" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {clients.map((client) => (
-                          <SelectItem key={client.id} value={client.id}>
-                            {client.name} - {client.phone}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <AddClientDialog onClientCreated={onClientCreated}>
-                      <Button type="button" variant="outline">New</Button>
-                    </AddClientDialog>
-                  </div>
-                </div>
+      <div className="space-y-4">
+        {/* Job Details */}
+        <Section title="Job Details">
+          <FormField label="Client" required>
+            <div className="flex gap-2">
+              <Select value={formData.clientId} onValueChange={(v) => setFormData({ ...formData, clientId: v, quotationId: '' })}>
+                <SelectTrigger className="rounded-xl flex-1"><SelectValue placeholder="Select client..." /></SelectTrigger>
+                <SelectContent>{clients.map((c: any) => <SelectItem key={c.id} value={c.id}>{c.name} - {c.phone}</SelectItem>)}</SelectContent>
+              </Select>
+              <AddClientDialog onClientCreated={() => fetch('/api/clients').then(r => r.ok ? r.json() : []).then(setClients)}>
+                <Button type="button" variant="outline" className="rounded-xl shrink-0">New</Button>
+              </AddClientDialog>
+            </div>
+          </FormField>
+          <FormField label="Quotation">
+            <Select value={formData.quotationId || '__NONE__'} onValueChange={(v) => setFormData({ ...formData, quotationId: v === '__NONE__' ? '' : v })} disabled={!formData.clientId}>
+              <SelectTrigger className="rounded-xl"><SelectValue placeholder="Select quotation..." /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__NONE__">None</SelectItem>
+                {quotations.map((q: any) => <SelectItem key={q.id} value={q.id}>{q.quotationNumber || q.id} ({q.status})</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </FormField>
+          <FormField label="Location">
+            <Input value={formData.location} onChange={(e) => setFormData({ ...formData, location: e.target.value })} placeholder="Job location" className="rounded-xl" />
+          </FormField>
+        </Section>
 
-                
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="quotationId">Quotation (Optional)</Label>
-                <Select
-                  value={formData.quotationId}
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, quotationId: value })
-                  }
-                  disabled={!formData.clientId}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select quotation" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {quotations.map((quotation) => (
-                      <SelectItem key={quotation.id} value={quotation.id}>
-                        {quotation.client.name} - ({quotation.status})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="location">Location</Label>
-                <Input
-                  id="location"
-                  value={formData.location}
-                  onChange={(e) =>
-                    setFormData({ ...formData, location: e.target.value })
-                  }
-                  placeholder="e.g., Client's home address"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="status">Status</Label>
-                <Select
-                  value={formData.status}
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, status: value })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="SCHEDULED">Scheduled</SelectItem>
-                    <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
-                    <SelectItem value="COMPLETED">Completed</SelectItem>
-                    <SelectItem value="CANCELLED">Cancelled</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Schedule */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Schedule & Duration</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="scheduledDate">Scheduled Date *</Label>
-                  <Input
-                    id="scheduledDate"
-                    type="date"
-                    value={formData.scheduledDate}
-                    onChange={(e) =>
-                      setFormData({ ...formData, scheduledDate: e.target.value })
-                    }
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="scheduledStartTime">Start Time (Optional)</Label>
-                  <Input
-                    id="scheduledStartTime"
-                    type="time"
-                    value={formData.scheduledStartTime}
-                    onChange={(e) =>
-                      setFormData({ ...formData, scheduledStartTime: e.target.value })
-                    }
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label>Expected Duration</Label>
-                <div className="grid grid-cols-3 gap-2">
-                  <Input
-                    type="number"
-                    placeholder="Days"
-                    value={formData.durationDays || ''}
-                    onChange={(e) => setFormData({ ...formData, durationDays: parseInt(e.target.value) || 0 })}
-                  />
-                  <Input
-                    type="number"
-                    placeholder="Hours"
-                    value={formData.durationHours || ''}
-                    onChange={(e) => setFormData({ ...formData, durationHours: parseInt(e.target.value) || 0 })}
-                  />
-                  <Input
-                    type="number"
-                    placeholder="Minutes"
-                    value={formData.durationMinutes || ''}
-                    onChange={(e) => setFormData({ ...formData, durationMinutes: parseInt(e.target.value) || 0 })}
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="endDate">End Date</Label>
-                  <Input
-                    id="endDate"
-                    type="date"
-                    value={formData.endDate}
-                    disabled
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="scheduledEndTime">End Time</Label>
-                  <Input
-                    id="scheduledEndTime"
-                    type="time"
-                    value={formData.scheduledEndTime}
-                    disabled
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Assigned Staff */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Assigned Staff</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {formData.assignments.map((assignment, index) => (
-                <div key={index} className="grid grid-cols-3 gap-2 items-center">
-                  <Select
-                    value={assignment.userId}
-                    onValueChange={(value) => handleAssignmentChange(index, 'userId', value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Staff" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {users.map((user) => (
-                        <SelectItem key={user.id} value={user.id}>{user.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Select
-                    value={assignment.roleInJob}
-                    onValueChange={(value) => handleAssignmentChange(index, 'roleInJob', value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Role" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="TECHNICIAN">Technician</SelectItem>
-                      <SelectItem value="SUPERVISOR">Supervisor</SelectItem>
-                      <SelectItem value="DRIVER">Driver</SelectItem>
-                      <SelectItem value="OTHER">Other</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Button type="button" variant="ghost" onClick={() => removeAssignment(index)}>Remove</Button>
-                </div>
-              ))}
-              <Button type="button" variant="outline" onClick={addAssignment}>Add Assignee</Button>
-            </CardContent>
-          </Card>
-
-          {/* Materials */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Materials</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {formData.jobMaterials.map((material, index) => (
-                <div key={index} className="grid grid-cols-3 gap-2 items-center">
-                  <Select
-                    value={material.materialId}
-                    onValueChange={(value) => handleMaterialChange(index, 'materialId', value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Material" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {materials.map((mat) => (
-                        <SelectItem key={mat.id} value={mat.id}>{mat.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Input
-                    type="number"
-                    value={material.quantity}
-                    onChange={(e) => handleMaterialChange(index, 'quantity', parseInt(e.target.value) || 0)}
-                    placeholder="Quantity"
-                  />
-                  <Button type="button" variant="ghost" onClick={() => removeMaterial(index)}>Remove</Button>
-                </div>
-              ))}
-              <Button type="button" variant="outline" onClick={addMaterial}>Add Material</Button>
-            </CardContent>
-          </Card>
-
-          {/* Equipment */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Equipment</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {formData.equipment.map((eq, index) => (
-                <div key={index} className="grid grid-cols-3 gap-2 items-center">
-                  <Select
-                    value={eq.equipmentId}
-                    onValueChange={(value) => handleEquipmentChange(index, 'equipmentId', value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Equipment" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {equipment.map((equip) => (
-                        <SelectItem key={equip.id} value={equip.id}>{equip.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Input
-                    type="number"
-                    value={eq.quantity}
-                    onChange={(e) => handleEquipmentChange(index, 'quantity', parseInt(e.target.value) || 0)}
-                    placeholder="Quantity"
-                  />
-                  <Button type="button" variant="ghost" onClick={() => removeEquipment(index)}>Remove</Button>
-                </div>
-              ))}
-              <Button type="button" variant="outline" onClick={addEquipment}>Add Equipment</Button>
-            </CardContent>
-          </Card>
-
-          <div className="space-y-2">
-            <Label htmlFor="notes">Notes (Optional)</Label>
-            <Textarea
-              id="notes"
-              value={formData.notes}
-              onChange={(e) =>
-                setFormData({ ...formData, notes: e.target.value })
-              }
-              placeholder="Add any additional notes or special instructions..."
-              rows={3}
-            />
+        {/* Schedule */}
+        <Section title="Schedule & Duration">
+          <div className="grid grid-cols-2 gap-3">
+            <FormField label="Date" required>
+              <Input type="date" value={formData.scheduledDate} onChange={(e) => setFormData({ ...formData, scheduledDate: e.target.value })} className="rounded-xl" required />
+            </FormField>
+            <FormField label="Start Time">
+              <Input type="time" value={formData.scheduledStartTime} onChange={(e) => setFormData({ ...formData, scheduledStartTime: e.target.value })} className="rounded-xl" />
+            </FormField>
           </div>
-
-          {/* Submit Button */}
-          <div className="flex justify-end gap-4 pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => router.push(`/${locale}/admin/jobs`)}
-              disabled={loading}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={loading}>
-              {loading ? 'Creating...' : 'Create Job Order'}
-            </Button>
+          <div>
+            <Label className="text-xs text-gray-500">Expected Duration</Label>
+            <div className="grid grid-cols-3 gap-2 mt-1">
+              <Input type="number" placeholder="Days" value={formData.durationDays || ''} onChange={(e) => setFormData({ ...formData, durationDays: parseInt(e.target.value) || 0 })} className="rounded-xl" />
+              <Input type="number" placeholder="Hours" value={formData.durationHours || ''} onChange={(e) => setFormData({ ...formData, durationHours: parseInt(e.target.value) || 0 })} className="rounded-xl" />
+              <Input type="number" placeholder="Min" value={formData.durationMinutes || ''} onChange={(e) => setFormData({ ...formData, durationMinutes: parseInt(e.target.value) || 0 })} className="rounded-xl" />
+            </div>
           </div>
+          {formData.scheduledEndTime && (
+            <p className="text-xs text-gray-400">End time: {formData.scheduledEndTime}</p>
+          )}
+        </Section>
+
+        {/* Staff */}
+        <Section title={`Staff (${formData.assignments.length})`}>
+          {formData.assignments.map((a, i) => (
+            <div key={i} className="flex items-center gap-2 rounded-xl border border-gray-100 bg-gray-50/50 p-2.5">
+              <Select value={a.userId} onValueChange={(v) => { const n = [...formData.assignments]; n[i] = { ...n[i], userId: v }; setFormData({ ...formData, assignments: n }) }}>
+                <SelectTrigger className="rounded-xl flex-1"><SelectValue placeholder="Staff..." /></SelectTrigger>
+                <SelectContent>{users.map((u: any) => <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>)}</SelectContent>
+              </Select>
+              <Select value={a.roleInJob} onValueChange={(v) => { const n = [...formData.assignments]; n[i] = { ...n[i], roleInJob: v }; setFormData({ ...formData, assignments: n }) }}>
+                <SelectTrigger className="rounded-xl w-28"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="SUPERVISOR">Supervisor</SelectItem>
+                  <SelectItem value="CLEANER">Cleaner</SelectItem>
+                  <SelectItem value="TECHNICIAN">Technician</SelectItem>
+                  <SelectItem value="DRIVER">Driver</SelectItem>
+                  <SelectItem value="OTHER">Other</SelectItem>
+                </SelectContent>
+              </Select>
+              <button onClick={() => { const n = formData.assignments.filter((_, j) => j !== i); setFormData({ ...formData, assignments: n }) }} className="text-red-400 hover:text-red-600">
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+          ))}
+          <button onClick={() => setFormData({ ...formData, assignments: [...formData.assignments, { userId: '', roleInJob: 'CLEANER' }] })}
+            className="w-full rounded-xl border border-dashed border-gray-300 py-2.5 text-xs font-medium text-gray-500 hover:bg-gray-50 active:scale-[0.98]">
+            + Add Staff
+          </button>
+        </Section>
+
+        {/* Materials */}
+        <Section title={`Materials (${formData.jobMaterials.length})`}>
+          {formData.jobMaterials.map((m, i) => (
+            <div key={i} className="flex items-center gap-2 rounded-xl border border-gray-100 bg-gray-50/50 p-2.5">
+              <Select value={m.materialId} onValueChange={(v) => { const n = [...formData.jobMaterials]; n[i] = { ...n[i], materialId: v }; setFormData({ ...formData, jobMaterials: n }) }}>
+                <SelectTrigger className="rounded-xl flex-1"><SelectValue placeholder="Material..." /></SelectTrigger>
+                <SelectContent>{materials.map((mat: any) => <SelectItem key={mat.id} value={mat.id}>{mat.name}</SelectItem>)}</SelectContent>
+              </Select>
+              <Input type="number" className="rounded-xl w-20" value={m.quantity} onChange={(e) => { const n = [...formData.jobMaterials]; n[i] = { ...n[i], quantity: parseInt(e.target.value) || 0 }; setFormData({ ...formData, jobMaterials: n }) }} />
+              <button onClick={() => setFormData({ ...formData, jobMaterials: formData.jobMaterials.filter((_, j) => j !== i) })} className="text-red-400 hover:text-red-600">
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+          ))}
+          <button onClick={() => setFormData({ ...formData, jobMaterials: [...formData.jobMaterials, { materialId: '', quantity: 1 }] })}
+            className="w-full rounded-xl border border-dashed border-gray-300 py-2.5 text-xs font-medium text-gray-500 hover:bg-gray-50 active:scale-[0.98]">
+            + Add Material
+          </button>
+        </Section>
+
+        {/* Equipment */}
+        <Section title={`Equipment (${formData.equipment.length})`}>
+          {formData.equipment.map((eq, i) => (
+            <div key={i} className="flex items-center gap-2 rounded-xl border border-gray-100 bg-gray-50/50 p-2.5">
+              <Select value={eq.equipmentId} onValueChange={(v) => { const n = [...formData.equipment]; n[i] = { ...n[i], equipmentId: v }; setFormData({ ...formData, equipment: n }) }}>
+                <SelectTrigger className="rounded-xl flex-1"><SelectValue placeholder="Equipment..." /></SelectTrigger>
+                <SelectContent>{equipment.map((e: any) => <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>)}</SelectContent>
+              </Select>
+              <Input type="number" className="rounded-xl w-20" value={eq.quantity} onChange={(e) => { const n = [...formData.equipment]; n[i] = { ...n[i], quantity: parseInt(e.target.value) || 0 }; setFormData({ ...formData, equipment: n }) }} />
+              <button onClick={() => setFormData({ ...formData, equipment: formData.equipment.filter((_, j) => j !== i) })} className="text-red-400 hover:text-red-600">
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+          ))}
+          <button onClick={() => setFormData({ ...formData, equipment: [...formData.equipment, { equipmentId: '', quantity: 1 }] })}
+            className="w-full rounded-xl border border-dashed border-gray-300 py-2.5 text-xs font-medium text-gray-500 hover:bg-gray-50 active:scale-[0.98]">
+            + Add Equipment
+          </button>
+        </Section>
+
+        {/* Notes */}
+        <Section title="Notes">
+          <Textarea value={formData.notes} onChange={(e) => setFormData({ ...formData, notes: e.target.value })} placeholder="Special instructions..." rows={3} className="rounded-xl text-sm" />
+        </Section>
+      </div>
+
+      {/* Sticky Save */}
+      <div className="fixed bottom-0 left-0 right-0 z-20 border-t border-gray-100 bg-white/90 px-4 py-3 backdrop-blur-sm">
+        <div className="mx-auto flex max-w-2xl gap-2">
+          <Link href={`/${locale}/admin/jobs`} className="flex-1 rounded-xl border border-gray-200 bg-white py-3 text-center text-sm font-medium text-gray-600 active:scale-[0.98]">Cancel</Link>
+          <button onClick={handleSubmit} disabled={loading || !formData.clientId || !formData.scheduledDate}
+            className="flex-[2] rounded-xl bg-gradient-to-r from-primary to-gold-600 py-3 text-sm font-semibold text-white shadow-md shadow-gold-300/30 active:scale-[0.98] disabled:opacity-50">
+            {loading ? 'Creating...' : 'Create Job'}
+          </button>
         </div>
-      </form>
+      </div>
     </div>
   )
 }
 
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="rounded-2xl border border-gray-100 bg-white shadow-sm">
+      <div className="border-b border-gray-50 px-4 py-3"><h3 className="text-xs font-semibold uppercase tracking-wider text-gray-400">{title}</h3></div>
+      <div className="space-y-3 p-4">{children}</div>
+    </div>
+  )
+}
+
+function FormField({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
+  return (
+    <div className="space-y-1">
+      <Label className="text-xs font-medium text-gray-500">{label} {required && <span className="text-red-400">*</span>}</Label>
+      {children}
+    </div>
+  )
+}

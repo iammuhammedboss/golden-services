@@ -1,77 +1,31 @@
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { prisma } from '@/lib/prisma'
-import { formatDate, enumToReadable } from '@/lib/utils'
+import { formatDate, enumToReadable, getInitials } from '@/lib/utils'
 import { redirect } from 'next/navigation'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import Link from 'next/link'
 import { AddUserDialog } from '@/components/add-user-dialog'
 
-export default async function UsersPage() {
-  // Check authentication and authorization
+export default async function UsersPage({ params }: { params: { locale: string } }) {
   const session = await getServerSession(authOptions)
+  if (!session?.user) redirect(`/${params.locale}/login`)
 
-  if (!session?.user) {
-    redirect('/login')
-  }
-
-  // Fetch user with roles
-  // Note: We cast to 'any' to avoid TS errors if types/next-auth.d.ts isn't set up yet
   const userId = session.user.id
-
   const currentUser = await prisma.user.findUnique({
     where: { id: userId },
-    include: {
-      roles: {
-        include: {
-          role: true,
-        },
-      },
-    },
+    include: { roles: { include: { role: true } } },
   })
 
-  // Check if user has OWNER or OPERATIONS_MANAGER role
   const userRoles = currentUser?.roles.map((r) => r.role.name) || []
-  const hasAccess = userRoles.includes('OWNER') || userRoles.includes('OPERATIONS_MANAGER')
-
-  if (!hasAccess) {
-    redirect('/admin/dashboard')
+  if (!userRoles.includes('OWNER') && !userRoles.includes('OPERATIONS_MANAGER')) {
+    redirect(`/${params.locale}/admin/dashboard`)
   }
 
-  // Fetch all users with their roles
   const users = await prisma.user.findMany({
-    orderBy: {
-      createdAt: 'desc',
-    },
+    orderBy: { createdAt: 'desc' },
     include: {
-      roles: {
-        include: {
-          role: {
-            select: {
-              name: true,
-              description: true,
-            },
-          },
-        },
-      },
-      _count: {
-        select: {
-          // FIXED: Updated to match correct Schema names
-          leads: true,
-          siteVisits: true,
-          jobAssignments: true,
-        },
-      },
+      roles: { include: { role: { select: { name: true } } } },
+      _count: { select: { leads: true, siteVisits: true, jobAssignments: true } },
     },
   })
 
@@ -82,152 +36,74 @@ export default async function UsersPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto max-w-2xl space-y-4 pb-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Users</h1>
-          <p className="text-muted-foreground">Manage system users and roles</p>
+          <h1 className="text-xl font-bold text-gray-900">Users</h1>
+          <p className="text-xs text-gray-400">{stats.total} total &middot; {stats.active} active</p>
         </div>
         <AddUserDialog />
       </div>
 
       {/* Stats */}
-      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Users</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.total}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Active</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">{stats.active}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Inactive</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-600">{stats.inactive}</div>
-          </CardContent>
-        </Card>
+      <div className="grid grid-cols-3 gap-2">
+        <div className="rounded-xl border border-gray-100 bg-white p-2.5 text-center shadow-sm">
+          <p className="text-lg font-bold text-gray-800">{stats.total}</p>
+          <p className="text-[9px] font-medium uppercase tracking-wider text-gray-400">Total</p>
+        </div>
+        <div className="rounded-xl border border-green-100 bg-green-50 p-2.5 text-center shadow-sm">
+          <p className="text-lg font-bold text-green-600">{stats.active}</p>
+          <p className="text-[9px] font-medium uppercase tracking-wider text-gray-400">Active</p>
+        </div>
+        <div className="rounded-xl border border-gray-100 bg-gray-50 p-2.5 text-center shadow-sm">
+          <p className="text-lg font-bold text-gray-400">{stats.inactive}</p>
+          <p className="text-[9px] font-medium uppercase tracking-wider text-gray-400">Inactive</p>
+        </div>
       </div>
 
-      {/* Users Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>All Users</CardTitle>
-          <CardDescription>A list of all users in the system</CardDescription>
-        </CardHeader>
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Phone</TableHead>
-                <TableHead>Roles</TableHead>
-                <TableHead>Activity</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Created</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {users.length > 0 ? (
-                users.map((user) => (
-                  <TableRow key={user.id}>
-                    <TableCell className="font-medium">{user.name}</TableCell>
-                    <TableCell>
-                      <div className="text-sm">{user.email}</div>
-                    </TableCell>
-                    <TableCell>
-                      {user.phone ? (
-                        <div className="text-sm">
-                          <div>{user.phone}</div>
-                          {user.whatsapp && user.whatsapp !== user.phone && (
-                            <div className="text-muted-foreground">WA: {user.whatsapp}</div>
-                          )}
-                        </div>
-                      ) : (
-                        <span className="text-sm text-muted-foreground">-</span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex flex-wrap gap-1">
-                        {user.roles.length > 0 ? (
-                          user.roles.map((userRole) => (
-                            <Badge
-                              key={userRole.role.name}
-                              variant="outline"
-                              className="text-xs"
-                            >
-                              {enumToReadable(userRole.role.name)}
-                            </Badge>
-                          ))
-                        ) : (
-                          <span className="text-sm text-muted-foreground">No roles</span>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="text-sm">
-                        {/* FIXED: Using correct schema names */}
-                        {user._count.leads > 0 && (
-                          <div>{user._count.leads} leads</div>
-                        )}
-                        {user._count.siteVisits > 0 && (
-                          <div>{user._count.siteVisits} site visits</div>
-                        )}
-                        {user._count.jobAssignments > 0 && (
-                          <div>{user._count.jobAssignments} jobs</div>
-                        )}
-                        {user._count.leads === 0 &&
-                          user._count.siteVisits === 0 &&
-                          user._count.jobAssignments === 0 && (
-                            <span className="text-muted-foreground">No activity</span>
-                          )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      {user.isActive ? (
-                        <Badge className="bg-green-100 text-green-800">Active</Badge>
-                      ) : (
-                        <Badge className="bg-red-100 text-red-800">Inactive</Badge>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <div className="text-sm">{formatDate(user.createdAt, 'PP')}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {formatDate(user.createdAt, 'p')}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button variant="ghost" size="sm" asChild>
-                        <Link href={`/admin/users/${user.id}`}>View</Link>
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={8} className="text-center text-muted-foreground">
-                    No users found
-                  </TableCell>
-                </TableRow>
+      {/* User Cards */}
+      <div className="space-y-2">
+        {users.map((user) => (
+          <Link
+            key={user.id}
+            href={`/${params.locale}/admin/users/${user.id}`}
+            className="group flex items-center gap-3 rounded-2xl border border-gray-100 bg-white p-3.5 shadow-sm transition-all hover:shadow-md active:scale-[0.98]"
+          >
+            <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-sm font-bold text-white shadow-sm ${
+              user.isActive ? 'bg-gradient-to-br from-blue-500 to-blue-600' : 'bg-gradient-to-br from-gray-400 to-gray-500'
+            }`}>
+              {getInitials(user.name)}
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2">
+                <p className="text-sm font-semibold text-gray-900">{user.name}</p>
+                {!user.isActive && <span className="rounded-full bg-red-50 px-1.5 py-0.5 text-[9px] font-semibold text-red-500">Inactive</span>}
+              </div>
+              <p className="text-xs text-gray-400">{user.email}</p>
+              <div className="mt-1 flex flex-wrap gap-1">
+                {user.roles.map((r) => (
+                  <span key={r.role.name} className="rounded-full bg-blue-50 px-1.5 py-0.5 text-[9px] font-semibold text-blue-600">
+                    {enumToReadable(r.role.name)}
+                  </span>
+                ))}
+              </div>
+            </div>
+            <div className="flex shrink-0 flex-col items-end gap-0.5">
+              <p className="text-[10px] text-gray-300">{formatDate(user.createdAt, 'PP')}</p>
+              {(user._count.leads > 0 || user._count.jobAssignments > 0) && (
+                <p className="text-[10px] text-gray-400">
+                  {user._count.leads > 0 && `${user._count.leads} leads`}
+                  {user._count.leads > 0 && user._count.jobAssignments > 0 && ' · '}
+                  {user._count.jobAssignments > 0 && `${user._count.jobAssignments} jobs`}
+                </p>
               )}
-            </TableBody>
-          </Table>
-          </div>
-        </CardContent>
-      </Card>
+              <svg className="h-4 w-4 text-gray-300 group-hover:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </div>
+          </Link>
+        ))}
+      </div>
     </div>
   )
 }
